@@ -6,9 +6,12 @@ namespace NetGL;
 
 public class VertexArray {
     private int handle;
-    
-    public VertexArray() {
+
+    private PrimitiveType primitive_type;
+
+    public VertexArray(PrimitiveType primitive_type = PrimitiveType.Triangles) {
         handle = 0;
+        this.primitive_type = primitive_type;
     }
     
     public void bind() {
@@ -27,7 +30,7 @@ public class VertexArray {
 
     public void upload(Buffer vertex_buffer) {
         if(handle == 0)
-            GL.GenVertexArray();
+            handle = GL.GenVertexArray();
 
         GL.BindVertexArray(handle);
 
@@ -67,6 +70,16 @@ public class VertexArray {
     public void upload(Buffer vertex_buffer, Buffer index_buffer) { 
         if(handle == 0)
             handle = GL.GenVertexArray();
+
+        DrawElementsType draw_elements_type;
+
+        if (index_buffer.item_type == typeof(ushort)) {
+            draw_elements_type = DrawElementsType.UnsignedByte;
+        }  else if (index_buffer.item_type == typeof(ushort)) {
+            draw_elements_type = DrawElementsType.UnsignedShort;
+        } else if (index_buffer.item_type == typeof(uint)) {
+            draw_elements_type = DrawElementsType.UnsignedInt;
+        }
 
         GL.BindVertexArray(handle);
 

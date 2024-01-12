@@ -10,7 +10,8 @@ public class Texture2DArrayBuffer: Buffer {
     public int height { get; }
 
     public override int count { get; }
-    public override int item_size{ get; }
+    public override int item_size { get; }
+    public override Type item_type { get; }
     public override int size { get; }
 
     public Texture2DArrayBuffer(in Texture[] textures) {
@@ -20,6 +21,7 @@ public class Texture2DArrayBuffer: Buffer {
         width = textures[0].width;
         height = textures[0].height;
         item_size = textures[0].image_data.Length;
+        item_type = textures[0].image_data.GetType();
         size = textures.Length * textures[0].image_data.Length;
         this.textures = textures;
     }

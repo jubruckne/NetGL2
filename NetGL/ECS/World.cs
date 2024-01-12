@@ -55,8 +55,7 @@ public class World {
     public Entity create_entity<T1>(string name, T1? comp = null) where T1: struct, IComponent<T1> {
         var entity = create_entity(name);
         
-        var buffer = allocate_component_buffer<T1>();
-        entity.components.Add(typeof(T1), new Entity.EntityComponent(buffer, buffer.append(comp ?? new T1())));
+        entity_add_component(entity, comp);
 
         return entity;
     }
@@ -64,30 +63,27 @@ public class World {
     public Entity create_entity<T1, T2>(string name, T1? comp1 = null, T2? comp2 = null) where T1: struct, IComponent<T1> where T2: struct, IComponent<T2> {
         var entity = create_entity(name);
 
-        var buf1 = allocate_component_buffer<T1>();
-        entity.components.Add(typeof(T1), new Entity.EntityComponent(buf1, buf1.append(comp1 ?? new T1())));
-        
-        var buf2 = allocate_component_buffer<T2>();
-        entity.components.Add(typeof(T2), new Entity.EntityComponent(buf2, buf2.append(comp2 ?? new T2())));
+        entity_add_component(entity, comp1);
+        entity_add_component(entity, comp2);
 
         return entity;
     }
     
-    public Entity create_entity<T1, T2, T3>(string name, T1? comp1, T2? comp2, T3? comp3) where T1: struct, IComponent<T1> where T2: struct, IComponent<T1> where T3: struct, IComponent<T3> {
+    public Entity create_entity<T1, T2, T3>(string name, T1? comp1, T2? comp2, T3? comp3) where T1: struct, IComponent<T1> where T2: struct, IComponent<T2> where T3: struct, IComponent<T3> {
         var entity = create_entity(name);
 
-        var buf1 = allocate_component_buffer<T1>();
-        entity.components.Add(typeof(T1), new Entity.EntityComponent(buf1, buf1.append(comp1 ?? new T1())));
-        
-        var buf2 = allocate_component_buffer<T2>();
-        entity.components.Add(typeof(T2), new Entity.EntityComponent(buf2, buf2.append(comp2 ?? new T2())));
-        
-        var buf3 = allocate_component_buffer<T3>();
-        entity.components.Add(typeof(T3), new Entity.EntityComponent(buf3, buf3.append(comp3 ?? new T3())));
+        entity_add_component(entity, comp1);
+        entity_add_component(entity, comp2);
+        entity_add_component(entity, comp3);
 
         return entity;
     }
-    
+
+    public void entity_add_component<T>(Entity entity, T? component) where T : struct, IComponent<T> {
+        var buf1 = allocate_component_buffer<T>();
+        entity.components.Add(typeof(T), new Entity.EntityComponent(buf1, buf1.append(component ?? new T())));
+    }
+
     private Buffer<T> allocate_component_buffer<T>() where T : struct {
         if (!component_buffer.ContainsKey(typeof(T))) {
             Console.WriteLine($"making new buffer for component {typeof(T).Name}");
@@ -100,6 +96,12 @@ public class World {
     public void update_systems(in float delta_time) {
         foreach (var sys in systems) {
             sys.system.update(sys.entities, delta_time);
+        }
+    }
+
+    public void render_systems() {
+        foreach (var sys in systems) {
+            sys.system.render(sys.entities);
         }
     }
 }

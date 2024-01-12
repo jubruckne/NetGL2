@@ -83,8 +83,11 @@ public class Engine: GameWindow {
             new ParentComponent(camera)
         );
 
+        Entity ball = world.create_sphere("Box", camera);
+
         NetGL.ECS.System cam = world.create_system<FirstPersonCameraSystem>();
-        
+        NetGL.ECS.System rend = world.create_system<VertexArrayRenderSystem>();
+
         GL.Enable(EnableCap.ProgramPointSize);
 
         Error.check();
@@ -113,7 +116,8 @@ public class Engine: GameWindow {
         frame++;
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        
+        world.render_systems();
+
         /*
         foreach(Entity ent in entities)  {
             if(ent.is_root()) {
@@ -151,4 +155,3 @@ public class Engine: GameWindow {
         base.OnUnload();
     }
 }
-

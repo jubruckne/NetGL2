@@ -3,9 +3,19 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
 
-public abstract class Buffer {
+public interface IBuffer {
+    int count{ get; }
+    int item_size{ get; }
+    Type item_type { get; }
+    int size{ get; }
+    void bind();
+    void unbind();
+}
+
+public abstract class Buffer: IBuffer {
     public abstract int count { get; }
     public abstract int item_size { get; }
+    public abstract Type item_type { get; }
     public abstract int size { get; }
 
     public abstract void bind();
@@ -25,6 +35,8 @@ public abstract class Buffer<T>: Buffer where T: struct {
         this.handle = 0;
         buffer = new T[count];
     }
+
+    public override Type item_type => typeof(T);
     
     public ref T this[int index] {
         get {
