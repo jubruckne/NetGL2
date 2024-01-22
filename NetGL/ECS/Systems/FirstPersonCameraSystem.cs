@@ -2,11 +2,11 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace NetGL.ECS;
-
-public class FirstPersonCameraSystem: System<TransformComponent, FirstPersonCameraComponent> {
+/*
+public class FirstPersonCameraSystem: System<TransformComponent, FirstPersonCamera> {
     public FirstPersonCameraSystem(): base("First Person Camera", update) { }
 
-    private static void update(ref TransformComponent transform, ref FirstPersonCameraComponent camera, in float delta_time) { 
+    private static void update(ref TransformComponent transform, ref FirstPersonCamera camera, in float delta_time) {
         var speed = camera.speed * delta_time;
         var sensitivity = camera.sensitivity * camera.speed * delta_time * 180f;
 
@@ -53,6 +53,7 @@ public class FirstPersonCameraSystem: System<TransformComponent, FirstPersonCame
         camera.right = Vector3.Normalize(Vector3.Cross(camera.direction, Vector3.UnitY));
         camera.up = Vector3.Normalize(Vector3.Cross(camera.right, camera.direction));
 
-        transform.set(Matrix4.LookAt(camera.position, camera.position + camera.direction, camera.up));
+        transform.set(camera.position, camera.direction, camera.up);
     }
 }
+*/

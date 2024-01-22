@@ -4,17 +4,24 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using ImGuiNET;
+
+using Vector2 = System.Numerics.Vector2;
 
 public class Engine: GameWindow {
+    public readonly bool debug;
+
     protected readonly World world;
+    protected readonly ImGuiController imgui_controller;
 
     protected float game_clock;
     protected int frame;
 
+    private float cursor_state_last_switch = 1f;
     private double frame_time;
     private int frame_count;
 
-    public Engine(int width, int height, string title): 
+    public Engine(int width, int height, string title, bool debug = false):
         base(
             new() {
                 UpdateFrequency = 0,
@@ -22,12 +29,14 @@ public class Engine: GameWindow {
                 APIVersion = new Version("4.1"),
                 AlphaBits = 8,
                 NumberOfSamples = 16,
-                ClientSize = (width, height), 
+                ClientSize = (width, height),
                 Title = title,
-                WindowState = WindowState.Normal, 
+                WindowState = WindowState.Normal,
                 Vsync = VSyncMode.On,
                 Flags = ContextFlags.ForwardCompatible
-            }) { 
+            }) {
+
+        this.debug = debug;
 
         Console.WriteLine($"OpenGL Version: {GL.GetString(StringName.Version)}");
         Console.WriteLine($"Shading Language Version: {GL.GetString(StringName.ShadingLanguageVersion)}");
@@ -36,17 +45,47 @@ public class Engine: GameWindow {
         Console.WriteLine($"MaxElementsVertices: {GL.GetInteger(GetPName.MaxElementsVertices)}");
         Console.WriteLine($"MaxElementsIndices: {GL.GetInteger(GetPName.MaxElementsIndices)}");
         Console.WriteLine();
-                
+
         GL.CullFace(CullFaceMode.Back);
         GL.Enable(EnableCap.CullFace);
-        
+
         //GL.Enable(EnableCap.Blend);
-        //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);  
+        //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
-        
+
         world = new World();
+        if (debug) imgui_controller = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2);
+    }
+
+    protected override void OnLoad() {
+        base.OnLoad();
+
+        Entity player = world.create_entity("Player");
+        player.transform.position = (0, 0, 0);
+        player.transform.forward = (0, 0, -1);
+        player.add_first_person_camera(field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState);
+
+        Entity ball = world.create_sphere("Ball");
+        ball.transform.position = (-5, 0, -8);
+        Entity box = world.create_cube("Box");
+        box.transform.position = (-2, 0, -8);
+
+        Console.WriteLine(player);
+
+        //NetGL.ECS.System cam = world.create_system<FirstPersonCameraSystem>();
+        //NetGL.ECS.System rend = world.create_system<VertexArrayRenderSystem>();
+
+        GL.Enable(EnableCap.ProgramPointSize);
+
+        Error.check();
+
+        CursorState = CursorState.Normal;
+
+        GL.ClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+
+        game_clock = 0;
     }
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
@@ -58,56 +97,31 @@ public class Engine: GameWindow {
         if (KeyboardState.IsKeyDown(Keys.Escape))
             Close();
 
-        var e_time = (float)e.Time;
-        
-        world.update_systems(e_time);
-    }
+        var delta_time = (float)e.Time;
 
-    protected override void OnLoad() {
-        base.OnLoad();
+        if (cursor_state_last_switch >= 1f) {
+            if (KeyboardState.IsKeyDown(Keys.Tab)) {
+                CursorState = CursorState == CursorState.Normal ? CursorState.Grabbed : CursorState.Normal;
+                this.Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
+                cursor_state_last_switch = 0f;
+            }
+        } else cursor_state_last_switch += delta_time;
 
-        Entity camera = world.create_entity<TransformComponent, FirstPersonCameraComponent>(
-            "Camera",
-            new TransformComponent(),
-            new FirstPersonCameraComponent(
-                position: (0, 0, 250), 
-                direction: (0, 0, -1), 
-                keyboard_state: KeyboardState, 
-                mouse_state: MouseState
-            )
-        );
-
-        Entity player = world.create_entity<TransformComponent, ParentComponent>(
-            "Player", 
-            new TransformComponent(), 
-            new ParentComponent(camera)
-        );
-
-        Entity ball = world.create_sphere("Box", camera);
-
-        NetGL.ECS.System cam = world.create_system<FirstPersonCameraSystem>();
-        NetGL.ECS.System rend = world.create_system<VertexArrayRenderSystem>();
-
-        GL.Enable(EnableCap.ProgramPointSize);
-
-        Error.check();
-
-        CursorState = CursorState.Grabbed;
-
-        GL.ClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-
-        game_clock = 0;
+        if(CursorState == CursorState.Grabbed)
+            world.update(delta_time);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
         base.OnRenderFrame(e);
+
+        if (debug) imgui_controller.Update(this, (float)e.Time);
 
         //Console.WriteLine($"frame:{frame}, {GC.CollectionCount(2)}");
 
         game_clock += (float)e.Time;
         frame_time += e.Time;
         if (frame_time >= 1.0) {
-            this.Title = $"fps: {frame_count}, last_frame: {e.Time*1000:F2}";
+            this.Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
             frame_count = 0;
             frame_time = 0;
         }
@@ -116,39 +130,135 @@ public class Engine: GameWindow {
         frame++;
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        world.render_systems();
 
-        /*
-        foreach(Entity ent in entities)  {
-            if(ent.is_root()) {
-                //Console.WriteLine("Root entity: {0}", ent.name);
-                foreach(IEntity child in entities) {
-                    //Console.WriteLine("drawing child" + child.name);
-
-                    if(child.parent == ent && child is IRenderable r) {
-                        //Console.WriteLine("drawing " + r.ToString());
-                        r.shader.bind();
-                        
-                        Error.check();
-
-                        r.shader.set_uniform("u_projection", camera_controller.projection);
-                        r.shader.set_uniform("u_view", child.parent.transform);
-                        r.shader.set_uniform("u_model", child.transform);
-                        r.mesh.bind();
-                        r.mesh.draw();
-                    }
-                }
-            }
-        }
-        */
+        if(debug) render_ui();
+        world.render();
 
         SwapBuffers();
+    }
+
+    private void render_ui() {
+        ImGui.DockSpace(0, new Vector2(80f, 20f), ImGuiDockNodeFlags.NoUndocking);
+        ImGui.Begin("Entities");
+        ImGui.SetWindowSize(new Vector2(240, 600));
+
+        add_entities_to_gui(world.root);
+
+        ImGui.End();
+        imgui_controller.Render();
+
+        ImGuiController.CheckGLError("End of frame");
+    }
+
+    private void add_entities_to_gui(IEnumerable<Entity> entities) {
+        foreach (var entity in entities) {
+            // Console.WriteLine(entity.name);
+            ImGui.CollapsingHeader(entity.name, ImGuiTreeNodeFlags.Leaf);
+
+            foreach (var comp in entity.get_components()) {
+                // Console.WriteLine(comp.name);
+
+                if (comp is Transform t) {
+                    ImGui.Text("Position");
+                    ImGui.SameLine(80);
+                    ImGui.DragFloat3($"##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100);
+
+                    ImGui.Text("Forward");
+                    ImGui.SameLine(80);
+                    ImGui.DragFloat3($"##{entity.name}.forward", ref t.forward.as_sys_num_ref(), 0.01f, -1, 1);
+
+                    ImGui.Text("Up");
+                    ImGui.SameLine(80);
+                    ImGui.DragFloat3($"##{entity.name}.up", ref t.up.as_sys_num_ref(), 0.01f, -1, 1);
+/*
+                    ImGui.Spacing();
+
+                    Matrix4 mat;
+                    if (entity.has<FirstPersonCamera>())
+                        mat = entity.get<FirstPersonCamera>().camera_matrix;
+                    else
+                        mat = t.get_model_matrix();
+
+                    var x1 = t.get_model_matrix().Row0;
+                    ImGui.SliderFloat4($"##{entity.name}.mat1", ref x1.as_sys_num_ref(), 0, 1);
+                    var x2 = t.get_model_matrix().Row1;
+                    ImGui.SliderFloat4($"##{entity.name}.mat2", ref x2.as_sys_num_ref(), 0, 1);
+                    var x3 = t.get_model_matrix().Row2;
+                    ImGui.SliderFloat4($"##{entity.name}.mat3", ref x3.as_sys_num_ref(), 0, 1);
+                    var x4 = t.get_model_matrix().Row3;
+                    ImGui.SliderFloat4($"##{entity.name}.mat4", ref x4.as_sys_num_ref(), 0, 1);
+                  */  ImGui.Spacing();
+
+
+                } else if (comp is Hierarchy h) {
+                    ImGui.Text("Parent");
+                    ImGui.SameLine(80);
+
+                    if (ImGui.BeginCombo($"##{entity.name}.parent", h.parent?.name, ImGuiComboFlags.None)) {
+                        foreach (var parent_ent in world.root) {
+                            ImGui.Selectable(parent_ent.name);
+                        }
+
+                        ImGui.EndCombo();
+                    }
+
+                    ImGui.Spacing();
+                } else if (comp is FirstPersonCamera cam) {
+                    ImGui.Separator();
+                    ImGui.Spacing();
+
+                    ImGui.Text("Speed");
+                    ImGui.SameLine(80);
+                    ImGui.SliderFloat($"##{entity.name}.cam.speed", ref cam.speed, 0, 10);
+
+                    ImGui.Text("Sensitiv.");
+                    ImGui.SameLine(80);
+                    ImGui.SliderFloat($"##{entity.name}.cam.sensitivity", ref cam.sensitivity, 0, 1);
+
+                    ImGui.Spacing();
+                } else if (comp is VertexArrayRenderer va) {
+                    ImGui.Separator();
+                    ImGui.Spacing();
+
+                    ImGui.Text(va.name);
+                    ImGui.Indent();
+                    ImGui.Text($"{va.vertex_array}");
+
+                    ImGui.Text($"{va.shader}");
+
+                    ImGui.Unindent();
+                    ImGui.Spacing();
+                } else {
+                    ImGui.Separator();
+                    ImGui.Spacing();
+
+                    ImGui.Text(comp.name);
+                    ImGui.SameLine(80);
+                    ImGui.Spacing();
+                }
+            }
+
+            add_entities_to_gui(entity.children);
+        }
     }
 
     protected override void OnResize(ResizeEventArgs e) {
         base.OnResize(e);
         Console.WriteLine("OnResize: {0} {1}", e.Width, e.Height);
         GL.Viewport(0, 0, e.Width * 2, e.Height * 2);
+
+        if (debug) imgui_controller.WindowResized(ClientSize.X, ClientSize.Y);
+    }
+
+    protected override void OnTextInput(TextInputEventArgs e) {
+        base.OnTextInput(e);
+
+        if(debug) imgui_controller.PressChar((char)e.Unicode);
+    }
+
+    protected override void OnMouseWheel(MouseWheelEventArgs e) {
+        base.OnMouseWheel(e);
+        if(debug) imgui_controller.MouseScroll(e.Offset);
     }
 
     protected override void OnUnload() {

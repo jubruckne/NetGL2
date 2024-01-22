@@ -1,98 +1,85 @@
+using OpenTK.Mathematics;
+
 namespace NetGL.ECS;
 
 public class World {
-    private readonly List<Entity> entities = [];
-    private readonly List<(System system, Entity[] entities)> systems = [];
-    private readonly Dictionary<Type, Buffer> component_buffer = [];
+    private readonly List<Entity> world_entities;
 
-    private System add_system(in System sys) {
-        Console.Write($"adding system {sys} with filter: ");
-        foreach (var t in sys.component_filter) {
-            Console.Write($"{t.Name} ");
+    public World() {
+        world_entities = new List<Entity>();
+    }
+
+    public IEnumerable<Entity> root{
+        get {
+            foreach (Entity ent in world_entities) {
+                if (ent.parent == null) yield return ent;
+            }
+        }
+    }
+
+    public Entity get(string name) {
+        foreach (var ent in world_entities) {
+            if (ent.name == name) return ent;
         }
 
-        var ents = filter(sys.component_filter);
-        systems.Add((sys, ents));
-        
-        Console.Write(" Entities: ");
-        foreach (var e in ents) {
-            Console.Write($"{e.name} ");
-        }
-        
-        Console.WriteLine();
-
-        return sys;
-    }
-    
-    public Entity[] filter(Type[] components) {
-        List<Entity> result = [];
-        foreach (var ent in entities) {
-            if (ent.supports(components)) result.Add(ent);
-        }
-
-        return result.ToArray();
+        throw new IndexOutOfRangeException(nameof(name));
     }
 
-    public System create_system<S>() where S: System, new(){
-        return add_system(new S());
-    }
+    public Entity create_entity(string name, Entity? parent = null, Transform? tranform = null) {
+        var e = new Entity(name, parent, tranform);
+        world_entities.Add(e);
 
-    public System create_system<C1>(string name, System<C1>.UpdateDelegate? update_action = null) where C1: struct, IComponent<C1> {
-        return add_system(new System<C1>(name, update_action));
-    }
-
-    public System create_system<C1, C2>(string name, System<C1, C2>.UpdateDelegate? update_action = null) where C1: struct, IComponent<C1> where C2: struct, IComponent<C2> {
-        return add_system(new System<C1, C2>(name, update_action));
-    }
-    
-    public Entity create_entity(string name) {
-        var e = new Entity(name);
-        entities.Add(e);
-        
         return e;
     }
 
-    public Entity create_entity<T1>(string name, T1? comp = null) where T1: struct, IComponent<T1> {
-        var entity = create_entity(name);
-        
-        entity_add_component(entity, comp);
-
-        return entity;
-    }
-    
-    public Entity create_entity<T1, T2>(string name, T1? comp1 = null, T2? comp2 = null) where T1: struct, IComponent<T1> where T2: struct, IComponent<T2> {
-        var entity = create_entity(name);
-
-        entity_add_component(entity, comp1);
-        entity_add_component(entity, comp2);
-
-        return entity;
-    }
-    
-    public Entity create_entity<T1, T2, T3>(string name, T1? comp1, T2? comp2, T3? comp3) where T1: struct, IComponent<T1> where T2: struct, IComponent<T2> where T3: struct, IComponent<T3> {
-        var entity = create_entity(name);
-
-        entity_add_component(entity, comp1);
-        entity_add_component(entity, comp2);
-        entity_add_component(entity, comp3);
-
-        return entity;
-    }
-
-    public void entity_add_component<T>(Entity entity, T? component) where T : struct, IComponent<T> {
-        var buf1 = allocate_component_buffer<T>();
-        entity.components.Add(typeof(T), new Entity.EntityComponent(buf1, buf1.append(component ?? new T())));
-    }
-
-    private Buffer<T> allocate_component_buffer<T>() where T : struct {
-        if (!component_buffer.ContainsKey(typeof(T))) {
-            Console.WriteLine($"making new buffer for component {typeof(T).Name}");
-            component_buffer.Add(typeof(T), new ArrayBuffer<T>());
+    private Entity get_camera_entity() {
+        foreach (var entity in root) {
+            if (entity.has<FirstPersonCamera>()) {
+                return entity;
+            }
         }
 
-        return (Buffer<T>)component_buffer[typeof(T)];
+        throw new InvalidOperationException("no camera found!");
     }
 
+    public void render() {
+        var cam = get_camera_entity().get<FirstPersonCamera>();
+
+        foreach (var entity in root) {
+            render_entity(entity, cam.projection_matrix, cam.camera_matrix, Matrix4.Identity);
+        }
+
+        Error.check();
+    }
+
+    private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Matrix4 parent_model_matrix) {
+        var model_matrix = Matrix4.LookAt(entity.transform.position, entity.transform.forward + entity.transform.position, entity.transform.up).Inverted() * parent_model_matrix;
+
+        foreach (var renderable in entity.get_renderable_components())
+            renderable.render(projection_matrix, camera_matrix, model_matrix);
+
+        foreach (Entity child in entity.children)
+            render_entity(child, projection_matrix, camera_matrix, model_matrix);
+    }
+
+    public void update(in float delta_time) {
+        foreach (var entity in root) {
+            update_entity(delta_time, entity);
+        }
+    }
+
+    private void update_entity(in float delta_time, in Entity entity) {
+        foreach (var updateable in entity.get_updateable_components()) {
+            Console.WriteLine("update: " + updateable);
+            updateable.update(delta_time);
+        }
+
+        foreach (Entity child in entity.children) {
+            update_entity(delta_time, child);
+        }
+    }
+
+    /*
     public void update_systems(in float delta_time) {
         foreach (var sys in systems) {
             sys.system.update(sys.entities, delta_time);
@@ -104,4 +91,5 @@ public class World {
             sys.system.render(sys.entities);
         }
     }
+    */
 }

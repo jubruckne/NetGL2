@@ -6,20 +6,23 @@ using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-// A simple class meant to help create shaders.
 public class Shader {
+    public readonly string name;
     private readonly int handle;
     private readonly Dictionary<string, int> uniform_locations;
 
-    public Shader(string vertex_program, string fragment_program, string geometry_program="") {
+    public Shader(string name, string vertex_program, string fragment_program, string geometry_program="") {
+        this.name = name;
         Console.WriteLine("Compiling " + vertex_program + "...\n");
-        
+
+        string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../../Assets/Shaders/";
+
         if(File.Exists(vertex_program))
             vertex_program = File.ReadAllText(vertex_program);
-        else if(File.Exists("assets/shaders/" + vertex_program))
-            vertex_program = File.ReadAllText("assets/shaders/" + vertex_program);
+        else if(File.Exists(base_path + vertex_program))
+            vertex_program = File.ReadAllText(base_path + vertex_program);
         else
-            throw new ArgumentOutOfRangeException(vertex_program);
+            throw new ArgumentOutOfRangeException(vertex_program, base_path + vertex_program);
 
         // GL.CreateShader will create an empty shader (obviously). The ShaderType enum denotes which type of shader will be created.
         var vertexShader = GL.CreateShader(ShaderType.VertexShader);
@@ -33,8 +36,8 @@ public class Shader {
         Console.WriteLine("Compiling " + fragment_program + "...\n");
         if(File.Exists(fragment_program))
             fragment_program = File.ReadAllText(fragment_program);
-        else if(File.Exists("assets/shaders/" + fragment_program))
-            fragment_program = File.ReadAllText("assets/shaders/" + fragment_program);
+        else if(File.Exists(base_path + fragment_program))
+            fragment_program = File.ReadAllText(base_path + fragment_program);
         else
             throw new ArgumentOutOfRangeException(fragment_program);
 
@@ -55,8 +58,8 @@ public class Shader {
 
             if(File.Exists(geometry_program))
                 geometry_program = File.ReadAllText(geometry_program);
-            else if(File.Exists("assets/shaders/" + geometry_program))
-                geometry_program = File.ReadAllText("assets/shaders/" + geometry_program);
+            else if(File.Exists(base_path + geometry_program))
+                geometry_program = File.ReadAllText(base_path + geometry_program);
             else
                 throw new ArgumentOutOfRangeException(geometry_program);
 
@@ -236,7 +239,7 @@ public class Shader {
     }
     
     public override string ToString() {
-        return $"Shader[uniforms={string.Join(", ", uniform_locations.Keys)}]";
+        return $"{name}";
     }
 
     public void bind() {

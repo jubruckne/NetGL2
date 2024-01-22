@@ -1,10 +1,9 @@
-using System.Numerics;
-using Vector3 = OpenTK.Mathematics.Vector3;
+using OpenTK.Mathematics;
 
 namespace NetGL;
 
 public class Sphere: IShape<Sphere> {
-    public float radius;
+    public readonly float radius;
 
     public Sphere(float radius) {
         this.radius = radius;
@@ -42,7 +41,7 @@ public class Sphere: IShape<Sphere> {
                 u = polarX * 0.5f / (float) Math.PI + 0.5f;
                 v = polarY / (float) Math.PI;
 
-                vertices[i * (meridians + 1) + j] = (x, y, z);
+                vertices[i * (meridians + 1) + j] = new (x, y, z);
             }
         }
 

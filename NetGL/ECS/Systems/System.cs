@@ -1,5 +1,5 @@
 namespace NetGL.ECS;
-
+/*
 public abstract class System {
     public string name { get; }
     public Type[] component_filter { get; }
@@ -62,3 +62,30 @@ public class System<C1, C2>: System where C1 : struct, IComponent<C1> where C2 :
         }
     }
 }
+
+
+public class System<C1, C2, C3>: System where C1 : struct, IComponent<C1> where C2 : struct, IComponent<C2> where C3 : struct, IComponent<C3> {
+    public delegate void UpdateDelegate(ref C1 c1, ref C2 c2, ref C3 c3, in float delta_time);
+    public delegate void RenderDelegate(ref C1 c1, ref C2 c2, ref C3 c3);
+
+    private readonly UpdateDelegate? on_update;
+    private readonly RenderDelegate? on_render;
+
+    protected internal System(string name, UpdateDelegate? on_update = null, RenderDelegate? on_render = null): base(name, [typeof(C1), typeof(C2)]) {
+        this.on_update = on_update;
+        this.on_render = on_render;
+    }
+
+    public override void update(in Entity[] entities, in float delta_time) {
+        foreach (var ent in entities) {
+            on_update?.Invoke(ref ent.get<C1>(), ref ent.get<C2>(), ref ent.get<C3>(), delta_time);
+        }
+    }
+
+    public override void render(in Entity[] entities) {
+        foreach (var ent in entities) {
+            on_render?.Invoke(ref ent.get<C1>(), ref ent.get<C2>(), ref ent.get<C3>());
+        }
+    }
+}
+*/

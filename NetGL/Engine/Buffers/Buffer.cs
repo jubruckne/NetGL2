@@ -4,10 +4,10 @@ using OpenTK.Graphics.OpenGL4;
 namespace NetGL;
 
 public interface IBuffer {
-    int count{ get; }
+    int count { get; }
     int item_size{ get; }
     Type item_type { get; }
-    int size{ get; }
+    int size { get; }
     void bind();
     void unbind();
 }
@@ -84,8 +84,8 @@ public abstract class Buffer<T>: Buffer where T: struct {
     }
 
     public override int item_size { get => Marshal.SizeOf(new T()); }
-    public override int size { get => Marshal.SizeOf(buffer); }
-    
+    public override int size { get => item_size * count; }
+
     public override void bind() {
         Console.WriteLine("Buffer.bind()");
 
