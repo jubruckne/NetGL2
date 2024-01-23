@@ -17,10 +17,16 @@ public class IndexBuffer : IndexBuffer<ushort>, IIndexBuffer {
     public IndexBuffer(in Triangle[] items) : base(items) { }
 }
 
-public class IndexBuffer<T> : Buffer<IndexBuffer<T>.Triangle>, IIndexBuffer where T : unmanaged, IUnsignedNumber<T> {
+public class IndexBuffer<T>: Buffer<IndexBuffer<T>.Triangle>, IIndexBuffer where T : unmanaged, IUnsignedNumber<T> {
     [StructLayout(LayoutKind.Sequential)]
     public struct Triangle: IIndexSpec {
         public T p1, p2, p3;
+
+        public Triangle(T p1, T p2, T p3) {
+            this.p1 = p1;
+            this.p2 = p2;
+            this.p3 = p3;
+        }
 
         public void set(T p1, T p2, T p3) {
             this.p1 = p1;
@@ -29,6 +35,14 @@ public class IndexBuffer<T> : Buffer<IndexBuffer<T>.Triangle>, IIndexBuffer wher
         }
 
         public static int get_point_count() => 3;
+
+        public static implicit operator Triangle((T x, T y, T z) tuple) {
+            return new Triangle {
+                p1 = tuple.x,
+                p2 = tuple.y,
+                p3 = tuple.z
+            };
+        }
     }
 
     public IndexBuffer() : base(BufferTarget.ElementArrayBuffer, 0) {

@@ -15,15 +15,14 @@ public class Cube: IShape<Cube> {
         this.depth = depth;
     }
 
-    public static (Vector3[] vertices, IndexBuffer.Triangle[] triangles) create_geometry(float radius = 0.5f) {
-        return create_geometry(new Cube(radius));
+    public static (Vector3[] vertices, IndexBuffer.Triangle[] triangles) create_geometry(float radius = 0.5f, int segments = 1) {
+        return create_geometry(new Cube(radius), segments);
     }
 
-    public static (Vector3[] vertices, IndexBuffer.Triangle[] triangles) create_geometry(Cube cube) {
+    public static (Vector3[] vertices, IndexBuffer.Triangle[] triangles) create_geometry(Cube cube, int segments = 1) {
         var halfWidth = cube.width * 0.5f;
         var halfHeight = cube.height * 0.5f;
         var halfDepth = cube.depth * 0.5f;
-
 
         // Define the eight vertices of the cube
         Vector3[] corners = [
@@ -54,6 +53,13 @@ public class Cube: IShape<Cube> {
             indices[index++].set((ushort)face[0], (ushort)face[1], (ushort)face[2]); // First triangle
             indices[index++].set((ushort)face[2], (ushort)face[1], (ushort)face[3]); // Second triangle
         }
+
+        Console.WriteLine($"cube\nvertices:\n");
+        foreach(var v in corners)
+            Console.WriteLine(v);
+        Console.WriteLine("faces:\n");
+        foreach(var i in indices)
+            Console.WriteLine(indices);
 
         return (corners, indices);
     }

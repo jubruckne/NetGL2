@@ -5,7 +5,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ImGuiNET;
-
+using OpenTK.Mathematics;
 using Vector2 = System.Numerics.Vector2;
 
 public class Engine: GameWindow {
@@ -52,7 +52,7 @@ public class Engine: GameWindow {
         //GL.Enable(EnableCap.Blend);
         //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        GL.Enable(EnableCap.DepthTest);
+        //GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
 
         world = new World();
@@ -67,10 +67,14 @@ public class Engine: GameWindow {
         player.transform.forward = (0, 0, -1);
         player.add_first_person_camera(field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState);
 
-        Entity ball = world.create_sphere("Ball");
+        Entity ball = world.create_sphere_uv("Ball");
         ball.transform.position = (-5, 0, -8);
         Entity box = world.create_cube("Box");
         box.transform.position = (-2, 0, -8);
+
+        Entity rect = world.create_rectangle("Rectangle", divisions:16);
+        rect.transform.position = (-3, 3, -8);
+
 
         Console.WriteLine(player);
 
@@ -102,8 +106,17 @@ public class Engine: GameWindow {
         if (cursor_state_last_switch >= 1f) {
             if (KeyboardState.IsKeyDown(Keys.Tab)) {
                 CursorState = CursorState == CursorState.Normal ? CursorState.Grabbed : CursorState.Normal;
-                this.Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
+                Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
                 cursor_state_last_switch = 0f;
+            } else if (CursorState == CursorState.Normal) {
+                if (KeyboardState.IsKeyDown(Keys.A) |
+                    KeyboardState.IsKeyDown(Keys.S) |
+                    KeyboardState.IsKeyDown(Keys.D) |
+                    KeyboardState.IsKeyDown(Keys.W)) {
+                    CursorState = CursorState.Grabbed;
+                    Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
+                    cursor_state_last_switch = 0f;
+                }
             }
         } else cursor_state_last_switch += delta_time;
 
@@ -131,18 +144,33 @@ public class Engine: GameWindow {
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-        if(debug) render_ui();
         world.render();
+        if(debug) render_ui();
 
         SwapBuffers();
     }
 
     private void render_ui() {
-        ImGui.DockSpace(0, new Vector2(80f, 20f), ImGuiDockNodeFlags.NoUndocking);
-        ImGui.Begin("Entities");
-        ImGui.SetWindowSize(new Vector2(240, 600));
+        // ImGui.DockSpaceOverViewport(ImGui.GetMainViewport());
+        ImGui.Begin("Entities",
+            CursorState == CursorState.Grabbed
+                ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
+                : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize);
+        ImGui.SetWindowSize(new Vector2(250, 680));
+        ImGui.SetWindowPos(new Vector2(765, 10));
+
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 6f);
+        ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 6f);
+        ImGui.PushStyleVar(ImGuiStyleVar.IndentSpacing, 12f);
+        ImGui.PushStyleVar(ImGuiStyleVar.Alpha, CursorState == CursorState.Grabbed ? 0.35f : 1f);
+
+        ImGui.StyleColorsClassic();
 
         add_entities_to_gui(world.root);
+
+        // ImGui.ShowIDStackToolWindow();
+
+        ImGui.PopStyleVar(4);
 
         ImGui.End();
         imgui_controller.Render();

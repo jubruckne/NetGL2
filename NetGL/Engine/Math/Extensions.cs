@@ -1,9 +1,6 @@
-using System.Numerics;
 using System.Runtime.InteropServices;
 using OpenTK.Mathematics;
 using Vector3 = OpenTK.Mathematics.Vector3;
-using Vector4_net = System.Numerics.Vector4;
-using Vector3_net = System.Numerics.Vector3;
 using Vector4 = OpenTK.Mathematics.Vector4;
 
 namespace NetGL;
