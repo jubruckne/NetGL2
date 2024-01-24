@@ -22,9 +22,9 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
 
     public void render(in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Matrix4 model_matrix) {
         shader.bind();
-        shader.set_uniform("projection", projection_matrix);
-        shader.set_uniform("camera", camera_matrix);
-        shader.set_uniform("model", model_matrix);
+        shader.set_projection_matrix(projection_matrix);
+        shader.set_camera_matrix(camera_matrix);
+        shader.set_model_matrix(model_matrix);
 
         // Console.WriteLine($"projection:\n{projection_matrix}");
         // Console.WriteLine($"camera:\n{camera_matrix}");

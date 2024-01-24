@@ -12,7 +12,7 @@ public struct Vertex: IVertexSpec {
         this.position = position;
     }
 
-    public static IList<VertexAttribute> get_vertex_spec() {
+    public static IReadOnlyList<VertexAttribute> get_vertex_spec() {
         return [
             new("position", location:0, size:3, pointer_type:VertexAttribPointerType.Float)
         ];

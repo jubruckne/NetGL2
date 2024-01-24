@@ -4,7 +4,7 @@ public class Entity {
     public string name { get; }
     public Transform transform { get; }
     public Entity? parent { get; }
-    public IReadOnlyCollection<Entity> children{ get; }
+    public IReadOnlyList<Entity> children{ get; }
     private readonly Dictionary<Type, Dictionary<string, IComponent>> components;
     private readonly List<IUpdatableComponent> updateable_components;
     private readonly List<IRenderableComponent> renderable_components;

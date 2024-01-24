@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 namespace NetGL;
 
 public interface IVertexBuffer: IBuffer {
-    IList<VertexAttribute> get_vertex_spec();
+    IReadOnlyList<VertexAttribute> get_vertex_spec();
 }
 
 public class VertexBuffer<T> : ArrayBuffer<T>, IVertexBuffer where T: struct, IVertexSpec {
@@ -17,5 +17,5 @@ public class VertexBuffer<T> : ArrayBuffer<T>, IVertexBuffer where T: struct, IV
         }
     }
 
-    IList<VertexAttribute> IVertexBuffer.get_vertex_spec() => T.get_vertex_spec();
+    IReadOnlyList<VertexAttribute> IVertexBuffer.get_vertex_spec() => T.get_vertex_spec();
 }

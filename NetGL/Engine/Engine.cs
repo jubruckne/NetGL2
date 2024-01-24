@@ -5,14 +5,13 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ImGuiNET;
-using OpenTK.Mathematics;
 using Vector2 = System.Numerics.Vector2;
 
 public class Engine: GameWindow {
     public readonly bool debug;
 
     protected readonly World world;
-    protected readonly ImGuiController imgui_controller;
+    protected readonly ImGuiController imgui_controller = null!;
 
     protected float game_clock;
     protected int frame;
@@ -52,7 +51,7 @@ public class Engine: GameWindow {
         //GL.Enable(EnableCap.Blend);
         //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        //GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
 
         world = new World();

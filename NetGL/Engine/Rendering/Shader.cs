@@ -11,11 +11,82 @@ public class Shader {
     private readonly int handle;
     private readonly Dictionary<string, int> uniform_locations;
 
-    public Shader(string name, string vertex_program, string fragment_program, string geometry_program="") {
+    protected Shader(string name) {
         this.name = name;
-        Console.WriteLine("Compiling " + vertex_program + "...\n");
+        uniform_locations = [];
+        handle = GL.CreateProgram();
+    }
 
+    public Shader(string name, string vertex_program, string fragment_program, string geometry_program = "")
+    : this(name) {
+        compile_from_file(vertex_program, fragment_program, geometry_program);
+    }
+
+    protected void compile_from_text(string vertex_program, string fragment_program, string geometry_program = "") {
+        Console.WriteLine("compiling vertex shader...");
+        var vertex_shader_handle = GL.CreateShader(ShaderType.VertexShader);
+        GL.ShaderSource(vertex_shader_handle, vertex_program);
+        compile(vertex_shader_handle);
+
+        Console.WriteLine("compiling fragment shader...");
+        var fragment_shader_handle = GL.CreateShader(ShaderType.FragmentShader);
+        GL.ShaderSource(fragment_shader_handle, fragment_program);
+        compile(fragment_shader_handle);
+
+        var geometry_shader_handle = -1;
+        if (geometry_program != "") {
+            Console.WriteLine("compiling geometry shader...");
+
+            geometry_shader_handle = GL.CreateShader(ShaderType.GeometryShader);
+            GL.ShaderSource(geometry_shader_handle, geometry_program);
+            compile(geometry_shader_handle);
+            GL.AttachShader(handle, geometry_shader_handle);
+        }
+
+        // Attach shaders...
+        GL.AttachShader(handle, vertex_shader_handle);
+        GL.AttachShader(handle, fragment_shader_handle);
+        if(geometry_shader_handle != -1)
+            GL.AttachShader(handle, geometry_shader_handle);
+
+        // And then link them together.
+        Console.WriteLine("linking shaders...");
+
+        LinkProgram(handle);
+
+        GL.DetachShader(handle, vertex_shader_handle);
+        GL.DetachShader(handle, fragment_shader_handle);
+        if(geometry_shader_handle != -1)
+            GL.DetachShader(handle, geometry_shader_handle);
+
+        GL.DeleteShader(fragment_shader_handle);
+        GL.DeleteShader(vertex_shader_handle);
+        if(geometry_shader_handle != -1)
+            GL.DeleteShader(geometry_shader_handle);
+
+        // cache uniform locations.
+        GL.GetProgram(handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
+
+        uniform_locations.Clear();
+
+        Console.WriteLine("Uniforms: ");
+
+        // Loop over all the uniforms,
+        for (var i = 0; i < numberOfUniforms; i++) {
+            var key = GL.GetActiveUniform(handle, i, out _, out _);
+            var location = GL.GetUniformLocation(handle, key);
+            uniform_locations.Add(key, location);
+
+            Console.WriteLine("  " + key + " -> " + location);
+        }
+
+        Console.WriteLine();
+    }
+
+    protected void compile_from_file(string vertex_program, string fragment_program, string geometry_program="") {
         string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../../Assets/Shaders/";
+
+        Console.WriteLine("Compiling " + vertex_program + "...\n");
 
         if(File.Exists(vertex_program))
             vertex_program = File.ReadAllText(vertex_program);
@@ -24,15 +95,6 @@ public class Shader {
         else
             throw new ArgumentOutOfRangeException(vertex_program, base_path + vertex_program);
 
-        // GL.CreateShader will create an empty shader (obviously). The ShaderType enum denotes which type of shader will be created.
-        var vertexShader = GL.CreateShader(ShaderType.VertexShader);
-
-        // Now, bind the GLSL source code
-        GL.ShaderSource(vertexShader, vertex_program);
-
-        // And then compile
-        compile(vertexShader);
-
         Console.WriteLine("Compiling " + fragment_program + "...\n");
         if(File.Exists(fragment_program))
             fragment_program = File.ReadAllText(fragment_program);
@@ -40,18 +102,6 @@ public class Shader {
             fragment_program = File.ReadAllText(base_path + fragment_program);
         else
             throw new ArgumentOutOfRangeException(fragment_program);
-
-        // We do the same for the fragment shader.
-        var fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-        GL.ShaderSource(fragmentShader, fragment_program);
-        compile(fragmentShader);
-
-        // These two shaders must then be merged into a shader program, which can then be used by OpenGL.
-        // To do this, create a program...
-
-        handle = GL.CreateProgram();
-
-        int handle_geo = -1;
 
         if(geometry_program != "") {
             Console.WriteLine("Compiling " + geometry_program + "...\n");
@@ -62,49 +112,9 @@ public class Shader {
                 geometry_program = File.ReadAllText(base_path + geometry_program);
             else
                 throw new ArgumentOutOfRangeException(geometry_program);
-
-            // We do the same for the fragment shader.
-            handle_geo = GL.CreateShader(ShaderType.GeometryShader);
-            GL.ShaderSource(handle_geo, geometry_program);
-            compile(handle_geo);
-
-            GL.AttachShader(handle, handle_geo);
         }
 
-        // Attach shaders...
-        GL.AttachShader(handle, vertexShader);
-        GL.AttachShader(handle, fragmentShader);
-        if(handle_geo != -1)
-            GL.AttachShader(handle, handle_geo);
-
-        // And then link them together.
-        LinkProgram(handle);
-
-        GL.DetachShader(handle, vertexShader);
-        GL.DetachShader(handle, fragmentShader);
-        if(handle_geo != -1)
-            GL.DetachShader(handle, handle_geo);
-
-        GL.DeleteShader(fragmentShader);
-        GL.DeleteShader(vertexShader);
-        if(handle_geo != -1)
-            GL.DeleteShader(handle_geo);
-
-        // cache uniform locations.
-        GL.GetProgram(handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
-
-        uniform_locations = [];
-
-        Console.WriteLine("Uniforms: ");
-
-        // Loop over all the uniforms,
-        for (var i = 0; i < numberOfUniforms; i++) {
-            var key = GL.GetActiveUniform(handle, i, out _, out _);
-            var location = GL.GetUniformLocation(handle, key);
-            uniform_locations.Add(key, location);
-            
-            Console.WriteLine("  " + key + " -> " + location);
-        }
+        compile_from_text(vertex_program, fragment_program, geometry_program);
 
         Console.WriteLine();
     }
@@ -116,9 +126,9 @@ public class Shader {
         if (code == (int)All.True) return;
         
         var infoLog = GL.GetShaderInfoLog(shader);
-        Console.WriteLine();
-        Console.WriteLine(infoLog);
-        Console.WriteLine();
+        Console.Error.WriteLine();
+        Console.Error.WriteLine(infoLog);
+        Console.Error.WriteLine();
         
         throw new Exception($"Error occurred whilst compiling Shader({shader}).\n\n{infoLog}");
     }
@@ -142,21 +152,16 @@ public class Shader {
         return GL.GetAttribLocation(handle, attribName);
     }
 
-    // Uniform setters
-    // Uniforms are variables that can be set by user code, instead of reading them from the VBO.
-    // You use VBOs for vertex-related data, and uniforms for almost everything else.
-
-    // Setting a uniform is almost always the exact same, so I'll explain it here once, instead of in every method:
-    //     1. Bind the program you want to set the uniform on
-    //     2. Get a handle to the location of the uniform with GL.GetUniformLocation.
-    //     3. Use the appropriate GL.Uniform* function to set the uniform.
+    public void set_projection_matrix(in Matrix4 matrix) => set_uniform("projection", matrix);
+    public void set_camera_matrix(in Matrix4 matrix) => set_uniform("camera", matrix);
+    public void set_model_matrix(in Matrix4 matrix) => set_uniform("model", matrix);
 
     /// <summary>
     /// Set a uniform int on this shader.
     /// </summary>
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
-    public void set_uniform(string name, int data) {
+    protected void set_uniform(string name, int data) {
         GL.UseProgram(handle);
         GL.Uniform1(uniform_locations[name], data);
     }
@@ -166,7 +171,7 @@ public class Shader {
     /// </summary>
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
-    public void set_uniform(string name, float data) {
+    protected void set_uniform(string name, float data) {
         GL.UseProgram(handle);
         GL.Uniform1(uniform_locations[name], data);
     }
@@ -176,7 +181,7 @@ public class Shader {
     /// </summary>
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
-    public void set_uniform(string name, double data) {
+    protected void set_uniform(string name, double data) {
         GL.UseProgram(handle);
         GL.Uniform1(uniform_locations[name], data);
     }
@@ -191,19 +196,19 @@ public class Shader {
     ///   The matrix is transposed before being sent to the shader.
     ///   </para>
     /// </remarks>
-    public void set_uniform(string name, Matrix4 data) {
+    protected void set_uniform(string name, Matrix4 data) {
         GL.UseProgram(handle);
         GL.UniformMatrix4(uniform_locations[name], transpose:true, matrix:ref data);
     }
 
-    public bool has_uniform(string name) => uniform_locations.ContainsKey(name);
+    protected bool has_uniform(string name) => uniform_locations.ContainsKey(name);
 
     /// <summary>
     /// Set a uniform Vector3 on this shader.
     /// </summary>
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
-    public void set_uniform(string name, Vector3 data) {
+    protected void set_uniform(string name, Vector3 data) {
         GL.UseProgram(handle);
         GL.Uniform3(uniform_locations[name], data);
     }
@@ -213,7 +218,7 @@ public class Shader {
     /// </summary>
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
-    public void set_uniform(string name, Color4 data) {
+    protected void set_uniform(string name, Color4 data) {
         GL.UseProgram(handle);
         GL.Uniform4(uniform_locations[name], data);
     }
@@ -223,7 +228,7 @@ public class Shader {
     /// </summary>
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
-    public void set_uniform(string name, Vector2 data) {
+    protected void set_uniform(string name, Vector2 data) {
         GL.UseProgram(handle);
         GL.Uniform2(uniform_locations[name], data);
     }
@@ -233,7 +238,7 @@ public class Shader {
     /// </summary>
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
-    public void set_uniform(string name, Vector4 data) {
+    protected void set_uniform(string name, Vector4 data) {
         GL.UseProgram(handle);
         GL.Uniform4(uniform_locations[name], data);
     }

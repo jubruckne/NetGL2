@@ -9,6 +9,17 @@ public class VertexAttribute {
     public VertexAttribPointerType pointer_type { get; }
     public bool normalized { get; }
 
+    public string glsl_type {
+        get {
+            switch (pointer_type) {
+                case VertexAttribPointerType.Float:
+                    return $"vec{size}";
+            }
+
+            throw new NotImplementedException($"glsl_type for {name}, {pointer_type}, {size}!");
+        }
+    }
+
     public VertexAttribute(string name, int location, int size, VertexAttribPointerType pointer_type, bool normalized = false) {
         this.name = name;
         this.size = size;
