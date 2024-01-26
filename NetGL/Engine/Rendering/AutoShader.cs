@@ -3,12 +3,11 @@ using System.Text;
 namespace NetGL;
 
 public class AutoShader: Shader {
-    private AutoShader(in string name) : base(name) {
-    }
+    private AutoShader(in string name) : base(name) { }
 
     public static AutoShader for_vertex_type<T>(in string name) where T: IVertexSpec {
         var vertex_code = new StringBuilder();
-        var shader = new AutoShader(name);
+        var shader = new AutoShader("AUTO: " + name);
 
         vertex_code.AppendLine("#version 410\n");
 
@@ -43,10 +42,20 @@ public class AutoShader: Shader {
         fragment_code.AppendLine("  vec3 world_position;");
         fragment_code.AppendLine("} vertex;\n");
 
+        fragment_code.AppendLine("uniform float game_time;\n");
+
+        fragment_code.AppendLine("struct Material {");
+        fragment_code.AppendLine("  vec4 ambient;");
+        fragment_code.AppendLine("  vec4 diffuse;");
+        fragment_code.AppendLine("  vec4 specular;");
+        fragment_code.AppendLine("  float shininess;");
+        fragment_code.AppendLine("};");
+        fragment_code.AppendLine("uniform Material material;\n");
+
         fragment_code.AppendLine("out vec4 frag_color;\n");
 
         fragment_code.AppendLine("void main() {");
-        fragment_code.AppendLine("  frag_color = vec4(vertex.local_position + 0.5, 1);");
+        fragment_code.AppendLine("  frag_color = material.ambient;");
         fragment_code.AppendLine("}");
 
         Console.WriteLine(fragment_code);

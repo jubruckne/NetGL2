@@ -1,3 +1,5 @@
+using NetGL.ECS;
+
 namespace NetGL;
 
 using System;
@@ -10,6 +12,9 @@ public class Shader {
     public readonly string name;
     private readonly int handle;
     private readonly Dictionary<string, int> uniform_locations;
+    public IReadOnlyList<string> uniforms => uniform_locations.Keys.ToList();
+
+    private static Shader? current_shader = null;
 
     protected Shader(string name) {
         this.name = name;
@@ -155,6 +160,14 @@ public class Shader {
     public void set_projection_matrix(in Matrix4 matrix) => set_uniform("projection", matrix);
     public void set_camera_matrix(in Matrix4 matrix) => set_uniform("camera", matrix);
     public void set_model_matrix(in Matrix4 matrix) => set_uniform("model", matrix);
+    public void set_game_time(in float game_time) => set_uniform("game_time", game_time);
+
+    public void set_material(Material.Color color_material) {
+        set_uniform("material.ambient", color_material.ambient);
+        set_uniform("material.diffuse", color_material.diffuse);
+        set_uniform("material.specular", color_material.specular);
+        set_uniform("material.shininess", color_material.shininess);
+    }
 
     /// <summary>
     /// Set a uniform int on this shader.
@@ -172,9 +185,13 @@ public class Shader {
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
     protected void set_uniform(string name, float data) {
-        GL.UseProgram(handle);
-        GL.Uniform1(uniform_locations[name], data);
+        if (has_uniform(name)) {
+            GL.UseProgram(handle);
+            GL.Uniform1(uniform_locations[name], data);
+        }
     }
+
+    private bool has_uniform(in string name) => uniform_locations.ContainsKey(name);
 
     /// <summary>
     /// Set a uniform double on this shader.
@@ -219,8 +236,22 @@ public class Shader {
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
     protected void set_uniform(string name, Color4 data) {
-        GL.UseProgram(handle);
-        GL.Uniform4(uniform_locations[name], data);
+        if (has_uniform(name)) {
+            GL.UseProgram(handle);
+            GL.Uniform4(uniform_locations[name], data);
+            Error.check();
+        }
+    }
+
+    protected void set_uniform(string name, Color4i data) {
+        if (has_uniform(name)) {
+            GL.UseProgram(handle);
+            GL.Uniform4(uniform_locations[name], (Color4)data);
+
+            Console.WriteLine((Color4)data);
+        } else {
+            Console.WriteLine($"{this.name} doesn't have uniform {name}!");
+        }
     }
 
     /// <summary>
@@ -248,10 +279,15 @@ public class Shader {
     }
 
     public void bind() {
-        GL.UseProgram(handle);
+        if (Shader.current_shader != this) {
+            Shader.current_shader = this;
+            GL.UseProgram(handle);
+        }
     }
 
     public void unbind() {
+        Shader.current_shader = null;
         GL.UseProgram(0);
     }
+
 }

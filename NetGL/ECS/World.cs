@@ -2,19 +2,17 @@ using OpenTK.Mathematics;
 
 namespace NetGL.ECS;
 
-public class World {
+public class World: Entity {
     private readonly List<Entity> world_entities;
 
-    public World() {
+    public World(): base("World", null, null) {
         world_entities = new List<Entity>();
     }
 
-    public IEnumerable<Entity> root{
-        get {
-            foreach (Entity ent in world_entities) {
-                if (ent.parent == null) yield return ent;
-            }
-        }
+    public void for_all_components_with<C1>(Action<C1> action) where C1: IComponent {
+        foreach(var entity in world_entities)
+            if (entity.has<C1>())
+                action(entity.get<C1>());
     }
 
     public Entity get(string name) {
@@ -26,14 +24,14 @@ public class World {
     }
 
     public Entity create_entity(string name, Entity? parent = null, Transform? tranform = null) {
-        var e = new Entity(name, parent, tranform);
+        var e = new Entity(name, parent ?? this, tranform);
         world_entities.Add(e);
 
         return e;
     }
 
     private Entity get_camera_entity() {
-        foreach (var entity in root) {
+        foreach (var entity in children) {
             if (entity.has<FirstPersonCamera>()) {
                 return entity;
             }
@@ -45,8 +43,12 @@ public class World {
     public void render() {
         var cam = get_camera_entity().get<FirstPersonCamera>();
 
-        foreach (var entity in root) {
-            render_entity(entity, cam.projection_matrix, cam.camera_matrix, Matrix4.Identity);
+        foreach (var entity in children) {
+            render_entity(
+                entity,
+                cam.projection_matrix,
+                cam.camera_matrix,
+                Matrix4.Identity);
         }
 
         Error.check();
@@ -55,41 +57,32 @@ public class World {
     private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Matrix4 parent_model_matrix) {
         var model_matrix = Matrix4.LookAt(entity.transform.position, entity.transform.forward + entity.transform.position, entity.transform.up).Inverted() * parent_model_matrix;
 
+        /*entity.for_any_component_like<AmbientLight, DirectionalLight, PointLight>(
+            component => lights.Add((ILight)component)
+        );*/
+
         foreach (var renderable in entity.get_renderable_components())
             renderable.render(projection_matrix, camera_matrix, model_matrix);
 
-        foreach (Entity child in entity.children)
+        foreach (var child in entity.children)
             render_entity(child, projection_matrix, camera_matrix, model_matrix);
     }
 
-    public void update(in float delta_time) {
-        foreach (var entity in root) {
-            update_entity(delta_time, entity);
+    public void update(in float game_time, in float delta_time) {
+        foreach (var entity in children) {
+            update_entity(game_time, delta_time, entity);
         }
     }
 
-    private void update_entity(in float delta_time, in Entity entity) {
+    private void update_entity(in float game_time, in float delta_time, in Entity entity) {
         foreach (var updateable in entity.get_updateable_components()) {
             Console.WriteLine("update: " + updateable);
-            updateable.update(delta_time);
+            if(updateable.enable_updates)
+                updateable.update(game_time, delta_time);
         }
 
         foreach (Entity child in entity.children) {
-            update_entity(delta_time, child);
+            update_entity(game_time, delta_time, child);
         }
     }
-
-    /*
-    public void update_systems(in float delta_time) {
-        foreach (var sys in systems) {
-            sys.system.update(sys.entities, delta_time);
-        }
-    }
-
-    public void render_systems() {
-        foreach (var sys in systems) {
-            sys.system.render(sys.entities);
-        }
-    }
-    */
 }

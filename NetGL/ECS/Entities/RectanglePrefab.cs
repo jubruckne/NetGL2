@@ -15,9 +15,8 @@ public static class RectanglePrefab {
 
         va.upload();
 
-        Shader shader = AutoShader.for_vertex_type<Vertex>("default");
-
-        entity.add_vertex_array_renderer(va, shader);
+        entity.add_shader(AutoShader.for_vertex_type<Vertex>("default"));
+        entity.add_vertex_array_renderer(va);
 
         return entity;
     }

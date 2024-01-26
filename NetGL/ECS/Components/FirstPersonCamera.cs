@@ -3,7 +3,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace NetGL.ECS;
 
-public class FirstPersonCamera: IComponent<FirstPersonCamera>, IUpdatableComponent {
+public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatableComponent {
     private readonly KeyboardState? keyboard_state;
     private readonly MouseState? mouse_state;
 
@@ -25,9 +25,7 @@ public class FirstPersonCamera: IComponent<FirstPersonCamera>, IUpdatableCompone
         float far = 1000f,
         KeyboardState? keyboard_state = null,
         MouseState? mouse_state = null
-        ) {
-        this.entity = entity;
-        this.name = GetType().Name;
+        ): base(entity) {
         this.keyboard_state = keyboard_state;
         this.mouse_state = mouse_state;
 
@@ -35,14 +33,11 @@ public class FirstPersonCamera: IComponent<FirstPersonCamera>, IUpdatableCompone
         camera_matrix = Matrix4.Identity;
     }
 
-    public Entity entity { get; }
-    public string name { get; }
-
     public override string ToString() {
         return $"yaw: {yaw}, pitch: {pitch}, roll: n/a";
     }
 
-    public void update(float delta_time) {
+    public override void update(in float game_time, in float delta_time) {
         var speed = this.speed * delta_time;
         var sensitivity = this.sensitivity * this.speed * delta_time * 180f;
 

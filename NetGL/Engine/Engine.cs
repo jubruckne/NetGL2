@@ -5,6 +5,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ImGuiNET;
+using OpenTK.Mathematics;
 using Vector2 = System.Numerics.Vector2;
 
 public class Engine: GameWindow {
@@ -13,7 +14,7 @@ public class Engine: GameWindow {
     protected readonly World world;
     protected readonly ImGuiController imgui_controller = null!;
 
-    protected float game_clock;
+    protected float game_time;
     protected int frame;
 
     private float cursor_state_last_switch = 1f;
@@ -61,19 +62,22 @@ public class Engine: GameWindow {
     protected override void OnLoad() {
         base.OnLoad();
 
+        world.add_ambient_light((0.1f, 0.1f, 0.5f));
+
         Entity player = world.create_entity("Player");
         player.transform.position = (0, 0, 0);
         player.transform.forward = (0, 0, -1);
         player.add_first_person_camera(field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState);
 
         Entity ball = world.create_sphere_uv("Ball");
-        ball.transform.position = (-5, 0, -8);
+        ball.transform.position = (-5, -2, -8);
+
         Entity box = world.create_cube("Box");
-        box.transform.position = (-2, 0, -8);
+        box.transform.position = (-2, -2, -8);
 
         Entity rect = world.create_rectangle("Rectangle", divisions:16);
-        rect.transform.position = (-3, 3, -8);
-
+        rect.transform.position = (-.5f, 0.4f, -1.3f);
+        rect.add_material(Material.Gold);
 
         Console.WriteLine(player);
 
@@ -88,7 +92,7 @@ public class Engine: GameWindow {
 
         GL.ClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 
-        game_clock = 0;
+        game_time = 0f;
     }
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
@@ -101,12 +105,18 @@ public class Engine: GameWindow {
             Close();
 
         var delta_time = (float)e.Time;
+        game_time += delta_time;
+
+        if (KeyboardState.IsKeyDown(Keys.Space)) {
+            world.for_all_components_with<Camera>(camera => camera.viewport.resize(1000, 800, 800, 600));
+        }
 
         if (cursor_state_last_switch >= 1f) {
             if (KeyboardState.IsKeyDown(Keys.Tab)) {
                 CursorState = CursorState == CursorState.Normal ? CursorState.Grabbed : CursorState.Normal;
                 Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
                 cursor_state_last_switch = 0f;
+                world.for_all_components_with<Camera>(c1 => c1.enable_updates = CursorState == CursorState.Grabbed);
             } else if (CursorState == CursorState.Normal) {
                 if (KeyboardState.IsKeyDown(Keys.A) |
                     KeyboardState.IsKeyDown(Keys.S) |
@@ -115,12 +125,12 @@ public class Engine: GameWindow {
                     CursorState = CursorState.Grabbed;
                     Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
                     cursor_state_last_switch = 0f;
+                    world.for_all_components_with<Camera>(c1 => c1.enable_updates = CursorState == CursorState.Grabbed);
                 }
             }
         } else cursor_state_last_switch += delta_time;
 
-        if(CursorState == CursorState.Grabbed)
-            world.update(delta_time);
+        world.update(game_time, delta_time);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
@@ -130,10 +140,9 @@ public class Engine: GameWindow {
 
         //Console.WriteLine($"frame:{frame}, {GC.CollectionCount(2)}");
 
-        game_clock += (float)e.Time;
         frame_time += e.Time;
         if (frame_time >= 1.0) {
-            this.Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
+            Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
             frame_count = 0;
             frame_time = 0;
         }
@@ -154,7 +163,7 @@ public class Engine: GameWindow {
         ImGui.Begin("Entities",
             CursorState == CursorState.Grabbed
                 ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
-                : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize);
+                : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar);
         ImGui.SetWindowSize(new Vector2(250, 680));
         ImGui.SetWindowPos(new Vector2(765, 10));
 
@@ -165,7 +174,7 @@ public class Engine: GameWindow {
 
         ImGui.StyleColorsClassic();
 
-        add_entities_to_gui(world.root);
+        add_entities_to_gui(world);
 
         // ImGui.ShowIDStackToolWindow();
 
@@ -177,102 +186,131 @@ public class Engine: GameWindow {
         ImGuiController.CheckGLError("End of frame");
     }
 
-    private void add_entities_to_gui(IEnumerable<Entity> entities) {
-        foreach (var entity in entities) {
-            // Console.WriteLine(entity.name);
-            ImGui.CollapsingHeader(entity.name, ImGuiTreeNodeFlags.Leaf);
+    private void add_entities_to_gui(Entity entity) {
+        // Console.WriteLine(entity.name);
+        ImGui.CollapsingHeader(entity.name, ImGuiTreeNodeFlags.Leaf);
 
-            foreach (var comp in entity.get_components()) {
-                // Console.WriteLine(comp.name);
+        foreach (var comp in entity.get_components()) {
+            // Console.WriteLine(comp.name);
 
-                if (comp is Transform t) {
-                    ImGui.Text("Position");
-                    ImGui.SameLine(80);
-                    ImGui.DragFloat3($"##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100);
+            if(entity is World && comp is Transform or Hierarchy)
+                continue;
 
-                    ImGui.Text("Forward");
-                    ImGui.SameLine(80);
-                    ImGui.DragFloat3($"##{entity.name}.forward", ref t.forward.as_sys_num_ref(), 0.01f, -1, 1);
+            if (comp is Transform t) {
+                ImGui.Text("Position");
+                ImGui.SameLine(80);
+                ImGui.DragFloat3($"##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100);
 
-                    ImGui.Text("Up");
-                    ImGui.SameLine(80);
-                    ImGui.DragFloat3($"##{entity.name}.up", ref t.up.as_sys_num_ref(), 0.01f, -1, 1);
+                ImGui.Text("Forward");
+                ImGui.SameLine(80);
+                ImGui.DragFloat3($"##{entity.name}.forward", ref t.forward.as_sys_num_ref(), 0.01f, -1, 1);
+
+                ImGui.Text("Up");
+                ImGui.SameLine(80);
+                ImGui.DragFloat3($"##{entity.name}.up", ref t.up.as_sys_num_ref(), 0.01f, -1, 1);
 /*
-                    ImGui.Spacing();
+                ImGui.Spacing();
 
-                    Matrix4 mat;
-                    if (entity.has<FirstPersonCamera>())
-                        mat = entity.get<FirstPersonCamera>().camera_matrix;
-                    else
-                        mat = t.get_model_matrix();
+                Matrix4 mat;
+                if (entity.has<FirstPersonCamera>())
+                    mat = entity.get<FirstPersonCamera>().camera_matrix;
+                else
+                    mat = t.get_model_matrix();
 
-                    var x1 = t.get_model_matrix().Row0;
-                    ImGui.SliderFloat4($"##{entity.name}.mat1", ref x1.as_sys_num_ref(), 0, 1);
-                    var x2 = t.get_model_matrix().Row1;
-                    ImGui.SliderFloat4($"##{entity.name}.mat2", ref x2.as_sys_num_ref(), 0, 1);
-                    var x3 = t.get_model_matrix().Row2;
-                    ImGui.SliderFloat4($"##{entity.name}.mat3", ref x3.as_sys_num_ref(), 0, 1);
-                    var x4 = t.get_model_matrix().Row3;
-                    ImGui.SliderFloat4($"##{entity.name}.mat4", ref x4.as_sys_num_ref(), 0, 1);
-                  */  ImGui.Spacing();
+                var x1 = t.get_model_matrix().Row0;
+                ImGui.SliderFloat4($"##{entity.name}.mat1", ref x1.as_sys_num_ref(), 0, 1);
+                var x2 = t.get_model_matrix().Row1;
+                ImGui.SliderFloat4($"##{entity.name}.mat2", ref x2.as_sys_num_ref(), 0, 1);
+                var x3 = t.get_model_matrix().Row2;
+                ImGui.SliderFloat4($"##{entity.name}.mat3", ref x3.as_sys_num_ref(), 0, 1);
+                var x4 = t.get_model_matrix().Row3;
+                ImGui.SliderFloat4($"##{entity.name}.mat4", ref x4.as_sys_num_ref(), 0, 1);
+              */  ImGui.Spacing();
+            } else if (comp is Hierarchy h) {
+                ImGui.Text("Parent");
+                ImGui.SameLine(80);
 
-
-                } else if (comp is Hierarchy h) {
-                    ImGui.Text("Parent");
-                    ImGui.SameLine(80);
-
-                    if (ImGui.BeginCombo($"##{entity.name}.parent", h.parent?.name, ImGuiComboFlags.None)) {
-                        foreach (var parent_ent in world.root) {
-                            ImGui.Selectable(parent_ent.name);
-                        }
-
-                        ImGui.EndCombo();
+                if (ImGui.BeginCombo($"##{entity.name}.parent", h.parent?.name, ImGuiComboFlags.None)) {
+                    foreach (var parent_ent in world.children) {
+                        ImGui.Selectable(parent_ent.name);
                     }
 
-                    ImGui.Spacing();
-                } else if (comp is FirstPersonCamera cam) {
-                    ImGui.Separator();
-                    ImGui.Spacing();
-
-                    ImGui.Text("Speed");
-                    ImGui.SameLine(80);
-                    ImGui.SliderFloat($"##{entity.name}.cam.speed", ref cam.speed, 0, 10);
-
-                    ImGui.Text("Sensitiv.");
-                    ImGui.SameLine(80);
-                    ImGui.SliderFloat($"##{entity.name}.cam.sensitivity", ref cam.sensitivity, 0, 1);
-
-                    ImGui.Spacing();
-                } else if (comp is VertexArrayRenderer va) {
-                    ImGui.Separator();
-                    ImGui.Spacing();
-
-                    ImGui.Text(va.name);
-                    ImGui.Indent();
-                    ImGui.Text($"{va.vertex_array}");
-
-                    ImGui.Text($"{va.shader}");
-
-                    ImGui.Unindent();
-                    ImGui.Spacing();
-                } else {
-                    ImGui.Separator();
-                    ImGui.Spacing();
-
-                    ImGui.Text(comp.name);
-                    ImGui.SameLine(80);
-                    ImGui.Spacing();
+                    ImGui.EndCombo();
                 }
-            }
 
-            add_entities_to_gui(entity.children);
+                ImGui.Spacing();
+            } else if (comp is FirstPersonCamera cam) {
+                ImGui.Separator();
+                ImGui.Spacing();
+                ImGui.Text("Camera");
+                ImGui.Spacing();
+
+                ImGui.Text("Viewport");
+                ImGui.SameLine(80);
+                ImGui.InputInt4($"##{entity.name}.viewport.pos", ref cam.viewport.x);
+
+                ImGui.Text("Speed");
+                ImGui.SameLine(80);
+                ImGui.SliderFloat($"##{entity.name}.cam.speed", ref cam.speed, 0, 10);
+
+                ImGui.Text("Sensitiv.");
+                ImGui.SameLine(80);
+                ImGui.SliderFloat($"##{entity.name}.cam.sensitivity", ref cam.sensitivity, 0, 1);
+
+                ImGui.Spacing();
+            } else if (comp is VertexArrayRenderer va) {
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                ImGui.Text(va.name);
+                ImGui.Indent();
+                ImGui.Text($"{va.vertex_array}");
+
+                ImGui.Text($"{va}");
+
+                ImGui.Unindent();
+                ImGui.Spacing();
+            } else if (comp is ShaderComponent shader) {
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                ImGui.Text($"{shader}");
+
+                ImGui.Spacing();
+
+            } else if (comp is MaterialComponent mat) {
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                ImGui.Text("Material");
+                ImGui.Indent();
+                ImGui.Text($"{mat.color}");
+
+                ImGui.Unindent();
+                ImGui.Spacing();
+            } else if (comp is AmbientLight amb) {
+                ImGui.Text(comp.name);
+                ImGui.Text(amb.ToString());
+                ImGui.Spacing();
+            } else {
+                ImGui.Separator();
+                ImGui.Spacing();
+
+                ImGui.Text(comp.name);
+                ImGui.SameLine(80);
+                ImGui.Spacing();
+            }
+        }
+
+        foreach (var child in entity.children) {
+            add_entities_to_gui(child);
         }
     }
 
     protected override void OnResize(ResizeEventArgs e) {
         base.OnResize(e);
         Console.WriteLine("OnResize: {0} {1}", e.Width, e.Height);
-        GL.Viewport(0, 0, e.Width * 2, e.Height * 2);
+        world.for_all_components_with<Camera>(camera => camera.viewport.resize(0, 0, e.Width * 2, e.Height * 2));
 
         if (debug) imgui_controller.WindowResized(ClientSize.X, ClientSize.Y);
     }

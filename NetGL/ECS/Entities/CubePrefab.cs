@@ -15,9 +15,9 @@ public static class CubePrefab {
 
         va.upload();
 
-        Shader shader = new Shader("default shader", "vert.glsl", "frag.glsl");
+        entity.add_shader(new Shader("default shader", "vert.glsl", "frag.glsl"));
 
-        entity.add_vertex_array_renderer(va, shader);
+        entity.add_vertex_array_renderer(va);
 
         return entity;
     }
