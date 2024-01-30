@@ -169,6 +169,32 @@ public class Shader {
         set_uniform("material.shininess", color_material.shininess);
     }
 
+    public void set_light(IEnumerable<Light> lights) {
+        int num_ambient_lights = 0;
+        int num_directional_lights = 0;
+        int num_point_lights = 0;
+
+        foreach (var light in lights) {
+            switch (light) {
+                case AmbientLight ambient:
+                    set_uniform("ambient_light", ambient.data.color);
+                    num_ambient_lights++;
+                    break;
+                case DirectionalLight directional:
+                    set_uniform($"directional_light[{num_directional_lights}].direction", directional.data.direction);
+                    set_uniform($"directional_light[{num_directional_lights}].ambient", directional.data.ambient);
+                    set_uniform($"directional_light[{num_directional_lights}].specular", directional.data.specular);
+                    set_uniform($"directional_light[{num_directional_lights}].diffuse", directional.data.diffuse);
+                    num_directional_lights++;
+                    break;
+                case PointLight pointlight:
+                    break;
+                default:
+                    throw new NotImplementedException(light.name);
+            }
+        }
+    }
+
     /// <summary>
     /// Set a uniform int on this shader.
     /// </summary>
@@ -227,7 +253,9 @@ public class Shader {
     /// <param name="data">The data to set</param>
     protected void set_uniform(string name, Vector3 data) {
         GL.UseProgram(handle);
-        GL.Uniform3(uniform_locations[name], data);
+        if (has_uniform(name)) {
+            GL.Uniform3(uniform_locations[name], data);
+        }
     }
 
     /// <summary>
@@ -248,7 +276,7 @@ public class Shader {
             GL.UseProgram(handle);
             GL.Uniform4(uniform_locations[name], (Color4)data);
 
-            Console.WriteLine((Color4)data);
+            //Console.WriteLine((Color4)data);
         } else {
             Console.WriteLine($"{this.name} doesn't have uniform {name}!");
         }

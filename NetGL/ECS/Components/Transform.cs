@@ -7,6 +7,7 @@ public class Transform : IComponent<Transform> {
     public string name { get; }
 
     public Vector3 position;
+    public Attitude attitute;
     public Vector3 forward;
     public Vector3 right;
     public Vector3 up;

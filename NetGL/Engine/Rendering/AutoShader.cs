@@ -44,6 +44,15 @@ public class AutoShader: Shader {
 
         fragment_code.AppendLine("uniform float game_time;\n");
 
+        fragment_code.AppendLine("uniform vec4 ambient_light;\n");
+        fragment_code.AppendLine("struct DirectionalLight {");
+        fragment_code.AppendLine("  vec3 direction;");
+        fragment_code.AppendLine("  vec4 ambient;");
+        fragment_code.AppendLine("  vec4 diffuse;");
+        fragment_code.AppendLine("  vec4 specular;");
+        fragment_code.AppendLine("};");
+        fragment_code.AppendLine("uniform DirectionalLight[2] directional_light;\n");
+
         fragment_code.AppendLine("struct Material {");
         fragment_code.AppendLine("  vec4 ambient;");
         fragment_code.AppendLine("  vec4 diffuse;");
@@ -55,10 +64,12 @@ public class AutoShader: Shader {
         fragment_code.AppendLine("out vec4 frag_color;\n");
 
         fragment_code.AppendLine("void main() {");
-        fragment_code.AppendLine("  frag_color = material.ambient;");
+        fragment_code.AppendLine("  vec3 d = directional_light[0].direction;");
+
+        fragment_code.AppendLine("  frag_color = material.ambient * (ambient_light + directional_light[0].ambient);");
         fragment_code.AppendLine("}");
 
-        Console.WriteLine(fragment_code);
+        //Console.WriteLine(fragment_code);
 
         shader.compile_from_text(vertex_code.ToString(), fragment_code.ToString());
 

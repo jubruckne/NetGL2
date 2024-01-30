@@ -57,12 +57,19 @@ public class Engine: GameWindow {
 
         world = new World();
         if (debug) imgui_controller = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2);
+
+        Attitude att = new();
+        att.yaw = 0;
+        att.pitch = 10;
+        att.roll = 0;
+        Console.Write(att.direction);
     }
 
     protected override void OnLoad() {
         base.OnLoad();
 
-        world.add_ambient_light((0.1f, 0.1f, 0.5f));
+        world.add_ambient_light(new Color4(0.5f, 0.1f, 0.1f, 1.0f));
+        world.add_directional_light((0, 0, -1), Color4.Aqua, Color4.Bisque, Color4.Gold);
 
         Entity player = world.create_entity("Player");
         player.transform.position = (0, 0, 0);
@@ -79,7 +86,17 @@ public class Engine: GameWindow {
         rect.transform.position = (-.5f, 0.4f, -1.3f);
         rect.add_material(Material.Gold);
 
-        Console.WriteLine(player);
+        Console.WriteLine("");
+        Console.WriteLine($"player: parents: {player.parents.to_print()}");
+        Console.WriteLine($"ball:   parents: {ball.parents.to_print()}");
+        Console.WriteLine($"world self: {world.get_entities(Entity.EntityRelationship.Self).to_print()}");
+        Console.WriteLine($"world child: {world.get_entities(Entity.EntityRelationship.Children).to_print()}");
+        Console.WriteLine($"player par: {player.get_entities(Entity.EntityRelationship.Parent).to_print()}");
+        Console.WriteLine($"box    par: {box.get_entities(Entity.EntityRelationship.Parent).to_print()}");
+        Console.WriteLine($"box    pars: {box.get_entities(Entity.EntityRelationship.ParentsRecursive).to_print()}");
+        Console.WriteLine($"world childs: {world.get_entities(Entity.EntityRelationship.ChildrenRecursive).to_print()}");
+
+        Console.WriteLine("");
 
         //NetGL.ECS.System cam = world.create_system<FirstPersonCameraSystem>();
         //NetGL.ECS.System rend = world.create_system<VertexArrayRenderSystem>();
@@ -197,6 +214,11 @@ public class Engine: GameWindow {
                 continue;
 
             if (comp is Transform t) {
+                ImGui.Text("Attitude");
+                ImGui.SameLine(80);
+                ImGui.DragFloat3($"##{entity.name}.attitude", ref t.attitute.yaw_pitch_roll_degrees.as_sys_num_ref(), 1f, -180, 180);
+                ImGui.Spacing();
+
                 ImGui.Text("Position");
                 ImGui.SameLine(80);
                 ImGui.DragFloat3($"##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100);
@@ -290,8 +312,16 @@ public class Engine: GameWindow {
                 ImGui.Spacing();
             } else if (comp is AmbientLight amb) {
                 ImGui.Text(comp.name);
-                ImGui.Text(amb.ToString());
+                ImGui.ColorEdit4($"##{entity}.ambient.color", ref amb.data.color.as_sys_num_ref());
                 ImGui.Spacing();
+            } else if (comp is DirectionalLight dir) {
+                ImGui.Text(comp.name);
+                ImGui.ColorEdit4($"##{entity}.directional.ambient", ref dir.data.ambient.as_sys_num_ref());
+                ImGui.ColorEdit4($"##{entity}.directional.diffuse", ref dir.data.diffuse.as_sys_num_ref());
+                ImGui.ColorEdit4($"##{entity}.directional.specular", ref dir.data.specular.as_sys_num_ref());
+                ImGui.SliderFloat3($"##{entity}.directional.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
+                ImGui.Spacing();
+
             } else {
                 ImGui.Separator();
                 ImGui.Spacing();
@@ -309,7 +339,7 @@ public class Engine: GameWindow {
 
     protected override void OnResize(ResizeEventArgs e) {
         base.OnResize(e);
-        Console.WriteLine("OnResize: {0} {1}", e.Width, e.Height);
+        //Console.WriteLine("OnResize: {0} {1}", e.Width, e.Height);
         world.for_all_components_with<Camera>(camera => camera.viewport.resize(0, 0, e.Width * 2, e.Height * 2));
 
         if (debug) imgui_controller.WindowResized(ClientSize.X, ClientSize.Y);

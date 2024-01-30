@@ -1,3 +1,6 @@
+using System.ComponentModel.Design;
+using System.Reflection.Metadata;
+
 namespace NetGL.ECS;
 
 public class Entity {
@@ -22,12 +25,93 @@ public class Entity {
         }
 
         this.parent = parent;
-        this.children = new List<Entity>();
+        children = new List<Entity>();
 
         add(hierarchy = new Hierarchy(this, parent, children));
 
         if (parent != null) {
             ((IList<Entity>)parent.children).Add(this);
+        }
+    }
+
+    public enum EntityRelationship {Self, Parent, ParentsRecursive, Children, ChildrenRecursive, }
+
+    public IEnumerable<Entity> get_entities(EntityRelationship relationship) {
+        switch (relationship) {
+            case EntityRelationship.Self:
+                yield return this;
+                yield break;
+
+            case EntityRelationship.Parent:
+                if (parent != null)
+                    yield return parent;
+                yield break;
+
+            case EntityRelationship.Children:
+                foreach(var child in children)
+                    yield return child;
+                yield break;
+
+            case EntityRelationship.ChildrenRecursive:
+                foreach (var child in children) {
+                    yield return child;
+                    foreach (var child2 in child.children) {
+                        yield return child2;
+                        foreach (var child3 in child2.children)
+                            yield return child3;
+                    }
+                }
+                yield break;
+
+            case EntityRelationship.ParentsRecursive:
+                var p = parent;
+                while (p != null) {
+                    yield return p;
+                    p = p.parent;
+                }
+
+                yield break;
+        }
+
+        throw new ArgumentException();
+    }
+
+    public IEnumerable<Entity> parents {
+        get {
+            Entity? p = parent;
+
+            while (p != null) {
+                yield return p;
+                p = p.parent;
+            }
+        }
+    }
+
+    public T get<T>(EntityRelationship relationship) where T: class, IComponent {
+        if(relationship == EntityRelationship.Self) return get<T>();
+
+        foreach (Entity entity in get_entities(relationship)) {
+            if (entity.try_get<T>(out var component)) {
+                return component!;
+            }
+        }
+
+        throw new IndexOutOfRangeException(nameof(T));
+    }
+
+    public IEnumerable<T> get_all<T>(EntityRelationship relationship) where T: class, IComponent {
+        if(relationship == EntityRelationship.Self) yield return get<T>();
+
+        foreach (Entity entity in get_entities(relationship)) {
+            if (entity.try_get<T>(out var component)) {
+                yield return component!;
+            }
+        }
+    }
+
+    public IEnumerable<T> get_all<T>() where T: class, IComponent {
+        foreach (var component in components) {
+            if (component is T t) yield return t;
         }
     }
 

@@ -29,7 +29,7 @@ public class VertexArrayIndexed: VertexArray {
         vertex_buffer.unbind();
         index_buffer.unbind();
 
-        Console.WriteLine();
+        //Console.WriteLine();
     }
 
     public override string ToString() {

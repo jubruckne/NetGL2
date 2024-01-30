@@ -87,7 +87,7 @@ public abstract class Buffer<T>: Buffer where T: struct {
     public override int size { get => item_size * count; }
 
     public override void bind() {
-        Console.WriteLine("Buffer.bind()");
+        // Console.WriteLine("Buffer.bind()");
 
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");
@@ -96,7 +96,7 @@ public abstract class Buffer<T>: Buffer where T: struct {
     }
 
     public override void unbind() {
-        Console.WriteLine("Buffer.unbind()");
+        // Console.WriteLine("Buffer.unbind()");
         
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");

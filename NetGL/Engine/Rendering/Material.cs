@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using OpenTK.Mathematics;
 
 namespace NetGL;
 
@@ -7,15 +8,22 @@ public interface IMaterial { }
 public class Material {
     [StructLayout(LayoutKind.Sequential)]
     public struct Color: IMaterial, IEquatable<Color> {
-        public Color4i ambient;
-        public Color4i diffuse;
-        public Color4i specular;
+        public Color4 ambient;
+        public Color4 diffuse;
+        public Color4 specular;
         public float shininess;
 
-        public Color(in Color4i ambient, in Color4i diffuse, in Color4i specular, in float shininess) {
+        public Color(in Color4 ambient, in Color4 diffuse, in Color4 specular, in float shininess) {
             this.ambient = ambient;
             this.diffuse = diffuse;
             this.specular = specular;
+            this.shininess = shininess;
+        }
+
+        public Color((float r, float g, float b) ambient, (float r, float g, float b) specular, (float r, float g, float b) diffuse, float shininess) {
+            this.ambient = new Color4(ambient.r, ambient.g, ambient.b, 1f);
+            this.specular = new Color4(specular.r, specular.g, specular.b, 1f);
+            this.diffuse = new Color4(diffuse.r, diffuse.g, diffuse.b, 1f);
             this.shininess = shininess;
         }
 

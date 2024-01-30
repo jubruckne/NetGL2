@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using OpenTK.Mathematics;
 
 namespace NetGL.ECS;
@@ -30,6 +29,9 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
         if (entity.try_get<MaterialComponent>(out var mat)) {
             shader.set_material(mat!.color);
         }
+
+        var lights = entity.get_all<Light>(Entity.EntityRelationship.ParentsRecursive);
+        shader.set_light(lights);
 
         // Console.WriteLine($"projection:\n{projection_matrix}");
         // Console.WriteLine($"camera:\n{camera_matrix}");

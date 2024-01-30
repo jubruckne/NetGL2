@@ -76,7 +76,7 @@ public class World: Entity {
 
     private void update_entity(in float game_time, in float delta_time, in Entity entity) {
         foreach (var updateable in entity.get_updateable_components()) {
-            Console.WriteLine("update: " + updateable);
+            //Console.WriteLine("update: " + updateable);
             if(updateable.enable_updates)
                 updateable.update(game_time, delta_time);
         }

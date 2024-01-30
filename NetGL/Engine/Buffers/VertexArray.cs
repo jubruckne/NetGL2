@@ -56,7 +56,7 @@ public class VertexArray {
 
         foreach (var field in vertex_buffer.get_vertex_spec()) {
             nint offset = Marshal.OffsetOf(vertex_buffer.item_type, field.name);
-            Console.WriteLine($"VertexAttribPointer({field.location}, {field.size}, {field.pointer_type}, {field.normalized}, {stride}, {offset})");
+            // Console.WriteLine($"VertexAttribPointer({field.location}, {field.size}, {field.pointer_type}, {field.normalized}, {stride}, {offset})");
             GL.VertexAttribPointer(field.location, field.size, field.pointer_type, field.normalized, stride, offset);
             GL.EnableVertexAttribArray(field.location);
         }
