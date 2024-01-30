@@ -68,33 +68,23 @@ public class Engine: GameWindow {
     protected override void OnLoad() {
         base.OnLoad();
 
-        world.add_ambient_light(new Color4(0.5f, 0.1f, 0.1f, 1.0f));
+        world.add_ambient_light(0.5f, 0.4f, 0.3f);
         world.add_directional_light((0, 0, -1), Color4.Aqua, Color4.Bisque, Color4.Gold);
 
         Entity player = world.create_entity("Player");
         player.transform.position = (0, 0, 0);
-        player.transform.forward = (0, 0, -1);
-        player.add_first_person_camera(field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState);
-
+        player.transform.attitude.direction = (0, 0, -1);
+        player.add_first_person_camera(field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false);
+/*
         Entity ball = world.create_sphere_uv("Ball");
         ball.transform.position = (-5, -2, -8);
 
         Entity box = world.create_cube("Box");
         box.transform.position = (-2, -2, -8);
-
+*/
         Entity rect = world.create_rectangle("Rectangle", divisions:16);
         rect.transform.position = (-.5f, 0.4f, -1.3f);
-        rect.add_material(Material.Gold);
-
-        Console.WriteLine("");
-        Console.WriteLine($"player: parents: {player.parents.to_print()}");
-        Console.WriteLine($"ball:   parents: {ball.parents.to_print()}");
-        Console.WriteLine($"world self: {world.get_entities(Entity.EntityRelationship.Self).to_print()}");
-        Console.WriteLine($"world child: {world.get_entities(Entity.EntityRelationship.Children).to_print()}");
-        Console.WriteLine($"player par: {player.get_entities(Entity.EntityRelationship.Parent).to_print()}");
-        Console.WriteLine($"box    par: {box.get_entities(Entity.EntityRelationship.Parent).to_print()}");
-        Console.WriteLine($"box    pars: {box.get_entities(Entity.EntityRelationship.ParentsRecursive).to_print()}");
-        Console.WriteLine($"world childs: {world.get_entities(Entity.EntityRelationship.ChildrenRecursive).to_print()}");
+        rect.add_material(Material.Chrome);
 
         Console.WriteLine("");
 
@@ -133,7 +123,7 @@ public class Engine: GameWindow {
                 CursorState = CursorState == CursorState.Normal ? CursorState.Grabbed : CursorState.Normal;
                 Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
                 cursor_state_last_switch = 0f;
-                world.for_all_components_with<Camera>(c1 => c1.enable_updates = CursorState == CursorState.Grabbed);
+                world.for_all_components_with<Camera>(c1 => c1.enable_input = CursorState == CursorState.Grabbed);
             } else if (CursorState == CursorState.Normal) {
                 if (KeyboardState.IsKeyDown(Keys.A) |
                     KeyboardState.IsKeyDown(Keys.S) |
@@ -142,7 +132,7 @@ public class Engine: GameWindow {
                     CursorState = CursorState.Grabbed;
                     Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
                     cursor_state_last_switch = 0f;
-                    world.for_all_components_with<Camera>(c1 => c1.enable_updates = CursorState == CursorState.Grabbed);
+                    world.for_all_components_with<Camera>(c1 => c1.enable_input = CursorState == CursorState.Grabbed);
                 }
             }
         } else cursor_state_last_switch += delta_time;
@@ -179,10 +169,10 @@ public class Engine: GameWindow {
         // ImGui.DockSpaceOverViewport(ImGui.GetMainViewport());
         ImGui.Begin("Entities",
             CursorState == CursorState.Grabbed
-                ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
+                ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
                 : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar);
-        ImGui.SetWindowSize(new Vector2(250, 680));
-        ImGui.SetWindowPos(new Vector2(765, 10));
+        ImGui.SetWindowSize(new Vector2(300, 680));
+        ImGui.SetWindowPos(new Vector2(715-250, 10));
 
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 6f);
         ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 6f);
@@ -204,136 +194,142 @@ public class Engine: GameWindow {
     }
 
     private void add_entities_to_gui(Entity entity) {
-        // Console.WriteLine(entity.name);
-        ImGui.CollapsingHeader(entity.name, ImGuiTreeNodeFlags.Leaf);
+        if (ImGui.TreeNodeEx(entity.name, entity.name == "World" | entity.name == "Rectangle" ? ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.Framed : ImGuiTreeNodeFlags.Framed)) {
+            // ImGui.CollapsingHeader(entity.name, ImGuiTreeNodeFlags.Leaf);
+            ImGui.Unindent();
 
-        foreach (var comp in entity.get_components()) {
-            // Console.WriteLine(comp.name);
+            foreach (var comp in entity.get_components()) {
+                // Console.WriteLine(comp.name);
 
-            if(entity is World && comp is Transform or Hierarchy)
-                continue;
+                if (comp is Hierarchy)
+                    continue;
+                if (entity is World && comp is Transform)
+                    continue;
 
-            if (comp is Transform t) {
-                ImGui.Text("Attitude");
-                ImGui.SameLine(80);
-                ImGui.DragFloat3($"##{entity.name}.attitude", ref t.attitute.yaw_pitch_roll_degrees.as_sys_num_ref(), 1f, -180, 180);
-                ImGui.Spacing();
+                if (comp is Transform t) {
+                    ImGui.Text("Position");
+                    ImGui.SameLine(80);
+                    ImGui.DragFloat3($"##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100,
+                        "%.1f");
 
-                ImGui.Text("Position");
-                ImGui.SameLine(80);
-                ImGui.DragFloat3($"##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100);
+                    ImGui.Text("Attitude");
+                    ImGui.SameLine(80);
+                    ImGui.DragFloat3($"##{entity.name}.attitude",
+                        ref t.attitude.yaw_pitch_roll_degrees.as_sys_num_ref(), 1f, -180, 180, "%.0f");
 
-                ImGui.Text("Forward");
-                ImGui.SameLine(80);
-                ImGui.DragFloat3($"##{entity.name}.forward", ref t.forward.as_sys_num_ref(), 0.01f, -1, 1);
+                    ImGui.Spacing();
 
-                ImGui.Text("Up");
-                ImGui.SameLine(80);
-                ImGui.DragFloat3($"##{entity.name}.up", ref t.up.as_sys_num_ref(), 0.01f, -1, 1);
-/*
-                ImGui.Spacing();
+                    ImGui.Text("Direction");
+                    ImGui.SameLine(80);
+                    var attitudeDirection = t.attitude.direction;
+                    ImGui.InputFloat3($"##{entity.name}.direction", ref attitudeDirection.as_sys_num_ref(), "%.2f",
+                        ImGuiInputTextFlags.ReadOnly);
 
-                Matrix4 mat;
-                if (entity.has<FirstPersonCamera>())
-                    mat = entity.get<FirstPersonCamera>().camera_matrix;
-                else
-                    mat = t.get_model_matrix();
+                    ImGui.Text("Up");
+                    ImGui.SameLine(80);
+                    var attitudeUp = t.attitude.up;
+                    ImGui.InputFloat3($"##{entity.name}.up", ref attitudeUp.as_sys_num_ref(), "%.2f",
+                        ImGuiInputTextFlags.ReadOnly);
 
-                var x1 = t.get_model_matrix().Row0;
-                ImGui.SliderFloat4($"##{entity.name}.mat1", ref x1.as_sys_num_ref(), 0, 1);
-                var x2 = t.get_model_matrix().Row1;
-                ImGui.SliderFloat4($"##{entity.name}.mat2", ref x2.as_sys_num_ref(), 0, 1);
-                var x3 = t.get_model_matrix().Row2;
-                ImGui.SliderFloat4($"##{entity.name}.mat3", ref x3.as_sys_num_ref(), 0, 1);
-                var x4 = t.get_model_matrix().Row3;
-                ImGui.SliderFloat4($"##{entity.name}.mat4", ref x4.as_sys_num_ref(), 0, 1);
-              */  ImGui.Spacing();
-            } else if (comp is Hierarchy h) {
-                ImGui.Text("Parent");
-                ImGui.SameLine(80);
+                    ImGui.Spacing();
+                    ImGui.Text($"Aizmuth:{t.attitude.azimuth:N1}, Polar: {t.attitude.polar:N1}");
+                    ImGui.Spacing();
 
-                if (ImGui.BeginCombo($"##{entity.name}.parent", h.parent?.name, ImGuiComboFlags.None)) {
-                    foreach (var parent_ent in world.children) {
-                        ImGui.Selectable(parent_ent.name);
+
+                } else if (comp is Hierarchy h) {
+                    ImGui.Text("Parent");
+                    ImGui.SameLine(80);
+
+                    if (ImGui.BeginCombo($"##{entity.name}.parent", h.parent?.name, ImGuiComboFlags.None)) {
+                        foreach (var parent_ent in world.children) {
+                            ImGui.Selectable(parent_ent.name);
+                        }
+
+                        ImGui.EndCombo();
                     }
 
-                    ImGui.EndCombo();
+                    ImGui.Spacing();
+                } else if (comp is FirstPersonCamera cam) {
+                    ImGui.Separator();
+                    ImGui.Spacing();
+                    ImGui.Text("Camera");
+                    ImGui.Spacing();
+
+                    ImGui.Text("Viewport");
+                    ImGui.SameLine(80);
+                    ImGui.InputInt4($"##{entity.name}.viewport.pos", ref cam.viewport.x);
+
+                    ImGui.Text("Speed");
+                    ImGui.SameLine(80);
+                    ImGui.SliderFloat($"##{entity.name}.cam.speed", ref cam.speed, 0, 10);
+
+                    ImGui.Text("Sensitiv.");
+                    ImGui.SameLine(80);
+                    ImGui.SliderFloat($"##{entity.name}.cam.sensitivity", ref cam.sensitivity, 0, 1);
+
+                    ImGui.Spacing();
+                } else if (comp is VertexArrayRenderer va) {
+                    ImGui.Separator();
+                    ImGui.Spacing();
+
+                    ImGui.Text(va.name);
+                    ImGui.Indent();
+                    ImGui.Text($"{va.vertex_array}");
+
+                    ImGui.Text($"{va}");
+
+                    ImGui.Unindent();
+                    ImGui.Spacing();
+                } else if (comp is ShaderComponent shader) {
+                    ImGui.Separator();
+                    ImGui.Spacing();
+
+                    ImGui.Text($"{shader}");
+
+                    ImGui.Spacing();
+                } else if (comp is MaterialComponent mat) {
+                    ImGui.Separator();
+                    ImGui.Spacing();
+
+                    ImGui.Text("Material --- " + mat.name );
+                    ImGui.ColorEdit4($"Ambient##{entity}.{mat.name}.ambient", ref mat.color.ambient.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
+                    ImGui.SameLine(100);
+                    ImGui.ColorEdit4($"Diffuse##{entity}.{mat.name}.diffuse", ref mat.color.diffuse.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
+                    ImGui.SameLine(184);
+                    ImGui.ColorEdit4($"Specular##{entity}.{mat.name}.specular", ref mat.color.specular.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
+                    ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.color.shininess, 0f, 1f);
+
+                    ImGui.Spacing();
+                } else if (comp is AmbientLight amb) {
+                    ImGui.Text(comp.name);
+                    ImGui.ColorEdit4($"Ambient##{entity}.{comp.name}.color", ref amb.data.color.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
+                    ImGui.Spacing();
+                } else if (comp is DirectionalLight dir) {
+                    ImGui.Text(comp.name);
+
+                    ImGui.ColorEdit4($"Ambient##{entity}.{comp.name}.ambient", ref dir.data.ambient.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
+                    ImGui.SameLine(100);
+                    ImGui.ColorEdit4($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
+                    ImGui.SameLine(184);
+                    ImGui.ColorEdit4($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
+                    ImGui.SliderFloat3($"Direction##{entity}.{comp.name}.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
+                    ImGui.Spacing();
+                } else {
+                    ImGui.Separator();
+                    ImGui.Spacing();
+
+                    ImGui.Text(comp.name);
+                    ImGui.SameLine(80);
+                    ImGui.Spacing();
                 }
-
-                ImGui.Spacing();
-            } else if (comp is FirstPersonCamera cam) {
-                ImGui.Separator();
-                ImGui.Spacing();
-                ImGui.Text("Camera");
-                ImGui.Spacing();
-
-                ImGui.Text("Viewport");
-                ImGui.SameLine(80);
-                ImGui.InputInt4($"##{entity.name}.viewport.pos", ref cam.viewport.x);
-
-                ImGui.Text("Speed");
-                ImGui.SameLine(80);
-                ImGui.SliderFloat($"##{entity.name}.cam.speed", ref cam.speed, 0, 10);
-
-                ImGui.Text("Sensitiv.");
-                ImGui.SameLine(80);
-                ImGui.SliderFloat($"##{entity.name}.cam.sensitivity", ref cam.sensitivity, 0, 1);
-
-                ImGui.Spacing();
-            } else if (comp is VertexArrayRenderer va) {
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                ImGui.Text(va.name);
-                ImGui.Indent();
-                ImGui.Text($"{va.vertex_array}");
-
-                ImGui.Text($"{va}");
-
-                ImGui.Unindent();
-                ImGui.Spacing();
-            } else if (comp is ShaderComponent shader) {
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                ImGui.Text($"{shader}");
-
-                ImGui.Spacing();
-
-            } else if (comp is MaterialComponent mat) {
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                ImGui.Text("Material");
-                ImGui.Indent();
-                ImGui.Text($"{mat.color}");
-
-                ImGui.Unindent();
-                ImGui.Spacing();
-            } else if (comp is AmbientLight amb) {
-                ImGui.Text(comp.name);
-                ImGui.ColorEdit4($"##{entity}.ambient.color", ref amb.data.color.as_sys_num_ref());
-                ImGui.Spacing();
-            } else if (comp is DirectionalLight dir) {
-                ImGui.Text(comp.name);
-                ImGui.ColorEdit4($"##{entity}.directional.ambient", ref dir.data.ambient.as_sys_num_ref());
-                ImGui.ColorEdit4($"##{entity}.directional.diffuse", ref dir.data.diffuse.as_sys_num_ref());
-                ImGui.ColorEdit4($"##{entity}.directional.specular", ref dir.data.specular.as_sys_num_ref());
-                ImGui.SliderFloat3($"##{entity}.directional.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
-                ImGui.Spacing();
-
-            } else {
-                ImGui.Separator();
-                ImGui.Spacing();
-
-                ImGui.Text(comp.name);
-                ImGui.SameLine(80);
-                ImGui.Spacing();
             }
-        }
 
-        foreach (var child in entity.children) {
-            add_entities_to_gui(child);
+            foreach (var child in entity.children) {
+                add_entities_to_gui(child);
+            }
+
+            ImGui.Indent();
+            ImGui.TreePop();
         }
     }
 

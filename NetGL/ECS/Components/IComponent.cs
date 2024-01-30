@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 namespace NetGL.ECS;
 
 public interface IUpdatableComponent {
-    bool enable_updates{ get; set; }
+    bool enable_update { get; set; }
     void update(in float game_time, in float delta_time);
 }
 

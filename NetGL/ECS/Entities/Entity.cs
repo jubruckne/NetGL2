@@ -103,8 +103,8 @@ public class Entity {
         if(relationship == EntityRelationship.Self) yield return get<T>();
 
         foreach (Entity entity in get_entities(relationship)) {
-            if (entity.try_get<T>(out var component)) {
-                yield return component!;
+            foreach (IComponent component in entity.components) {
+                if (component is T t) yield return t;
             }
         }
     }

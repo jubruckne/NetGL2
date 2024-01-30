@@ -3,7 +3,7 @@ namespace NetGL.ECS;
 public class ShaderComponent: IComponent<ShaderComponent>, IUpdatableComponent {
     public Entity entity { get; }
     public string name { get; }
-    public bool enable_updates { get; set; } = true;
+    public bool enable_update { get; set; } = true;
 
     public Shader shader;
 

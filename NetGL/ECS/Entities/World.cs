@@ -55,7 +55,7 @@ public class World: Entity {
     }
 
     private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Matrix4 parent_model_matrix) {
-        var model_matrix = Matrix4.LookAt(entity.transform.position, entity.transform.forward + entity.transform.position, entity.transform.up).Inverted() * parent_model_matrix;
+        var model_matrix = Matrix4.LookAt(entity.transform.position, entity.transform.attitude.direction + entity.transform.position, entity.transform.attitude.up).Inverted() * parent_model_matrix;
 
         /*entity.for_any_component_like<AmbientLight, DirectionalLight, PointLight>(
             component => lights.Add((ILight)component)
@@ -77,7 +77,7 @@ public class World: Entity {
     private void update_entity(in float game_time, in float delta_time, in Entity entity) {
         foreach (var updateable in entity.get_updateable_components()) {
             //Console.WriteLine("update: " + updateable);
-            if(updateable.enable_updates)
+            if(updateable.enable_update)
                 updateable.update(game_time, delta_time);
         }
 

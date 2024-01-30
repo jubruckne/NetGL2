@@ -11,7 +11,5 @@ public class PointLight: Light<PointLight.Data>, IComponent<AmbientLight> {
         public float intensity;
     };
 
-    public PointLight(in Entity entity, in Data data): base(entity) {
-        this.data = data;
-    }
+    public PointLight(in Entity entity, in Data data): base(entity, data) { }
 }

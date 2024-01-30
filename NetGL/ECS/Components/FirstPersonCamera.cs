@@ -13,8 +13,6 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
     public float speed = 2.5f;
     public float sensitivity = 0.5f;
 
-    public float yaw = -90;
-    public float pitch = 0;
     public readonly Vector2 pitch_clamp = new(20, -20);
 
     internal FirstPersonCamera (
@@ -34,59 +32,48 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
     }
 
     public override string ToString() {
-        return $"yaw: {yaw}, pitch: {pitch}, roll: n/a";
+        return $"position: {entity.transform.position} attitude: {entity.transform.attitude}";
     }
 
     public override void update(in float game_time, in float delta_time) {
-        var speed = this.speed * delta_time;
-        var sensitivity = this.sensitivity * this.speed * delta_time * 180f;
-
         var transform = entity.transform;
 
-        if(keyboard_state != null) {
-            if (keyboard_state.IsKeyDown(Keys.W))
-                transform.position += transform.forward * speed; //Forward
+        if (enable_input) {
+            var speed = this.speed * delta_time;
+            var sensitivity = this.sensitivity * this.speed * delta_time * 180f;
 
-            if (keyboard_state.IsKeyDown(Keys.S))
-                transform.position -= transform.forward * speed; //Backwards
+            if (keyboard_state != null) {
+                if (keyboard_state.IsKeyDown(Keys.W))
+                    transform.position += transform.attitude.direction * speed; //Forward
 
-            if (keyboard_state.IsKeyDown(Keys.A))
-                transform.position -= Vector3.Normalize(Vector3.Cross(transform.forward, transform.up)) * speed; //Left
+                if (keyboard_state.IsKeyDown(Keys.S))
+                    transform.position -= transform.attitude.direction * speed; //Backwards
 
-            if (keyboard_state.IsKeyDown(Keys.D))
-                transform.position += Vector3.Normalize(Vector3.Cross(transform.forward, transform.up)) * speed; //Right
+                if (keyboard_state.IsKeyDown(Keys.A))
+                    transform.position -= Vector3.Normalize(transform.attitude.right) * speed; //Left
 
-            if (keyboard_state.IsKeyDown(Keys.RightShift))
-                transform.position += transform.up * speed; //Up
+                if (keyboard_state.IsKeyDown(Keys.D))
+                    transform.position += Vector3.Normalize(transform.attitude.right) * speed; //Right
 
-            if (keyboard_state.IsKeyDown(Keys.LeftShift))
-                transform.position -= transform.up * speed; //Down
+                if (keyboard_state.IsKeyDown(Keys.RightShift))
+                    transform.position += transform.attitude.up * speed; //Up
+
+                if (keyboard_state.IsKeyDown(Keys.LeftShift))
+                    transform.position -= transform.attitude.up * speed; //Down
+            }
+
+            if (mouse_state != null) {
+                transform.attitude.yaw += mouse_state.Delta.X * sensitivity;
+                transform.attitude.pitch -= mouse_state.Delta.Y * sensitivity;
+            }
         }
 
-        if(mouse_state != null) {
-            yaw += mouse_state.Delta.X * sensitivity;
-            pitch -= mouse_state.Delta.Y * sensitivity;
+        if (transform.attitude.pitch > pitch_clamp[0])
+            transform.attitude.pitch = pitch_clamp[0];
+        else if (transform.attitude.pitch < pitch_clamp[1])
+            transform.attitude.pitch = pitch_clamp[1];
 
-            if(pitch > pitch_clamp[0])
-                pitch = pitch_clamp[0];
-            else if(pitch < pitch_clamp[1])
-                pitch = pitch_clamp[1];
-
-            transform.forward.X = (float)(Math.Cos(float.DegreesToRadians(pitch))
-                                         * Math.Cos(float.DegreesToRadians(yaw)));
-            transform.forward.Y = (float)Math.Sin(float.DegreesToRadians(pitch));
-            transform.forward.Z = (float)(Math.Cos(float.DegreesToRadians(pitch))
-                                         * Math.Sin(float.DegreesToRadians(yaw)));
-            transform.forward = Vector3.Normalize(transform.forward);
-        }
-
-        // Calculate both the right and the up vector using cross product.
-        // Note that we are calculating the right from the global up; this behaviour might
-        // not be what you need for all cameras so keep this in mind if you do not want a FPS camera.
-        transform.right = Vector3.Normalize(Vector3.Cross(transform.forward, Vector3.UnitY));
-        transform.up = Vector3.Normalize(Vector3.Cross(transform.right, transform.forward));
-
-        camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.forward, transform.up);
+        camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.attitude.direction, transform.attitude.up);
     }
 }
 
@@ -98,9 +85,13 @@ public static class FirstPersonCameraExt {
         float near = 0.01f,
         float far = 1000f,
         KeyboardState? keyboard_state = null,
-        MouseState? mouse_state = null
+        MouseState? mouse_state = null,
+        bool? enable_input = true,
+        bool? enable_update = true
     ) {
         var cam = new FirstPersonCamera(entity, field_of_view, aspect_ratio, near, far, keyboard_state, mouse_state);
+        if (enable_input != null) cam.enable_input = (bool)enable_input;
+        if (enable_update != null) cam.enable_update = (bool)enable_update;
         entity.add(cam);
         return cam;
     }

@@ -19,7 +19,7 @@ public class DirectionalLight: Light<DirectionalLight.Data>, IComponent<AmbientL
         }
     }
 
-    public DirectionalLight(in Entity entity, in Vector3 direction, in Color4 ambient, in Color4 diffuse, in Color4 specular): base(entity) {
-        data = new Data(direction, ambient, diffuse, specular);
-    }
+    public DirectionalLight(in Entity entity, in Vector3 direction, in Color4 ambient, in Color4 diffuse,
+        in Color4 specular)
+        : base(entity, new Data(direction, ambient, diffuse, specular)) { }
 }

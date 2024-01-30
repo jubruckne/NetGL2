@@ -66,7 +66,7 @@ public class AutoShader: Shader {
         fragment_code.AppendLine("void main() {");
         fragment_code.AppendLine("  vec3 d = directional_light[0].direction;");
 
-        fragment_code.AppendLine("  frag_color = material.ambient * (ambient_light + directional_light[0].ambient);");
+        fragment_code.AppendLine("  frag_color = material.ambient * (ambient_light + directional_light[0].ambient*0);");
         fragment_code.AppendLine("}");
 
         //Console.WriteLine(fragment_code);

@@ -8,12 +8,14 @@ public class AmbientLight: Light<AmbientLight.Data>, IComponent<AmbientLight> {
     public struct Data {
         public Color4 color;
 
+        public Data(in Color4 color) {
+            this.color = color;
+        }
+
         public override string ToString() {
             return $"color: {color}";
         }
     }
 
-    public AmbientLight(in Entity entity, in Color4 color): base(entity) {
-        data.color = color;
-    }
+    public AmbientLight(in Entity entity, in Color4 color): base(entity, new Data(color)) { }
 }

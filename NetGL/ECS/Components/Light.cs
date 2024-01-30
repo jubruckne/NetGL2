@@ -15,7 +15,9 @@ public abstract class Light : IComponent<Light> {
 public abstract class Light<TLight>: Light, IComponent<Light<TLight>> {
     public TLight data;
 
-    protected Light(in Entity entity): base(entity) {}
+    protected Light(in Entity entity, in TLight data): base(entity) {
+        this.data = data;
+    }
 
     public override string ToString() {
         return $"{data}";
@@ -23,8 +25,8 @@ public abstract class Light<TLight>: Light, IComponent<Light<TLight>> {
 }
 
 public static class LightComponentExt {
-    public static AmbientLight add_ambient_light(this Entity entity, in Color4 color) {
-        var light = new AmbientLight(entity, color);
+    public static AmbientLight add_ambient_light(this Entity entity, float r, float g, float b, float a = 1f) {
+        var light = new AmbientLight(entity, new Color4(r, g, b, a));
         entity.add(light);
         return light;
     }

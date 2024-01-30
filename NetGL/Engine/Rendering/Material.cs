@@ -3,11 +3,9 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public interface IMaterial { }
-
 public class Material {
     [StructLayout(LayoutKind.Sequential)]
-    public struct Color: IMaterial, IEquatable<Color> {
+    public struct Color: IEquatable<Color> {
         public Color4 ambient;
         public Color4 diffuse;
         public Color4 specular;
