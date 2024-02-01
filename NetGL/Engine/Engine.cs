@@ -74,30 +74,35 @@ public class Engine: GameWindow {
         Entity player = world.create_entity("Player");
         player.transform.position = (0, 0, 0);
         player.transform.attitude.direction = (0, 0, -1);
-        player.add_first_person_camera(field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false);
-/*
+        player.add_first_person_camera(Viewport.Gameplay, field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false);
+
+        Entity hud = world.create_entity("Hud");
+        var oc2 = hud.add_orthographic_camera(Viewport.Hud.copy("O2", y:400), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
+        var oc4 = hud.add_orthographic_camera(Viewport.Hud.copy("04", x:600, y:400), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
+
+        oc2.transform.position = (0, -1, 0);
+        oc2.transform.attitude.direction = (0, 0, 0);
+
+        oc4.transform.position = (0, 0, -1);
+        oc4.transform.attitude.direction = (0, 0, 0);
+
+
         Entity ball = world.create_sphere_uv("Ball");
         ball.transform.position = (-5, -2, -8);
 
         Entity box = world.create_cube("Box");
         box.transform.position = (-2, -2, -8);
-*/
+
         Entity rect = world.create_rectangle("Rectangle", divisions:16);
         rect.transform.position = (-.5f, 0.4f, -1.3f);
         rect.add_material(Material.Chrome);
-
         Console.WriteLine("");
-
-        //NetGL.ECS.System cam = world.create_system<FirstPersonCameraSystem>();
-        //NetGL.ECS.System rend = world.create_system<VertexArrayRenderSystem>();
 
         GL.Enable(EnableCap.ProgramPointSize);
 
         Error.check();
 
         CursorState = CursorState.Normal;
-
-        GL.ClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 
         game_time = 0f;
     }
@@ -157,9 +162,8 @@ public class Engine: GameWindow {
         frame_count++;
         frame++;
 
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
         world.render();
+        Viewport.Gameplay.make_current();
         if(debug) render_ui();
 
         SwapBuffers();
@@ -171,8 +175,8 @@ public class Engine: GameWindow {
             CursorState == CursorState.Grabbed
                 ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
                 : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar);
-        ImGui.SetWindowSize(new Vector2(300, 680));
-        ImGui.SetWindowPos(new Vector2(715-250, 10));
+        ImGui.SetWindowSize(new Vector2(260, 680));
+        ImGui.SetWindowPos(new Vector2(755, 10));
 
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 6f);
         ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 6f);
@@ -194,11 +198,15 @@ public class Engine: GameWindow {
     }
 
     private void add_entities_to_gui(Entity entity) {
-        if (ImGui.TreeNodeEx(entity.name, entity.name == "World" | entity.name == "Rectangle" ? ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.Framed : ImGuiTreeNodeFlags.Framed)) {
-            // ImGui.CollapsingHeader(entity.name, ImGuiTreeNodeFlags.Leaf);
+        ImGui.PushStyleColor(ImGuiCol.Header, Color4i.random_for(entity.name).to_int());
+        if (ImGui.TreeNodeEx(
+                entity.name,
+                entity.name == "World" | entity.name == "Rectangle"
+                    ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
+                    : ImGuiTreeNodeFlags.Framed)) {
             ImGui.Unindent();
 
-            foreach (var comp in entity.get_components()) {
+            foreach (var comp in entity.components) {
                 // Console.WriteLine(comp.name);
 
                 if (comp is Hierarchy)
@@ -293,9 +301,9 @@ public class Engine: GameWindow {
 
                     ImGui.Text("Material --- " + mat.name );
                     ImGui.ColorEdit4($"Ambient##{entity}.{mat.name}.ambient", ref mat.color.ambient.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SameLine(100);
+                    ImGui.SameLine(90);
                     ImGui.ColorEdit4($"Diffuse##{entity}.{mat.name}.diffuse", ref mat.color.diffuse.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SameLine(184);
+                    ImGui.SameLine(170);
                     ImGui.ColorEdit4($"Specular##{entity}.{mat.name}.specular", ref mat.color.specular.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
                     ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.color.shininess, 0f, 1f);
 
@@ -308,9 +316,9 @@ public class Engine: GameWindow {
                     ImGui.Text(comp.name);
 
                     ImGui.ColorEdit4($"Ambient##{entity}.{comp.name}.ambient", ref dir.data.ambient.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SameLine(100);
+                    ImGui.SameLine(90);
                     ImGui.ColorEdit4($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SameLine(184);
+                    ImGui.SameLine(170);
                     ImGui.ColorEdit4($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
                     ImGui.SliderFloat3($"Direction##{entity}.{comp.name}.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
                     ImGui.Spacing();
@@ -331,12 +339,14 @@ public class Engine: GameWindow {
             ImGui.Indent();
             ImGui.TreePop();
         }
+
+        ImGui.PopStyleColor();
     }
 
     protected override void OnResize(ResizeEventArgs e) {
         base.OnResize(e);
         //Console.WriteLine("OnResize: {0} {1}", e.Width, e.Height);
-        world.for_all_components_with<Camera>(camera => camera.viewport.resize(0, 0, e.Width * 2, e.Height * 2));
+        Viewport.Gameplay.resize(0, 0, e.Width * 2, e.Height * 2);
 
         if (debug) imgui_controller.WindowResized(ClientSize.X, ClientSize.Y);
     }

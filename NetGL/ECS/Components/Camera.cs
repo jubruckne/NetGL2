@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace NetGL.ECS;
 
-public abstract class Camera: IComponent<Camera>, IUpdatableComponent, IRenderableComponent {
+public abstract class Camera: IComponent<Camera>, IUpdatableComponent {
     public Entity entity { get; }
     public string name { get; }
     public Viewport viewport { get; }
@@ -11,15 +11,17 @@ public abstract class Camera: IComponent<Camera>, IUpdatableComponent, IRenderab
 
     public abstract void update(in float game_time, in float delta_time);
 
-    protected Camera(in Entity entity) {
+    internal Matrix4 projection_matrix { get; set; }
+    internal Matrix4 camera_matrix { get; set; }
+
+    public readonly Transform transform;
+
+    protected Camera(in Entity entity, Viewport viewport) {
         this.entity = entity;
+        this.viewport = viewport;
         name = GetType().Name;
-        viewport = new();
         enable_input = true;
         enable_update = true;
-    }
-
-    public virtual void render(in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Matrix4 model_matrix) {
-        viewport.bind();
+        transform = entity.transform.copy();
     }
 }

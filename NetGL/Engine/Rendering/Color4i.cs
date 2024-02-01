@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using OpenTK.Mathematics;
 
 namespace NetGL;
@@ -63,4 +64,13 @@ public struct Color4i : IEquatable<Color4i> {
 
     public void Deconstruct(out byte r, out byte g, out byte b, out byte a)
         => (r, g, b, a) = (this.r, this.g, this.b, this.a);
+
+
+    public static Color4i random_for(string name) {
+        Random rnd = new(name.GetHashCode());
+        float r = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
+        float g = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
+        float b = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
+        return new Color4i(r, g, b, 1.0f);
+    }
 }

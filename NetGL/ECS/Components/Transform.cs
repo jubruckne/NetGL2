@@ -19,4 +19,13 @@ public class Transform : IComponent<Transform> {
     public override string ToString() {
         return $"pos: {position}, att: {attitude}";
     }
+
+    public Transform copy() {
+        return new Transform(entity, name, position, attitude);
+    }
+
+    public void copy_from(in Transform source) {
+        attitude = source.attitude;
+        position = source.position;
+    }
 }

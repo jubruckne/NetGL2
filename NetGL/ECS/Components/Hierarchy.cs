@@ -4,9 +4,9 @@ public class Hierarchy: IComponent<Hierarchy> {
     public Entity entity { get; }
     public string name { get; }
     public readonly Entity? parent;
-    public IReadOnlyList<Entity> children;
+    public ReadOnlyEntityList children;
 
-    internal Hierarchy(in Entity entity, in Entity? parent, in IReadOnlyList<Entity> children) {
+    internal Hierarchy(in Entity entity, in Entity? parent, in ReadOnlyEntityList children) {
         this.name = GetType().Name;
         this.entity = entity;
         this.parent = parent;

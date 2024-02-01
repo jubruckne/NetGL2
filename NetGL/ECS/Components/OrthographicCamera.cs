@@ -3,7 +3,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace NetGL.ECS;
 
-public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatableComponent {
+public class OrthographicCamera: Camera, IComponent<FirstPersonCamera>, IUpdatableComponent {
     private readonly KeyboardState? keyboard_state;
     private readonly MouseState? mouse_state;
 
@@ -12,12 +12,14 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
 
     public readonly Vector2 pitch_clamp = new(20, -20);
 
-    internal FirstPersonCamera (
+    internal OrthographicCamera (
         in Entity entity,
         Viewport viewport,
-        float field_of_view = 60f, 
-        float aspect_ratio = 4 / 3f, 
-        float near = 0.01f, 
+        int x = 0,
+        int y = 0,
+        int width = 1,
+        int height = 1,
+        float near = 0.01f,
         float far = 1000f,
         KeyboardState? keyboard_state = null,
         MouseState? mouse_state = null
@@ -25,7 +27,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         this.keyboard_state = keyboard_state;
         this.mouse_state = mouse_state;
 
-        projection_matrix = Matrix4.CreatePerspectiveFieldOfView(field_of_view.degree_to_radians(), aspect_ratio, near, far);
+        projection_matrix = Matrix4.CreateOrthographicOffCenter(x, x+width, y, y+height, near, far);
         camera_matrix = Matrix4.Identity;
     }
 
@@ -69,16 +71,20 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         else if (transform.attitude.pitch < pitch_clamp[1])
             transform.attitude.pitch = pitch_clamp[1];
 
+        entity.transform.copy_from(transform);
+
         camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.attitude.direction, transform.attitude.up);
     }
 }
 
-public static class FirstPersonCameraExt {
-    public static FirstPersonCamera add_first_person_camera(
+public static class OrthographicCameraExt {
+    public static OrthographicCamera add_orthographic_camera(
         this Entity entity,
         Viewport viewport,
-        float field_of_view = 60f,
-        float aspect_ratio = 4 / 3f,
+        int x = 0,
+        int y = 0,
+        int width = 1,
+        int height = 1,
         float near = 0.01f,
         float far = 1000f,
         KeyboardState? keyboard_state = null,
@@ -86,7 +92,7 @@ public static class FirstPersonCameraExt {
         bool? enable_input = true,
         bool? enable_update = true
     ) {
-        var cam = new FirstPersonCamera(entity, viewport, field_of_view, aspect_ratio, near, far, keyboard_state, mouse_state);
+        var cam = new OrthographicCamera(entity, viewport, x, y, width, height, near, far, keyboard_state, mouse_state);
         if (enable_input != null) cam.enable_input = (bool)enable_input;
         if (enable_update != null) cam.enable_update = (bool)enable_update;
         entity.add(cam);

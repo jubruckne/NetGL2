@@ -3,13 +3,13 @@ using OpenTK.Mathematics;
 namespace NetGL.ECS;
 
 public class World: Entity {
-    private readonly List<Entity> world_entities;
+    private readonly EntityList world_entities;
 
     public World(): base("World", null, null) {
-        world_entities = new List<Entity>();
+        world_entities = new();
     }
 
-    public void for_all_components_with<C1>(Action<C1> action) where C1: IComponent {
+    public void for_all_components_with<C1>(Action<C1> action) where C1: class, IComponent {
         foreach(var entity in world_entities)
             if (entity.has<C1>())
                 action(entity.get<C1>());
@@ -25,7 +25,7 @@ public class World: Entity {
 
     public Entity create_entity(string name, Entity? parent = null, Transform? tranform = null) {
         var e = new Entity(name, parent ?? this, tranform);
-        world_entities.Add(e);
+        world_entities.add(e);
 
         return e;
     }
@@ -41,17 +41,31 @@ public class World: Entity {
     }
 
     public void render() {
-        var cam = get_camera_entity().get<FirstPersonCamera>();
+        foreach (var entity in children.with_component<Camera>()) {
+            foreach(var cam in entity.get_all<Camera>()) {
+                Console.WriteLine($"Switching to cam {cam.name}");
 
-        foreach (var entity in children) {
-            render_entity(
-                entity,
-                cam.projection_matrix,
-                cam.camera_matrix,
-                Matrix4.Identity);
+                if (cam!.entity.parent != null) {
+                    Console.WriteLine($"Switching to viewport {cam.viewport}");
+                    cam.viewport.make_current();
+                    cam.viewport.clear();
+                    Error.check();
+
+                    foreach (var child in cam.entity.parent.children) {
+                        Console.WriteLine("  " + child.name);
+                        render_entity(
+                            child,
+                            cam.projection_matrix,
+                            cam.camera_matrix,
+                            Matrix4.Identity);
+                    }
+                } else {
+                    Console.WriteLine($"Empty camera: {cam}");
+                }
+            }
+
+            Error.check();
         }
-
-        Error.check();
     }
 
     private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Matrix4 parent_model_matrix) {

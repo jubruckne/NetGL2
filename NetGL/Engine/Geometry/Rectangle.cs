@@ -2,14 +2,31 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public class Rectangle: IShape<Rectangle> {
+public struct Rectangle: IShape<Rectangle> {
+    public readonly float x;
+    public readonly float y;
     public readonly float width;
     public readonly float height;
 
-    public Rectangle(float width, float height) {
+    private Rectangle(float x = -0.5f, float y = -0.5f, float width = 1f, float height = 1f) {
+        this.x = x;
+        this.y = y;
         this.width = width;
         this.height = height;
     }
+
+    public static Rectangle make(float width = 1f, float height = 1f) {
+        return new Rectangle(-width * 0.5f, -height * 0.5f, width, height);
+    }
+
+    public static Rectangle make(float x, float y, float width, float height) {
+        return new Rectangle(x, y, width, height);
+    }
+
+    public static implicit operator Rectangle((float x, float y, float width, float height) tuple) {
+        return new Rectangle(tuple.x, tuple.y, tuple.width, tuple.height);
+    }
+
 
     public static (Vector3[] vertices, IndexBuffer.Triangle[] triangles) create_geometry(Rectangle rectangle, int divisions = 1) {
         return create_geometry(rectangle.width, rectangle.height, divisions);

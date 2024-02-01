@@ -8,7 +8,12 @@ public static class Error {
         public Exception(int code, string message): base(message) {
             this.code = code;
         }
-    }   
+    }
+
+    public class WrongContextException : Exception {
+        public WrongContextException(string expected, string current) : base(0, $"{expected} is not current! (current: {current})") {
+        }
+    }
 
     public static bool check(bool throw_exception = true) {
         var err = GL.GetError();
