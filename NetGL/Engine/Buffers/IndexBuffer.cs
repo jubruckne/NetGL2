@@ -9,55 +9,32 @@ public interface IIndexBuffer : IBuffer {
     PrimitiveType primitive_type { get; }
 }
 
-public class IndexBuffer : IndexBuffer<ushort>, IIndexBuffer {
-    public IndexBuffer() : base() {}
+public static class IndexBuffer {
+    public static IndexBuffer<T> make<T>(in T[] items) where T : unmanaged, INumber<T> {
+        return new IndexBuffer<T>(items);
+    }
 
-    public IndexBuffer(int count) : base(count) { }
-
-    public IndexBuffer(in Triangle[] items) : base(items) { }
+    public static IndexBuffer<T> make<T>(in IEnumerable<T> items) where T : unmanaged, INumber<T> {
+        return new IndexBuffer<T>(items.ToArray());
+    }
 }
 
-public class IndexBuffer<T>: Buffer<IndexBuffer<T>.Triangle>, IIndexBuffer where T : unmanaged, IUnsignedNumber<T> {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Triangle: IIndexSpec {
-        public T p1, p2, p3;
+public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
+    where T: unmanaged, INumber<T> {
 
-        public Triangle(T p1, T p2, T p3) {
-            this.p1 = p1;
-            this.p2 = p2;
-            this.p3 = p3;
-        }
-
-        public void set(T p1, T p2, T p3) {
-            this.p1 = p1;
-            this.p2 = p2;
-            this.p3 = p3;
-        }
-
-        public static int get_point_count() => 3;
-
-        public static implicit operator Triangle((T x, T y, T z) tuple) {
-            return new Triangle {
-                p1 = tuple.x,
-                p2 = tuple.y,
-                p3 = tuple.z
-            };
-        }
+    internal IndexBuffer(int triangle_count)
+        : base(BufferTarget.ElementArrayBuffer, triangle_count * 3) {
     }
 
-    public IndexBuffer() : base(BufferTarget.ElementArrayBuffer, 0) {
-    }
-
-    public IndexBuffer(int count) : base(BufferTarget.ElementArrayBuffer, count) {
-    }
-
-    public IndexBuffer(in Triangle[] items) : base(BufferTarget.ElementArrayBuffer, items.Length) {
-        insert(0, items);
-    }
+    internal IndexBuffer(in T[] items)
+        : this(items.Length)
+        => buffer = items;
 
     public DrawElementsType draw_element_type => typeof(T) switch {
         { } t when t == typeof(byte) => DrawElementsType.UnsignedByte,
+        { } t when t == typeof(short) => DrawElementsType.UnsignedShort,
         { } t when t == typeof(ushort) => DrawElementsType.UnsignedShort,
+        { } t when t == typeof(int) => DrawElementsType.UnsignedInt,
         { } t when t == typeof(uint) => DrawElementsType.UnsignedInt,
         _ => throw new InvalidOperationException("Unsupported type")
     };

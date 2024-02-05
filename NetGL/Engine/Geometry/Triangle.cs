@@ -1,3 +1,5 @@
+using OpenTK.Mathematics;
+
 namespace NetGL;
 
 public class Triangle: IShape<Triangle> {
@@ -8,4 +10,17 @@ public class Triangle: IShape<Triangle> {
         this.p2 = p2;
         this.p3 = p3;
     }
+
+    public IEnumerable<Vector3> get_vertices() {
+        throw new NotImplementedException();
+    }
+
+    public IEnumerable<ushort> get_indices() {
+        throw new NotImplementedException();
+    }
+
+    public override string ToString() {
+        return $"Triangle[p1:{p1}, p2:{p2}, p3:{p3}]";
+    }
+
 }

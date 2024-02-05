@@ -5,7 +5,6 @@ public class Entity {
     public Transform transform { get; }
     public Entity? parent { get; }
     public ReadOnlyEntityList children { get; }
-    private readonly Hierarchy hierarchy;
     private readonly ComponentList component_list;
     public ReadOnlyComponentList components => component_list;
     private readonly List<IUpdatableComponent> updateable_components;
@@ -13,9 +12,9 @@ public class Entity {
 
     internal Entity(string name, Entity? parent, Transform? transform) {
         this.name = name;
-        this.component_list = [];
-        this.updateable_components = [];
-        this.renderable_components = [];
+        component_list = [];
+        updateable_components = [];
+        renderable_components = [];
 
         this.transform = transform ?? new Transform(this);
         if (GetType() != typeof(World)) {
@@ -24,8 +23,6 @@ public class Entity {
 
         this.parent = parent;
         children = new EntityList();
-
-        add(hierarchy = new Hierarchy(this, parent, children));
 
         if (parent != null)
             ((EntityList)parent.children).add(this);

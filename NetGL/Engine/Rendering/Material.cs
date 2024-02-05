@@ -29,7 +29,7 @@ public class Material {
             if (color_to_name.TryGetValue(this, out var name))
                 return name;
 
-            return $"ambient:{ambient}, diffuse:{diffuse}, specular:{specular}, shininess{shininess}";
+            return $"ambient:({ambient.R},{ambient.G},{ambient.B}) diffuse:({diffuse.R}, {diffuse.G}, {diffuse.B}), specular:({specular.R}, {specular.G}, {specular.B}), shininess:{shininess}";
         }
 
         public bool Equals(Color other) {

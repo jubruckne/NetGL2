@@ -163,10 +163,14 @@ public class Shader {
     public void set_game_time(in float game_time) => set_uniform("game_time", game_time);
 
     public void set_material(Material.Color color_material) {
-        set_uniform("material.ambient", color_material.ambient);
-        set_uniform("material.diffuse", color_material.diffuse);
-        set_uniform("material.specular", color_material.specular);
+        set_uniform("material.ambient", color_material.ambient.as_vector3());
+        set_uniform("material.diffuse", color_material.diffuse.as_vector3());
+        set_uniform("material.specular", color_material.specular.as_vector3());
         set_uniform("material.shininess", color_material.shininess);
+    }
+
+    public void set_camera_position(in Vector3 pos) {
+        set_uniform("cam_position", pos);
     }
 
     public void set_light(IEnumerable<Light> lights) {
@@ -177,14 +181,14 @@ public class Shader {
         foreach (var light in lights) {
             switch (light) {
                 case AmbientLight ambient:
-                    set_uniform("ambient_light", ambient.data.color);
+                    set_uniform("ambient_light", ambient.data.color.as_vector3());
                     num_ambient_lights++;
                     break;
                 case DirectionalLight directional:
                     set_uniform($"directional_light[{num_directional_lights}].direction", directional.data.direction);
-                    set_uniform($"directional_light[{num_directional_lights}].ambient", directional.data.ambient);
-                    set_uniform($"directional_light[{num_directional_lights}].specular", directional.data.specular);
-                    set_uniform($"directional_light[{num_directional_lights}].diffuse", directional.data.diffuse);
+                    set_uniform($"directional_light[{num_directional_lights}].ambient", directional.data.ambient.as_vector3());
+                    set_uniform($"directional_light[{num_directional_lights}].specular", directional.data.specular.as_vector3());
+                    set_uniform($"directional_light[{num_directional_lights}].diffuse", directional.data.diffuse.as_vector3());
                     num_directional_lights++;
                     break;
                 case PointLight pointlight:

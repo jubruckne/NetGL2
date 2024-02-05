@@ -9,7 +9,8 @@ public class MaterialComponent: IComponent<MaterialComponent> {
     internal MaterialComponent(in Entity entity, in Material.Color color) {
         this.entity = entity;
         this.color = color;
-        name = color.ToString();
+
+        this.name = GetType().Name + entity.get_all<MaterialComponent>().Count();
     }
 
     public override string ToString() {

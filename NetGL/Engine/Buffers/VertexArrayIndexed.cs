@@ -6,9 +6,8 @@ namespace NetGL;
 public class VertexArrayIndexed: VertexArray {
     protected readonly IIndexBuffer index_buffer;
 
-    public VertexArrayIndexed(
-        IVertexBuffer vertex_buffer,
-        IIndexBuffer index_buffer): base(vertex_buffer, index_buffer.primitive_type) {
+    public VertexArrayIndexed(IIndexBuffer index_buffer, params IVertexBuffer[] vertex_buffers
+        ): base(index_buffer.primitive_type, vertex_buffers) {
 
         this.index_buffer = index_buffer;
     }
@@ -19,21 +18,19 @@ public class VertexArrayIndexed: VertexArray {
 
         GL.BindVertexArray(handle);
 
-        vertex_buffer.bind();
         index_buffer.bind();
 
         upload_attribute_pointers();
 
         GL.BindVertexArray(0);
 
-        vertex_buffer.unbind();
         index_buffer.unbind();
 
         //Console.WriteLine();
     }
 
     public override string ToString() {
-        return $"{primitive_type}, vert:{vertex_buffer.count}, ind:{index_buffer.count}";
+        return $"vert:{vertex_buffers.sum(buffer => buffer.count):N0}, ind:{index_buffer.count:N0}";
     }
 
     public override void draw() {

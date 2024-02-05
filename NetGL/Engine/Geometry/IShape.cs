@@ -1,6 +1,8 @@
+using OpenTK.Mathematics;
+
 namespace NetGL;
 
-public interface IShape { }
-
-public interface IShape <in T> : IShape where T: IShape {
+public interface IShape <in T> {
+    IEnumerable<Vector3> get_vertices();
+    IEnumerable<ushort> get_indices();
 }

@@ -24,7 +24,7 @@ public abstract class Buffer: IBuffer {
 }
 
 public abstract class Buffer<T>: Buffer where T: struct {
-    private T[] buffer;
+    protected T[] buffer;
     private readonly BufferTarget target;
     private int handle;
     
@@ -60,7 +60,7 @@ public abstract class Buffer<T>: Buffer where T: struct {
         Array.Copy(buffer, resized, Math.Min(buffer.Length, new_size));
 
         buffer = resized;
-    } 
+    }
 
     public void insert(int index, in T[] items) {
         if (index < 0)

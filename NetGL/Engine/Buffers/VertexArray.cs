@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
@@ -8,15 +7,32 @@ public class VertexArray {
 
     public readonly PrimitiveType primitive_type;
 
-    protected readonly IVertexBuffer vertex_buffer;
+    public readonly IVertexBuffer[] vertex_buffers;
+    public IReadOnlyList<VertexAttribute> vertex_attributes { get; }
 
-    public VertexArray(IVertexBuffer vertex_buffer, PrimitiveType primitive_type = PrimitiveType.Triangles) {
+    public VertexArray(PrimitiveType primitive_type = PrimitiveType.Triangles, params IVertexBuffer[] vertex_buffers) {
         handle = 0;
 
-        this.vertex_buffer = vertex_buffer;
+        this.vertex_buffers = vertex_buffers;
         this.primitive_type = primitive_type;
+
+        int location = 0;
+        vertex_attributes = new List<VertexAttribute>();
+        foreach (var buffer in this.vertex_buffers) {
+            int offset = 0;
+            foreach (var attrib in buffer.attributes) {
+                var a = attrib.copy();
+                a.location = location;
+                a.offset = offset;
+                a.buffer = buffer;
+                offset += a.size_of;
+                location++;
+
+                ((List<VertexAttribute>)vertex_attributes).Add(a);
+            }
+        }
     }
-    
+
     public void bind() {
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");
@@ -37,39 +53,48 @@ public class VertexArray {
 
         GL.BindVertexArray(handle);
 
-        vertex_buffer.bind();
-
         upload_attribute_pointers();
 
         GL.BindVertexArray(0);
-
-        vertex_buffer.unbind();
 
         Console.WriteLine();
     }
 
     protected void upload_attribute_pointers() {
-        var stride = vertex_buffer.item_size;
+        foreach (var attribute in vertex_attributes) {
+            attribute.buffer.bind();
 
-        Console.WriteLine("Vertex attributes: ");
-        Console.WriteLine($"  stride = {stride}");
+            Console.WriteLine("Vertex attributes: ");
+            Console.WriteLine($"  stride = {attribute.buffer.item_size}");
 
-        foreach (var field in vertex_buffer.get_vertex_spec()) {
-            nint offset = Marshal.OffsetOf(vertex_buffer.item_type, field.name);
-            // Console.WriteLine($"VertexAttribPointer({field.location}, {field.size}, {field.pointer_type}, {field.normalized}, {stride}, {offset})");
-            GL.VertexAttribPointer(field.location, field.size, field.pointer_type, field.normalized, stride, offset);
-            GL.EnableVertexAttribArray(field.location);
+            Console.WriteLine(attribute.buffer.item_type);
+            Console.WriteLine(
+                $"VertexAttribPointer({attribute.location}, {attribute.count}, {attribute.pointer_type}, {attribute.normalized}, {attribute.buffer.item_size}, {attribute.offset})");
+            GL.VertexAttribPointer(attribute.location, attribute.count, attribute.pointer_type, attribute.normalized, attribute.buffer.item_size, attribute.offset);
+            GL.EnableVertexAttribArray(attribute.location);
         }
 
         Error.check();
     }
 
     public override string ToString() {
-        return $"{primitive_type}, vert:{vertex_buffer.count}";
+        return $"vert:{vertex_buffers.sum(buffer => buffer.count):N0}";
     }
 
     public virtual void draw() {
-        // Console.WriteLine($"VertexArray.draw ({primitive_type}, {0}, {vertex_buffer.count})");
-        GL.DrawArrays(primitive_type, 0, vertex_buffer.count);
+        foreach (var buffer in vertex_buffers) {
+            buffer.bind();
+            GL.DrawArrays(primitive_type, 0, buffer.count);
+            buffer.unbind();
+        }
+    }
+
+    public bool has_normals {
+        get {
+            foreach (var a in vertex_attributes)
+                if (a.name == "normal")
+                    return true;
+            return false;
+        }
     }
 }

@@ -1,32 +1,63 @@
+using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public class VertexAttribute {
+public abstract class VertexAttribute {
+    public IVertexBuffer buffer { get; internal set; }
+    public abstract Type type_of { get; }
+    public abstract int size_of { get; }
     public string name {get; }
-    public int location { get; }
-    public int size { get; }
+    public int offset { get; internal set;  }
+    public int location { get; internal set; }
+    public int count { get; }
     public VertexAttribPointerType pointer_type { get; }
     public bool normalized { get; }
+
+    public static VertexAttribute<Vector3> Position =>
+        new (name:"position", count: 3, pointer_type: VertexAttribPointerType.Float);
+    public static VertexAttribute<Vector3> Normal =>
+        new (name:"normal", count: 3, pointer_type: VertexAttribPointerType.Float);
+
+    protected VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false) {
+        this.name = name;
+        this.offset = -1;
+        this.location = -1;
+        this.count = count;
+        this.pointer_type = pointer_type;
+        this.normalized = normalized;
+    }
 
     public string glsl_type {
         get {
             switch (pointer_type) {
                 case VertexAttribPointerType.Float:
-                    return $"vec{size}";
+                    return $"vec{count}";
             }
 
-            throw new NotImplementedException($"glsl_type for {name}, {pointer_type}, {size}!");
+            throw new NotImplementedException($"glsl_type for {name}, {pointer_type}, {count}!");
         }
     }
 
-    public VertexAttribute(string name, int location, int size, VertexAttribPointerType pointer_type, bool normalized = false) {
-        this.name = name;
-        this.size = size;
-        this.location = location;
-        this.pointer_type = pointer_type;
-        this.normalized = normalized;
+    public abstract VertexAttribute copy();
+
+    public override string ToString() => $"{name}: {type_of.Name} => {pointer_type}[{count}]";
+}
+
+public class VertexAttribute<T>: VertexAttribute {
+    public override Type type_of => typeof(T);
+    public override int size_of => Marshal.SizeOf<T>();
+
+    public override VertexAttribute copy() {
+        var a = new VertexAttribute<T>(name, count, pointer_type, normalized) {
+            offset = offset,
+            location = location
+        };
+        return a;
     }
 
-    public override string ToString() => $"name={name} location={location} size={size} type={pointer_type} normalized={normalized}";
+    internal VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false) :
+        base(name, count, pointer_type, normalized) {
+    }
 }

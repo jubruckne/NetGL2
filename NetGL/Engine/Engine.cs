@@ -57,19 +57,21 @@ public class Engine: GameWindow {
 
         world = new World();
         if (debug) imgui_controller = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2);
-
-        Attitude att = new();
-        att.yaw = 0;
-        att.pitch = 10;
-        att.roll = 0;
-        Console.Write(att.direction);
     }
 
     protected override void OnLoad() {
         base.OnLoad();
+/*
+        var desc = VertexDescriptor.make(NetGL.dev.VertexAttribute.Position, NetGL.dev.VertexAttribute.Normal);
+        desc.allocate(100);
+        Console.WriteLine(desc);
+        desc.buffer.
 
+        return;*/
         world.add_ambient_light(0.5f, 0.4f, 0.3f);
         world.add_directional_light((0, 0, -1), Color4.Aqua, Color4.Bisque, Color4.Gold);
+
+        Model model = Model.from_file("1701d.fbx");
 
         Entity player = world.create_entity("Player");
         player.transform.position = (0, 0, 0);
@@ -77,8 +79,8 @@ public class Engine: GameWindow {
         player.add_first_person_camera(Viewport.Gameplay, field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false);
 
         Entity hud = world.create_entity("Hud");
-        var oc2 = hud.add_orthographic_camera(Viewport.Hud.copy("O2", y:400), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
-        var oc4 = hud.add_orthographic_camera(Viewport.Hud.copy("04", x:600, y:400), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
+        var oc2 = hud.add_orthographic_camera(Viewport.Hud.copy("O2", x:25, y:25), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
+        var oc4 = hud.add_orthographic_camera(Viewport.Hud.copy("04", x:25, y:350), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
 
         oc2.transform.position = (0, -1, 0);
         oc2.transform.attitude.direction = (0, 0, 0);
@@ -97,6 +99,10 @@ public class Engine: GameWindow {
         rect.transform.position = (-.5f, 0.4f, -1.3f);
         rect.add_material(Material.Chrome);
         Console.WriteLine("");
+
+        Entity entd = world.create_model("1701-D", Model.from_file("1701d.fbx"));
+        rect.transform.position = (-.5f, 0.4f, -1.3f);
+
 
         GL.Enable(EnableCap.ProgramPointSize);
 
@@ -209,8 +215,6 @@ public class Engine: GameWindow {
             foreach (var comp in entity.components) {
                 // Console.WriteLine(comp.name);
 
-                if (comp is Hierarchy)
-                    continue;
                 if (entity is World && comp is Transform)
                     continue;
 
@@ -242,21 +246,6 @@ public class Engine: GameWindow {
                     ImGui.Spacing();
                     ImGui.Text($"Aizmuth:{t.attitude.azimuth:N1}, Polar: {t.attitude.polar:N1}");
                     ImGui.Spacing();
-
-
-                } else if (comp is Hierarchy h) {
-                    ImGui.Text("Parent");
-                    ImGui.SameLine(80);
-
-                    if (ImGui.BeginCombo($"##{entity.name}.parent", h.parent?.name, ImGuiComboFlags.None)) {
-                        foreach (var parent_ent in world.children) {
-                            ImGui.Selectable(parent_ent.name);
-                        }
-
-                        ImGui.EndCombo();
-                    }
-
-                    ImGui.Spacing();
                 } else if (comp is FirstPersonCamera cam) {
                     ImGui.Separator();
                     ImGui.Spacing();
@@ -276,18 +265,16 @@ public class Engine: GameWindow {
                     ImGui.SliderFloat($"##{entity.name}.cam.sensitivity", ref cam.sensitivity, 0, 1);
 
                     ImGui.Spacing();
-                } else if (comp is VertexArrayRenderer va) {
+                } else if (comp is VertexArrayRenderer var) {
                     ImGui.Separator();
-                    ImGui.Spacing();
-
-                    ImGui.Text(va.name);
-                    ImGui.Indent();
-                    ImGui.Text($"{va.vertex_array}");
-
-                    ImGui.Text($"{va}");
-
-                    ImGui.Unindent();
-                    ImGui.Spacing();
+                    ImGui.Text(var.name);
+                    foreach (var va in var.vertex_arrays) {
+                        ImGui.Spacing();
+                        ImGui.Text($"{va.primitive_type} ({va.vertex_buffers.Length})");
+                        va.vertex_buffers.for_each(buffer => ImGui.TextWrapped(buffer.ToString()));
+                        ImGui.Text(va.ToString());
+                        ImGui.Spacing();
+                    }
                 } else if (comp is ShaderComponent shader) {
                     ImGui.Separator();
                     ImGui.Spacing();
@@ -299,7 +286,7 @@ public class Engine: GameWindow {
                     ImGui.Separator();
                     ImGui.Spacing();
 
-                    ImGui.Text("Material --- " + mat.name );
+                    ImGui.Text("Material");
                     ImGui.ColorEdit4($"Ambient##{entity}.{mat.name}.ambient", ref mat.color.ambient.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
                     ImGui.SameLine(90);
                     ImGui.ColorEdit4($"Diffuse##{entity}.{mat.name}.diffuse", ref mat.color.diffuse.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);

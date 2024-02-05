@@ -2,22 +2,16 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public class Sphere: IShape<Sphere> {
+internal class Sphere: IShape<Sphere> {
     public readonly float radius;
 
     public Sphere(float radius) {
         this.radius = radius;
     }
 
-    public static (Vector3[] vertices, IndexBuffer.Triangle[] triangles) create_geometry(Sphere sphere, int meridians, int parallels) {
-        return create_geometry(sphere.radius, meridians, parallels);
-    }
+    public IEnumerable<Vector3> get_vertices() => get_vertices(32, 24);
 
-    public static (Vector3[] vertices, IndexBuffer.Triangle[] triangles) create_geometry(float radius, int meridians, int parallels) {
-        int vertexCount = (meridians + 1) * (parallels + 1);
-
-        var vertices = new Vector3[vertexCount];
-
+    public IEnumerable<Vector3> get_vertices(int meridians, int parallels) {
         float x, y, z, xy;
         float u, v;
         float sectorStep = (float) (2f * Math.PI / meridians);
@@ -41,15 +35,14 @@ public class Sphere: IShape<Sphere> {
                 u = polarX * 0.5f / (float) Math.PI + 0.5f;
                 v = polarY / (float) Math.PI;
 
-                vertices[i * (meridians + 1) + j] = new (x, y, z);
+                yield return new Vector3(x, y, z);
             }
         }
+    }
 
-        int indexCount = meridians * parallels * 2 * 3;
+    public IEnumerable<ushort> get_indices() => get_indices(1f, 32, 24);
 
-        var indices = new IndexBuffer.Triangle[indexCount];
-        int index = 0;
-
+    public IEnumerable<ushort> get_indices(float radius, int meridians, int parallels) {
         for (int i = 1; i <= parallels; ++i) {
             for (int j = 1; j <= meridians; ++j) {
                 int a = i * (meridians + 1) + j;
@@ -57,11 +50,18 @@ public class Sphere: IShape<Sphere> {
                 int c = (i - 1) * (meridians + 1) + j - 1;
                 int d = (i - 1) * (meridians + 1) + j;
 
-                indices[index++].set((ushort)c, (ushort)b, (ushort)a);
-                indices[index++].set((ushort)d, (ushort)c, (ushort)a);
+                yield return (ushort)c;
+                yield return (ushort)b;
+                yield return (ushort)a;
+
+                yield return (ushort)d;
+                yield return (ushort)c;
+                yield return (ushort)a;
             }
         }
+    }
 
-        return (vertices, indices);
+    public override string ToString() {
+        return $"Sphere[radius:{radius}]";
     }
 }

@@ -6,5 +6,6 @@
   &lt;Assembly Path="/usr/local/share/dotnet/shared/Microsoft.NETCore.App/6.0.25/System.Private.CoreLib.dll" /&gt;
   &lt;Assembly Path="/Users/julia/.nuget/packages/opentk.mathematics/4.8.2/lib/netcoreapp3.1/OpenTK.Mathematics.dll" /&gt;
   &lt;Assembly Path="/usr/local/share/dotnet/shared/Microsoft.NETCore.App/8.0.0/System.Private.CoreLib.dll" /&gt;
+  &lt;Assembly Path="/Users/julia/.nuget/packages/assimpnetlatest/5.0.0-beta1/lib/netstandard1.3/AssimpNet.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:Boolean x:Key="/Default/Environment/InlayHints/GeneralInlayHintsOptions/EnableInlayHints/@EntryValue">False</s:Boolean></wpf:ResourceDictionary>

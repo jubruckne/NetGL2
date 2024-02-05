@@ -43,20 +43,21 @@ public class World: Entity {
     public void render() {
         foreach (var entity in children.with_component<Camera>()) {
             foreach(var cam in entity.get_all<Camera>()) {
-                Console.WriteLine($"Switching to cam {cam.name}");
+                // Console.WriteLine($"Switching to cam {cam.name}");
 
                 if (cam!.entity.parent != null) {
-                    Console.WriteLine($"Switching to viewport {cam.viewport}");
+                    // Console.WriteLine($"Switching to viewport {cam.viewport}");
                     cam.viewport.make_current();
                     cam.viewport.clear();
                     Error.check();
 
                     foreach (var child in cam.entity.parent.children) {
-                        Console.WriteLine("  " + child.name);
+                        // Console.WriteLine("  " + child.name);
                         render_entity(
                             child,
                             cam.projection_matrix,
                             cam.camera_matrix,
+                            cam.transform.position,
                             Matrix4.Identity);
                     }
                 } else {
@@ -68,7 +69,7 @@ public class World: Entity {
         }
     }
 
-    private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Matrix4 parent_model_matrix) {
+    private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Vector3 camera_pos, in Matrix4 parent_model_matrix) {
         var model_matrix = Matrix4.LookAt(entity.transform.position, entity.transform.attitude.direction + entity.transform.position, entity.transform.attitude.up).Inverted() * parent_model_matrix;
 
         /*entity.for_any_component_like<AmbientLight, DirectionalLight, PointLight>(
@@ -76,10 +77,10 @@ public class World: Entity {
         );*/
 
         foreach (var renderable in entity.get_renderable_components())
-            renderable.render(projection_matrix, camera_matrix, model_matrix);
+            renderable.render(projection_matrix, camera_matrix, camera_pos, model_matrix);
 
         foreach (var child in entity.children)
-            render_entity(child, projection_matrix, camera_matrix, model_matrix);
+            render_entity(child, projection_matrix, camera_matrix, camera_pos, model_matrix);
     }
 
     public void update(in float game_time, in float delta_time) {
