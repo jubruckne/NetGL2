@@ -206,7 +206,7 @@ public class Engine: GameWindow {
     private void add_entities_to_gui(Entity entity) {
         ImGui.PushStyleColor(ImGuiCol.Header, Color4i.random_for(entity.name).to_int());
         if (ImGui.TreeNodeEx(
-                entity.name,
+                $"{entity.get_path()}##{entity.get_path()}",
                 entity.name == "World" | entity.name == "Rectangle"
                     ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
                     : ImGuiTreeNodeFlags.Framed)) {
@@ -283,18 +283,26 @@ public class Engine: GameWindow {
 
                     ImGui.Spacing();
                 } else if (comp is MaterialComponent mat) {
-                    ImGui.Separator();
-                    ImGui.Spacing();
+                    ImGui.PushStyleColor(ImGuiCol.Header, new Color4(45, 45, 50, 255).to_int());
+                    if (ImGui.TreeNodeEx($"{mat.name}##{entity.name}_{mat.name}_node", ImGuiTreeNodeFlags.Framed)) {
+                        ImGui.PopStyleColor();
+                        ImGui.Unindent();
 
-                    ImGui.Text("Material");
-                    ImGui.ColorEdit4($"Ambient##{entity}.{mat.name}.ambient", ref mat.color.ambient.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SameLine(90);
-                    ImGui.ColorEdit4($"Diffuse##{entity}.{mat.name}.diffuse", ref mat.color.diffuse.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SameLine(170);
-                    ImGui.ColorEdit4($"Specular##{entity}.{mat.name}.specular", ref mat.color.specular.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.color.shininess, 0f, 1f);
+                        ImGui.Text(mat.name);
+                        ImGui.ColorEdit3($"Ambient##{entity}.{mat.name}.ambient",
+                            ref mat.color.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoAlpha);
+                        // ImGui.SameLine(90);
+                        ImGui.ColorEdit3($"Diffuse##{entity}.{mat.name}.diffuse",
+                            ref mat.color.diffuse.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoAlpha);
+                        //ImGui.SameLine(170);
+                        ImGui.ColorEdit3($"Specular##{entity}.{mat.name}.specular",
+                            ref mat.color.specular.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoAlpha);
+                        ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.color.shininess, -1f, 1f);
 
-                    ImGui.Spacing();
+                        ImGui.Spacing();
+                        ImGui.Indent();
+                        ImGui.TreePop();
+                    }
                 } else if (comp is AmbientLight amb) {
                     ImGui.Text(comp.name);
                     ImGui.ColorEdit4($"Ambient##{entity}.{comp.name}.color", ref amb.data.color.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);

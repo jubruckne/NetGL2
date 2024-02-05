@@ -185,6 +185,7 @@ public class Shader {
                     num_ambient_lights++;
                     break;
                 case DirectionalLight directional:
+                    if(directional.data.direction.LengthSquared != 0) directional.data.direction.Normalize();
                     set_uniform($"directional_light[{num_directional_lights}].direction", directional.data.direction);
                     set_uniform($"directional_light[{num_directional_lights}].ambient", directional.data.ambient.as_vector3());
                     set_uniform($"directional_light[{num_directional_lights}].specular", directional.data.specular.as_vector3());

@@ -10,7 +10,7 @@ public class MaterialComponent: IComponent<MaterialComponent> {
         this.entity = entity;
         this.color = color;
 
-        this.name = GetType().Name + entity.get_all<MaterialComponent>().Count();
+        name = $"{GetType().Name}_{entity.get_all<MaterialComponent>().Count()}";
     }
 
     public override string ToString() {
