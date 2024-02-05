@@ -12,7 +12,7 @@ public class Engine: GameWindow {
     public readonly bool debug;
 
     protected readonly World world;
-    protected readonly ImGuiController imgui_controller = null!;
+    protected readonly ImGuiController handler_imgui = null!;
 
     protected float game_time;
     protected int frame;
@@ -56,7 +56,7 @@ public class Engine: GameWindow {
         GL.DepthFunc(DepthFunction.Less);
 
         world = new World();
-        if (debug) imgui_controller = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2);
+        if (debug) handler_imgui = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2);
     }
 
     protected override void OnLoad() {
@@ -88,12 +88,11 @@ public class Engine: GameWindow {
         oc4.transform.position = (0, 0, -1);
         oc4.transform.attitude.direction = (0, 0, 0);
 
-
         Entity ball = world.create_sphere_uv("Ball");
         ball.transform.position = (-5, -2, -8);
 
-        Entity box = world.create_cube("Box");
-        box.transform.position = (-2, -2, -8);
+        //Entity box = world.create_cube("Box");
+        //box.transform.position = (-2, -2, -8);
 
         Entity rect = world.create_rectangle("Rectangle", divisions:16);
         rect.transform.position = (-.5f, 0.4f, -1.3f);
@@ -132,7 +131,10 @@ public class Engine: GameWindow {
         if (cursor_state_last_switch >= 1f) {
             if (KeyboardState.IsKeyDown(Keys.Tab)) {
                 CursorState = CursorState == CursorState.Normal ? CursorState.Grabbed : CursorState.Normal;
-                Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
+                if (CursorState == CursorState.Normal) {
+                    UpdateFrequency = 60;
+                }
+                Title = $"fps: {frame_count:F0}, last_frame: {e.Time * 1000:F1} - {CursorState}";
                 cursor_state_last_switch = 0f;
                 world.for_all_components_with<Camera>(c1 => c1.enable_input = CursorState == CursorState.Grabbed);
             } else if (CursorState == CursorState.Normal) {
@@ -141,6 +143,7 @@ public class Engine: GameWindow {
                     KeyboardState.IsKeyDown(Keys.D) |
                     KeyboardState.IsKeyDown(Keys.W)) {
                     CursorState = CursorState.Grabbed;
+                    UpdateFrequency = 0;
                     Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
                     cursor_state_last_switch = 0f;
                     world.for_all_components_with<Camera>(c1 => c1.enable_input = CursorState == CursorState.Grabbed);
@@ -154,8 +157,6 @@ public class Engine: GameWindow {
     protected override void OnRenderFrame(FrameEventArgs e) {
         base.OnRenderFrame(e);
 
-        if (debug) imgui_controller.Update(this, (float)e.Time);
-
         //Console.WriteLine($"frame:{frame}, {GC.CollectionCount(2)}");
 
         frame_time += e.Time;
@@ -167,6 +168,8 @@ public class Engine: GameWindow {
 
         frame_count++;
         frame++;
+
+        if (debug) handler_imgui.Update(this, (float)e.Time);
 
         world.render();
         Viewport.Gameplay.make_current();
@@ -198,7 +201,7 @@ public class Engine: GameWindow {
         ImGui.PopStyleVar(4);
 
         ImGui.End();
-        imgui_controller.Render();
+        handler_imgui.Render();
 
         ImGuiController.CheckGLError("End of frame");
     }
@@ -206,10 +209,13 @@ public class Engine: GameWindow {
     private void add_entities_to_gui(Entity entity) {
         ImGui.PushStyleColor(ImGuiCol.Header, Color4i.random_for(entity.name).to_int());
         if (ImGui.TreeNodeEx(
-                $"{entity.get_path()}##{entity.get_path()}",
-                entity.name == "World" | entity.name == "Rectangle"
+                $"{entity.name}##{entity.get_path()}",
+                entity.name == "World" | entity.name == "Player"
                     ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
-                    : ImGuiTreeNodeFlags.Framed)) {
+                    : ImGuiTreeNodeFlags.Framed, entity.name)) {
+            ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Color4(65, 55, 65, 255).to_int());
+            ImGui.PushStyleColor(ImGuiCol.HeaderActive, new Color4(65, 55, 65, 255).to_int());
+            ImGui.PushStyleColor(ImGuiCol.Header, new Color4(30, 25, 28, 255).to_int());
             ImGui.Unindent();
 
             foreach (var comp in entity.components) {
@@ -219,115 +225,115 @@ public class Engine: GameWindow {
                     continue;
 
                 if (comp is Transform t) {
-                    ImGui.Text("Position");
-                    ImGui.SameLine(80);
-                    ImGui.DragFloat3($"##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100,
-                        "%.1f");
+                    if (ImGui.TreeNodeEx($"{t.name}##{entity.name}_{t.name}_node", entity.name == "Player" ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None)) {
+                        ImGui.Unindent();
+                        ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100, "%.1f");
 
-                    ImGui.Text("Attitude");
-                    ImGui.SameLine(80);
-                    ImGui.DragFloat3($"##{entity.name}.attitude",
-                        ref t.attitude.yaw_pitch_roll_degrees.as_sys_num_ref(), 1f, -180, 180, "%.0f");
+                        ImGui.DragFloat3($"Attitude##{entity.name}.attitude",
+                            ref t.attitude.yaw_pitch_roll_degrees.as_sys_num_ref(), 1f, -180, 180, "%.0f");
 
-                    ImGui.Spacing();
-
-                    ImGui.Text("Direction");
-                    ImGui.SameLine(80);
-                    var attitudeDirection = t.attitude.direction;
-                    ImGui.InputFloat3($"##{entity.name}.direction", ref attitudeDirection.as_sys_num_ref(), "%.2f",
-                        ImGuiInputTextFlags.ReadOnly);
-
-                    ImGui.Text("Up");
-                    ImGui.SameLine(80);
-                    var attitudeUp = t.attitude.up;
-                    ImGui.InputFloat3($"##{entity.name}.up", ref attitudeUp.as_sys_num_ref(), "%.2f",
-                        ImGuiInputTextFlags.ReadOnly);
-
-                    ImGui.Spacing();
-                    ImGui.Text($"Aizmuth:{t.attitude.azimuth:N1}, Polar: {t.attitude.polar:N1}");
-                    ImGui.Spacing();
-                } else if (comp is FirstPersonCamera cam) {
-                    ImGui.Separator();
-                    ImGui.Spacing();
-                    ImGui.Text("Camera");
-                    ImGui.Spacing();
-
-                    ImGui.Text("Viewport");
-                    ImGui.SameLine(80);
-                    ImGui.InputInt4($"##{entity.name}.viewport.pos", ref cam.viewport.x);
-
-                    ImGui.Text("Speed");
-                    ImGui.SameLine(80);
-                    ImGui.SliderFloat($"##{entity.name}.cam.speed", ref cam.speed, 0, 10);
-
-                    ImGui.Text("Sensitiv.");
-                    ImGui.SameLine(80);
-                    ImGui.SliderFloat($"##{entity.name}.cam.sensitivity", ref cam.sensitivity, 0, 1);
-
-                    ImGui.Spacing();
-                } else if (comp is VertexArrayRenderer var) {
-                    ImGui.Separator();
-                    ImGui.Text(var.name);
-                    foreach (var va in var.vertex_arrays) {
                         ImGui.Spacing();
-                        ImGui.Text($"{va.primitive_type} ({va.vertex_buffers.Length})");
-                        va.vertex_buffers.for_each(buffer => ImGui.TextWrapped(buffer.ToString()));
-                        ImGui.Text(va.ToString());
-                        ImGui.Spacing();
+
+                        var attitudeDirection = t.attitude.direction;
+                        ImGui.InputFloat3($"Direction##{entity.name}.direction", ref attitudeDirection.as_sys_num_ref(), "%.2f",
+                            ImGuiInputTextFlags.ReadOnly);
+
+                        var attitudeUp = t.attitude.up;
+                        ImGui.InputFloat3($"Up##{entity.name}.up", ref attitudeUp.as_sys_num_ref(), "%.2f",
+                            ImGuiInputTextFlags.ReadOnly);
+
+                        //ImGui.Spacing();
+                        //ImGui.Text($"Aizmuth:{t.attitude.azimuth:N1}, Polar: {t.attitude.polar:N1}");
+                        ImGui.Indent();
+                        ImGui.TreePop();
                     }
-                } else if (comp is ShaderComponent shader) {
-                    ImGui.Separator();
-                    ImGui.Spacing();
-
-                    ImGui.Text($"{shader}");
-
-                    ImGui.Spacing();
-                } else if (comp is MaterialComponent mat) {
-                    ImGui.PushStyleColor(ImGuiCol.Header, new Color4(45, 45, 50, 255).to_int());
-                    if (ImGui.TreeNodeEx($"{mat.name}##{entity.name}_{mat.name}_node", ImGuiTreeNodeFlags.Framed)) {
-                        ImGui.PopStyleColor();
+                } else if (comp is FirstPersonCamera cam) {
+                    if (ImGui.TreeNodeEx($"{cam.name}##{entity.name}_{cam.name}_node", ImGuiTreeNodeFlags.DefaultOpen)) {
                         ImGui.Unindent();
 
-                        ImGui.Text(mat.name);
-                        ImGui.ColorEdit3($"Ambient##{entity}.{mat.name}.ambient",
-                            ref mat.color.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoAlpha);
-                        // ImGui.SameLine(90);
-                        ImGui.ColorEdit3($"Diffuse##{entity}.{mat.name}.diffuse",
-                            ref mat.color.diffuse.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoAlpha);
-                        //ImGui.SameLine(170);
-                        ImGui.ColorEdit3($"Specular##{entity}.{mat.name}.specular",
-                            ref mat.color.specular.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoAlpha);
-                        ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.color.shininess, -1f, 1f);
+                        var camEnableInput = cam.enable_input;
+                        ImGui.Checkbox("Enable Input", ref camEnableInput);
+                        var camEnableUpdate = cam.enable_update;
+                        ImGui.Checkbox("Enable Update", ref camEnableUpdate);
 
-                        ImGui.Spacing();
+                        ImGui.InputInt4($"Viewport##{entity.name}.viewport.pos", ref cam.viewport.x);
+                        ImGui.SliderFloat($"Speed##{entity.name}.cam.speed", ref cam.speed, 0, 10);
+                        ImGui.SliderFloat($"Sensitivity##{entity.name}.cam.sensitivity", ref cam.sensitivity, 0, 1);
+
+                        ImGui.Indent();
+                        ImGui.TreePop();
+                    }
+                } else if (comp is VertexArrayRenderer var) {
+                    if (ImGui.TreeNodeEx($"{var.name}##{entity.name}_{var.name}_node", ImGuiTreeNodeFlags.None)) {
+                        ImGui.Unindent();
+
+                        foreach (var va in var.vertex_arrays) {
+                            ImGui.Text($"{va.primitive_type} ({va.vertex_buffers.Length})");
+                            va.vertex_buffers.for_each(buffer => ImGui.TextWrapped(buffer.ToString()));
+                            ImGui.Text(va.ToString());
+                            ImGui.Spacing();
+                        }
+
+                        ImGui.Indent();
+                        ImGui.TreePop();
+                    }
+                } else if (comp is ShaderComponent shader) {
+                    if (ImGui.TreeNodeEx($"{shader.name}##{entity.name}_{shader.name}_node", ImGuiTreeNodeFlags.None)) {
+                        ImGui.Unindent();
+                        ImGui.Text($"{shader}");
+                        ImGui.Indent();
+                        ImGui.TreePop();
+                    }
+                } else if (comp is MaterialComponent mat) {
+                    if (ImGui.TreeNodeEx($"{mat.name}##{entity.name}_{mat.name}_node", ImGuiTreeNodeFlags.None, mat.name)) {
+                        ImGui.Unindent();
+                        ImGui.Text(mat.name);
+
+                        ImGui.ColorEdit3($"Ambient##{entity}.{mat.name}.ambient",
+                            ref mat.color.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                        ImGui.ColorEdit3($"Diffuse##{entity}.{mat.name}.diffuse",
+                            ref mat.color.diffuse.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                        ImGui.ColorEdit3($"Specular##{entity}.{mat.name}.specular",
+                            ref mat.color.specular.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                        ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.color.shininess, -1, 1);
+
                         ImGui.Indent();
                         ImGui.TreePop();
                     }
                 } else if (comp is AmbientLight amb) {
-                    ImGui.Text(comp.name);
-                    ImGui.ColorEdit4($"Ambient##{entity}.{comp.name}.color", ref amb.data.color.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.Spacing();
+                    if (ImGui.TreeNodeEx($"{amb.name}##{entity.name}_{amb.name}_node", ImGuiTreeNodeFlags.DefaultOpen)) {
+                        ImGui.Unindent();
+                        ImGui.ColorEdit3($"Ambient##{entity}.{comp.name}.ambi.color",
+                            ref amb.data.color.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
+                        ImGui.Indent();
+                        ImGui.TreePop();
+                    }
                 } else if (comp is DirectionalLight dir) {
-                    ImGui.Text(comp.name);
-
-                    ImGui.ColorEdit4($"Ambient##{entity}.{comp.name}.ambient", ref dir.data.ambient.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SameLine(90);
-                    ImGui.ColorEdit4($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SameLine(170);
-                    ImGui.ColorEdit4($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.as_sys_num_ref(), ImGuiColorEditFlags.NoInputs);
-                    ImGui.SliderFloat3($"Direction##{entity}.{comp.name}.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
-                    ImGui.Spacing();
+                    if (ImGui.TreeNodeEx($"{dir.name}##{entity.name}_{dir.name}_node", ImGuiTreeNodeFlags.DefaultOpen)) {
+                        ImGui.Unindent();
+                        ImGui.ColorEdit3($"Ambient##{entity}.{comp.name}.ambient", ref dir.data.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
+                        ImGui.ColorEdit3($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
+                        ImGui.ColorEdit3($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
+                        ImGui.SliderFloat3($"Direction##{entity}.{comp.name}.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
+                        ImGui.Indent();
+                        ImGui.TreePop();
+                    }
                 } else {
-                    ImGui.Separator();
                     ImGui.Spacing();
-
-                    ImGui.Text(comp.name);
-                    ImGui.SameLine(80);
+                    ImGui.Text("***" + comp.name + "***");
                     ImGui.Spacing();
                 }
+
+                ImGui.Spacing();
             }
 
+            ImGui.PopStyleColor(3);
+
             foreach (var child in entity.children) {
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Spacing();
+
                 add_entities_to_gui(child);
             }
 
@@ -343,18 +349,18 @@ public class Engine: GameWindow {
         //Console.WriteLine("OnResize: {0} {1}", e.Width, e.Height);
         Viewport.Gameplay.resize(0, 0, e.Width * 2, e.Height * 2);
 
-        if (debug) imgui_controller.WindowResized(ClientSize.X, ClientSize.Y);
+        if (debug) handler_imgui.WindowResized(ClientSize.X, ClientSize.Y);
     }
 
     protected override void OnTextInput(TextInputEventArgs e) {
         base.OnTextInput(e);
 
-        if(debug) imgui_controller.PressChar((char)e.Unicode);
+        if(debug) handler_imgui.PressChar((char)e.Unicode);
     }
 
     protected override void OnMouseWheel(MouseWheelEventArgs e) {
         base.OnMouseWheel(e);
-        if(debug) imgui_controller.MouseScroll(e.Offset);
+        if(debug) handler_imgui.MouseScroll(e.Offset);
     }
 
     protected override void OnUnload() {

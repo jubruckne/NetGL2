@@ -70,6 +70,11 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
             transform.attitude.pitch = pitch_clamp[1];
 
         camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.attitude.direction, transform.attitude.up);
+
+        if (enable_input && enable_update) {
+            entity.transform.attitude = transform.attitude;
+            entity.transform.position = transform.position;
+        }
         /*
         Console.WriteLine("");
         Console.WriteLine("Camera Matrix:");

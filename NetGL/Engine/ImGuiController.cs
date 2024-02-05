@@ -92,16 +92,16 @@ public class ImGuiController : IDisposable {
 
         _vertexArray = GL.GenVertexArray();
         GL.BindVertexArray(_vertexArray);
-        LabelObject(ObjectLabelIdentifier.VertexArray, _vertexArray, "ImGui");
+        // LabelObject(ObjectLabelIdentifier.VertexArray, _vertexArray, "ImGui");
 
         _vertexBuffer = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
-        LabelObject(ObjectLabelIdentifier.Buffer, _vertexBuffer, "VBO: ImGui");
+        // LabelObject(ObjectLabelIdentifier.Buffer, _vertexBuffer, "VBO: ImGui");
         GL.BufferData(BufferTarget.ArrayBuffer, _vertexBufferSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
 
         _indexBuffer = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
-        LabelObject(ObjectLabelIdentifier.Buffer, _indexBuffer, "EBO: ImGui");
+        // LabelObject(ObjectLabelIdentifier.Buffer, _indexBuffer, "EBO: ImGui");
         GL.BufferData(BufferTarget.ElementArrayBuffer, _indexBufferSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
 
         RecreateFontDeviceTexture();
@@ -173,7 +173,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         _fontTexture = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, _fontTexture);
         GL.TexStorage2D(TextureTarget2d.Texture2D, mips, SizedInternalFormat.Rgba8, width, height);
-        LabelObject(ObjectLabelIdentifier.Texture, _fontTexture, "ImGui Text Atlas");
+        // LabelObject(ObjectLabelIdentifier.Texture, _fontTexture, "ImGui Text Atlas");
 
         GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, width, height, PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
 
@@ -370,7 +370,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
                 GL.BufferData(BufferTarget.ElementArrayBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                 _indexBufferSize = newSize;
 
-                // Console.WriteLine($"Resized dear imgui index buffer to new size {_indexBufferSize}");
+                Console.WriteLine($"Resized dear imgui index buffer to new size {_indexBufferSize}");
             }
         }
 
@@ -387,10 +387,10 @@ outputColor = color * texture(in_fontTexture, texCoord);
         GL.UseProgram(_shader);
         GL.UniformMatrix4(_shaderProjectionMatrixLocation, false, ref mvp);
         GL.Uniform1(_shaderFontTextureLocation, 0);
-        CheckGLError("Projection");
+        // CheckGLError("Projection");
 
         GL.BindVertexArray(_vertexArray);
-        CheckGLError("VAO");
+        // CheckGLError("VAO");
 
         draw_data.ScaleClipRects(io.DisplayFramebufferScale);
 
@@ -407,10 +407,10 @@ outputColor = color * texture(in_fontTexture, texCoord);
             ImDrawListPtr cmd_list = draw_data.CmdLists[n];
 
             GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>(), cmd_list.VtxBuffer.Data);
-            CheckGLError($"Data Vert {n}");
+            //CheckGLError($"Data Vert {n}");
 
             GL.BufferSubData(BufferTarget.ElementArrayBuffer, IntPtr.Zero, cmd_list.IdxBuffer.Size * sizeof(ushort), cmd_list.IdxBuffer.Data);
-            CheckGLError($"Data Idx {n}");
+            //CheckGLError($"Data Idx {n}");
 
             for (int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++)
             {
@@ -423,12 +423,12 @@ outputColor = color * texture(in_fontTexture, texCoord);
                 {
                     GL.ActiveTexture(TextureUnit.Texture0);
                     GL.BindTexture(TextureTarget.Texture2D, (int)pcmd.TextureId);
-                    CheckGLError("Texture");
+                    //CheckGLError("Texture");
 
                     // We do _windowHeight - (int)clip.W instead of (int)clip.Y because gl has flipped Y when it comes to these coordinates
                     var clip = pcmd.ClipRect;
                     GL.Scissor((int)clip.X, _windowHeight - (int)clip.W, (int)(clip.Z - clip.X), (int)(clip.W - clip.Y));
-                    CheckGLError("Scissor");
+                    // CheckGLError("Scissor");
 
                     if ((io.BackendFlags & ImGuiBackendFlags.RendererHasVtxOffset) != 0)
                     {
@@ -487,11 +487,13 @@ outputColor = color * texture(in_fontTexture, texCoord);
         GL.DeleteProgram(_shader);
     }
 
+    /*
     public static void LabelObject(ObjectLabelIdentifier objLabelIdent, int glObject, string name)
     {
         if (KHRDebugAvailable)
             GL.ObjectLabel(objLabelIdent, glObject, name.Length, name);
     }
+    */
 
     static bool IsExtensionSupported(string name)
     {
@@ -508,7 +510,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
     public static int CreateProgram(string name, string vertexSource, string fragmentSoruce)
     {
         int program = GL.CreateProgram();
-        LabelObject(ObjectLabelIdentifier.Program, program, $"Program: {name}");
+        //LabelObject(ObjectLabelIdentifier.Program, program, $"Program: {name}");
 
         int vertex = CompileShader(name, ShaderType.VertexShader, vertexSource);
         int fragment = CompileShader(name, ShaderType.FragmentShader, fragmentSoruce);
@@ -537,7 +539,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
     private static int CompileShader(string name, ShaderType type, string source)
     {
         int shader = GL.CreateShader(type);
-        LabelObject(ObjectLabelIdentifier.Shader, shader, $"Shader: {name}");
+        // LabelObject(ObjectLabelIdentifier.Shader, shader, $"Shader: {name}");
 
         GL.ShaderSource(shader, source);
         GL.CompileShader(shader);

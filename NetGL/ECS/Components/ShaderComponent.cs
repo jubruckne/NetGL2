@@ -10,7 +10,7 @@ public class ShaderComponent: IComponent<ShaderComponent>, IUpdatableComponent {
     internal ShaderComponent(in Entity entity, in Shader shader) {
         this.entity = entity;
         this.shader = shader;
-        name = shader.name;
+        name = GetType().Name;
     }
 
     public void update(in float game_time, in float delta_time) {
@@ -19,7 +19,7 @@ public class ShaderComponent: IComponent<ShaderComponent>, IUpdatableComponent {
     }
 
     public override string ToString() {
-        return $"Shader: {name}\n  uniform: {String.Join("\n  uniform: ", shader.uniforms.ToList())}";
+        return $"{name}\n  uniform: {String.Join("\n  uniform: ", shader.uniforms.ToList())}";
     }
 }
 

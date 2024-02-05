@@ -24,7 +24,7 @@ public class Viewport {
     public Viewport(string name, int x, int y, int width, int height): this(name, x, y, width, height, Color4.Black) { }
 
     public static Viewport Gameplay = new("Gameplay", 0, 0, 800, 600, Color4.Black);
-    public static Viewport Hud = new("Hud", 1000, 800, 400, 300, Color4.DimGray);
+    public static Viewport Hud = new("Hud", 1000, 800, 400, 300, new Color4(20, 20, 25, 255));
 
     public int left => x;
     public int right => x + width;
@@ -52,10 +52,14 @@ public class Viewport {
 
     public void clear() {
         if (!is_current) throw new Error.WrongContextException(ToString(), current_viewport?.ToString() ?? "None");
-        GL.Enable(EnableCap.ScissorTest);
-        GL.Scissor(x, y, width, height);
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        GL.Disable(EnableCap.ScissorTest);
+        if (this == Gameplay) {
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        } else {
+            GL.Enable(EnableCap.ScissorTest);
+            GL.Scissor(x, y, width, height);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Disable(EnableCap.ScissorTest);
+        }
     }
 
     public void make_current() {
