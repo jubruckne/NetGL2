@@ -162,11 +162,11 @@ public class Shader {
     public void set_model_matrix(in Matrix4 matrix) => set_uniform("model", matrix);
     public void set_game_time(in float game_time) => set_uniform("game_time", game_time);
 
-    public void set_material(Material.Color color_material) {
-        set_uniform("material.ambient", color_material.ambient.as_vector3());
-        set_uniform("material.diffuse", color_material.diffuse.as_vector3());
-        set_uniform("material.specular", color_material.specular.as_vector3());
-        set_uniform("material.shininess", color_material.shininess);
+    public void set_material(Material material) {
+        set_uniform("material.ambient", material.ambient.as_vector3());
+        set_uniform("material.diffuse", material.diffuse.as_vector3());
+        set_uniform("material.specular", material.specular.as_vector3());
+        set_uniform("material.shininess", material.shininess);
     }
 
     public void set_camera_position(in Vector3 pos) {

@@ -56,7 +56,7 @@ public class Engine: GameWindow {
         GL.DepthFunc(DepthFunction.Less);
 
         world = new World();
-        if (debug) handler_imgui = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2);
+        if (debug) handler_imgui = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2, "/Users/julia/Library/Fonts/FiraCodeNerdFontMono-Retina.ttf");
     }
 
     protected override void OnLoad() {
@@ -78,6 +78,7 @@ public class Engine: GameWindow {
         player.transform.attitude.direction = (0, 0, -1);
         player.add_first_person_camera(Viewport.Gameplay, field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false);
 
+        /*
         Entity hud = world.create_entity("Hud");
         var oc2 = hud.add_orthographic_camera(Viewport.Hud.copy("O2", x:25, y:25), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
         var oc4 = hud.add_orthographic_camera(Viewport.Hud.copy("04", x:25, y:350), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
@@ -87,7 +88,7 @@ public class Engine: GameWindow {
 
         oc4.transform.position = (0, 0, -1);
         oc4.transform.attitude.direction = (0, 0, 0);
-
+*/
         Entity ball = world.create_sphere_uv("Ball");
         ball.transform.position = (-5, -2, -8);
 
@@ -100,7 +101,10 @@ public class Engine: GameWindow {
         Console.WriteLine("");
 
         Entity entd = world.create_model("1701-D", Model.from_file("1701d.fbx"));
-        rect.transform.position = (-.5f, 0.4f, -1.3f);
+        entd.transform.position = (-.17f, 0.1f, -.8f);
+        entd.transform.attitude.yaw = -105f;
+        entd.transform.attitude.pitch = -5f;
+        entd.transform.attitude.roll = 2.5f;
 
 
         GL.Enable(EnableCap.ProgramPointSize);
@@ -233,12 +237,12 @@ public class Engine: GameWindow {
                         ImGui.Spacing();
 
                         var attitudeDirection = t.attitude.direction;
-                        ImGui.InputFloat3($"Direction##{entity.name}.direction", ref attitudeDirection.as_sys_num_ref(), "%.2f",
-                            ImGuiInputTextFlags.ReadOnly);
+                        ImGui.DragFloat3($"Direction\u20D7{entity.name}.direction", ref attitudeDirection.as_sys_num_ref(), 0f, -1, 1, "%.1f",
+                            ImGuiSliderFlags.NoInput);
 
                         var attitudeUp = t.attitude.up;
-                        ImGui.InputFloat3($"Up##{entity.name}.up", ref attitudeUp.as_sys_num_ref(), "%.2f",
-                            ImGuiInputTextFlags.ReadOnly);
+                        ImGui.DragFloat3($"Up##{entity.name}.up", ref attitudeUp.as_sys_num_ref(), 0f, -1, 1, "%.1f",
+                            ImGuiSliderFlags.NoInput);
 
                         //ImGui.Spacing();
                         //ImGui.Text($"Aizmuth:{t.attitude.azimuth:N1}, Polar: {t.attitude.polar:N1}");
@@ -288,12 +292,12 @@ public class Engine: GameWindow {
                         ImGui.Text(mat.name);
 
                         ImGui.ColorEdit3($"Ambient##{entity}.{mat.name}.ambient",
-                            ref mat.color.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                            ref mat.material.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
                         ImGui.ColorEdit3($"Diffuse##{entity}.{mat.name}.diffuse",
-                            ref mat.color.diffuse.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                            ref mat.material.diffuse.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
                         ImGui.ColorEdit3($"Specular##{entity}.{mat.name}.specular",
-                            ref mat.color.specular.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
-                        ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.color.shininess, -1, 1);
+                            ref mat.material.specular.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                        ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.material.shininess, -1, 1);
 
                         ImGui.Indent();
                         ImGui.TreePop();

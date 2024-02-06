@@ -7,16 +7,18 @@ namespace NetGL.ECS;
 public class Model {
     public readonly string name;
     public readonly IReadOnlyList<VertexArray> vertex_arrays;
-    public readonly IReadOnlyList<Material.Color> materials;
+    public readonly IReadOnlyList<Material> materials;
+    public readonly IReadOnlyList<Texture> textures;
 
     private Model(string name) {
         this.name = name;
         vertex_arrays = new List<VertexArray>();
-        materials = new List<Material.Color>();
+        materials = new List<Material>();
+        textures = new List<Texture>();
     }
 
     private void add_vertex_array(in VertexArray va) => ((List<VertexArray>)vertex_arrays).Add(va);
-    private void add_material(in Material.Color mat) => ((List<Material.Color>)materials).Add(mat);
+    private void add_material(in Material mat) => ((List<Material>)materials).Add(mat);
 
     public static Model from_shape<T>(IShape<T> shape) {
         VertexBuffer<Vector3> vb = new(shape.get_vertices());
@@ -47,13 +49,20 @@ public class Model {
         //importer.SetConfig(new MeshVertexLimitConfig(165000));
 
         importer.Scale = 0.1f;
-        var model = importer.ImportFile(filename, /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
+        var model = importer.ImportFile(filename, PostProcessSteps.EmbedTextures | /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
 
         var result = new Model(Path.GetFileName(filename));
 
+        Console.WriteLine("Textures:");
+        foreach (var tex in model.Textures) {
+            Console.WriteLine($"{tex.ToString()} {tex.Filename}");
+        }
+
         Console.WriteLine("Materials:");
         foreach (var mat in model.Materials) {
+            Console.WriteLine(mat.TextureAmbient.ToString());
             result.add_material(new(
+                mat.Name,
                 ambient: (mat.ColorAmbient.R, mat.ColorAmbient.G, mat.ColorAmbient.B),
                 specular: (mat.ColorSpecular.R, mat.ColorSpecular.G, mat.ColorSpecular.B),
                 diffuse: (mat.ColorDiffuse.R, mat.ColorDiffuse.G, mat.ColorDiffuse.B),

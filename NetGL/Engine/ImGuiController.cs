@@ -37,7 +37,8 @@ public class ImGuiController : IDisposable {
     /// <summary>
     /// Constructs a new ImGuiController.
     /// </summary>
-    public ImGuiController(int width, int height, float scaleFactorX = 1, float scaleFactorY = 1)
+    public ImGuiController(int width, int height, float scaleFactorX = 1, float scaleFactorY = 1,
+        string font = "")
     {
         _windowWidth = width;
         _windowHeight = height;
@@ -57,11 +58,14 @@ public class ImGuiController : IDisposable {
         IntPtr context = ImGui.CreateContext();
         ImGui.SetCurrentContext(context);
         var io = ImGui.GetIO();
-        io.Fonts.AddFontDefault();
+        io.Fonts.AddFontFromFileTTF(font, 13.5f);
+
+        // io.Fonts.AddFontDefault();
 
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
         // Enable Docking
-        io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        //io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.DpiEnableScaleFonts;
+        io.ConfigMacOSXBehaviors = true;
 
         CreateDeviceResources();
 
@@ -242,8 +246,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
 
     readonly List<char> PressedChars = new List<char>();
 
-    private void UpdateImGuiInput(GameWindow wnd)
-    {
+    private void UpdateImGuiInput(GameWindow wnd) {
         ImGuiIOPtr io = ImGui.GetIO();
 
         MouseState MouseState = wnd.MouseState;
@@ -256,28 +259,28 @@ outputColor = color * texture(in_fontTexture, texCoord);
         io.MouseDown[4] = MouseState[MouseButton.Button5];
 
         var screenPoint = new Vector2i((int)MouseState.X, (int)MouseState.Y);
-        var point = screenPoint;//wnd.PointToClient(screenPoint);
+        var point = screenPoint; //wnd.PointToClient(screenPoint);
         io.MousePos = new System.Numerics.Vector2(point.X, point.Y);
 
-        foreach (Keys key in Enum.GetValues(typeof(Keys)))
-        {
-            if (key == Keys.Unknown)
-            {
-                continue;
+        if (io.WantTextInput) {
+            foreach (Keys key in Enum.GetValues(typeof(Keys))) {
+                if (key == Keys.Unknown) {
+                    continue;
+                }
+
+                io.AddKeyEvent(TranslateKey(key), KeyboardState.IsKeyDown(key));
             }
-            io.AddKeyEvent(TranslateKey(key), KeyboardState.IsKeyDown(key));
-        }
 
-        foreach (var c in PressedChars)
-        {
-            io.AddInputCharacter(c);
-        }
-        PressedChars.Clear();
+            foreach (var c in PressedChars) {
+                io.AddInputCharacter(c);
+            }
 
-        io.KeyCtrl = KeyboardState.IsKeyDown(Keys.LeftControl) || KeyboardState.IsKeyDown(Keys.RightControl);
-        io.KeyAlt = KeyboardState.IsKeyDown(Keys.LeftAlt) || KeyboardState.IsKeyDown(Keys.RightAlt);
-        io.KeyShift = KeyboardState.IsKeyDown(Keys.LeftShift) || KeyboardState.IsKeyDown(Keys.RightShift);
-        io.KeySuper = KeyboardState.IsKeyDown(Keys.LeftSuper) || KeyboardState.IsKeyDown(Keys.RightSuper);
+            io.KeyCtrl = KeyboardState.IsKeyDown(Keys.LeftControl) || KeyboardState.IsKeyDown(Keys.RightControl);
+            io.KeyAlt = KeyboardState.IsKeyDown(Keys.LeftAlt) || KeyboardState.IsKeyDown(Keys.RightAlt);
+            io.KeyShift = KeyboardState.IsKeyDown(Keys.LeftShift) || KeyboardState.IsKeyDown(Keys.RightShift);
+            io.KeySuper = KeyboardState.IsKeyDown(Keys.LeftSuper) || KeyboardState.IsKeyDown(Keys.RightSuper);
+        } else PressedChars.Clear();
+
     }
 
     internal void PressChar(char keyChar)

@@ -28,7 +28,7 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
         shader.set_camera_position(camera_pos);
 
         if (entity.try_get<MaterialComponent>(out var mat)) {
-            shader.set_material(mat!.color);
+            shader.set_material(mat!.material);
         }
 
         var lights = entity.get_all<Light>(Entity.EntityRelationship.ParentsRecursive);
