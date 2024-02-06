@@ -163,9 +163,9 @@ public class Shader {
     public void set_game_time(in float game_time) => set_uniform("game_time", game_time);
 
     public void set_material(Material material) {
-        set_uniform("material.ambient", material.ambient.as_vector3());
-        set_uniform("material.diffuse", material.diffuse.as_vector3());
-        set_uniform("material.specular", material.specular.as_vector3());
+        set_uniform("material.ambient", material.ambient.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
+        set_uniform("material.diffuse", material.diffuse.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
+        set_uniform("material.specular", material.specular.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
         set_uniform("material.shininess", material.shininess);
     }
 
@@ -180,14 +180,14 @@ public class Shader {
         foreach (var light in lights) {
             switch (light) {
                 case AmbientLight ambient:
-                    set_uniform("ambient_light", ambient.data.color.as_vector3());
+                    set_uniform("ambient_light", ambient.data.color.reinterpret_cast<Color,Vector3>());
                     break;
                 case DirectionalLight directional:
                     if(directional.data.direction.LengthSquared != 0) directional.data.direction.Normalize();
                     set_uniform($"directional_light[{num_directional_lights}].direction", directional.data.direction);
-                    set_uniform($"directional_light[{num_directional_lights}].ambient", directional.data.ambient.as_vector3());
-                    set_uniform($"directional_light[{num_directional_lights}].specular", directional.data.specular.as_vector3());
-                    set_uniform($"directional_light[{num_directional_lights}].diffuse", directional.data.diffuse.as_vector3());
+                    set_uniform($"directional_light[{num_directional_lights}].ambient", directional.data.ambient.reinterpret_cast<Color, Vector3>());
+                    set_uniform($"directional_light[{num_directional_lights}].specular", directional.data.specular.reinterpret_cast<Color, Vector3>());
+                    set_uniform($"directional_light[{num_directional_lights}].diffuse", directional.data.diffuse.reinterpret_cast<Color, Vector3>());
                     num_directional_lights++;
                     break;
                 case PointLight pointlight:
@@ -255,7 +255,7 @@ public class Shader {
     /// </summary>
     /// <param name="name">The name of the uniform</param>
     /// <param name="data">The data to set</param>
-    protected void set_uniform(string name, Vector3 data) {
+    protected void set_uniform(string name, OpenTK.Mathematics.Vector3 data) {
         GL.UseProgram(handle);
         if (has_uniform(name)) {
             GL.Uniform3(uniform_locations[name], data);
@@ -275,12 +275,10 @@ public class Shader {
         }
     }
 
-    protected void set_uniform(string name, Color4i data) {
+    protected void set_uniform(string name, Color data) {
         if (has_uniform(name)) {
             GL.UseProgram(handle);
-            GL.Uniform4(uniform_locations[name], (Color4)data);
-
-            //Console.WriteLine((Color4)data);
+            GL.Uniform4(uniform_locations[name], data.reinterpret_cast<Color, OpenTK.Mathematics.Vector4>());
         } else {
             Console.WriteLine($"{this.name} doesn't have uniform {name}!");
         }

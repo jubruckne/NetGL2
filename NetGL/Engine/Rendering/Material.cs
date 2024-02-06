@@ -5,12 +5,12 @@ namespace NetGL;
 public class Material {
     public readonly string name;
     public Texture? ambient_texture;
-    public Color4 ambient;
-    public Color4 diffuse;
-    public Color4 specular;
+    public Color ambient;
+    public Color diffuse;
+    public Color specular;
     public float shininess;
 
-    public Material(in string name, in Color4 ambient, in Color4 diffuse, in Color4 specular, in float shininess) {
+    public Material(in string name, in Color ambient, in Color diffuse, in Color specular, in float shininess) {
         this.name = name;
         this.ambient = ambient;
         this.ambient_texture = null;
@@ -26,9 +26,9 @@ public class Material {
         in (float r, float g, float b) diffuse,
         in float shininess) {
         this.name = name;
-        this.ambient = new Color4(ambient.r, ambient.g, ambient.b, 1f);
-        this.specular = new Color4(specular.r, specular.g, specular.b, 1f);
-        this.diffuse = new Color4(diffuse.r, diffuse.g, diffuse.b, 1f);
+        this.ambient = new Color(ambient.r, ambient.g, ambient.b, 1f);
+        this.specular = new Color(specular.r, specular.g, specular.b, 1f);
+        this.diffuse = new Color(diffuse.r, diffuse.g, diffuse.b, 1f);
         this.shininess = shininess;
     }
 
@@ -37,7 +37,7 @@ public class Material {
             return name;
 
         return
-            $"ambient:({ambient.R},{ambient.G},{ambient.B}) diffuse:({diffuse.R}, {diffuse.G}, {diffuse.B}), specular:({specular.R}, {specular.G}, {specular.B}), shininess:{shininess}";
+            $"ambient:{ambient}, diffuse:{diffuse}, specular:{specular}, shininess:{shininess}";
     }
 
     public bool Equals(Material other) {

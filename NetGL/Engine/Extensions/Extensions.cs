@@ -47,16 +47,4 @@ public static class VectorExt {
         return ref MemoryMarshal.Cast<Vector4, System.Numerics.Vector4>(MemoryMarshal.CreateSpan(ref vector, 1))[0];
     }
 
-    public static ref Vector3 as_vector3(ref this Color4 color) {
-        return ref MemoryMarshal.Cast<Color4, Vector3>(MemoryMarshal.CreateSpan(ref color, 1))[0];
-    }
-
-
-    public static ref System.Numerics.Vector4 as_sys_num_ref(ref this Color4 color) {
-        return ref MemoryMarshal.Cast<Color4, System.Numerics.Vector4>(MemoryMarshal.CreateSpan(ref color, 1))[0];
-    }
-
-    public static ref System.Numerics.Vector3 as_sys_num_ref3(ref this Color4 color) {
-        return ref MemoryMarshal.Cast<Color4, System.Numerics.Vector3>(MemoryMarshal.CreateSpan(ref color, 1))[0];
-    }
 }

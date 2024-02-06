@@ -1,3 +1,4 @@
+using BulletSharp;
 using ImGuiNET;
 using NetGL;
 using NetGL.ECS;
@@ -63,6 +64,11 @@ public class Engine: GameWindow {
 
     protected override void OnLoad() {
         base.OnLoad();
+
+        Physics phy = new();
+        phy.World.AddRigidBody(new RigidBody(new RigidBodyConstructionInfo(12, new DefaultMotionState(), new BoxShape(1f))));
+        phy.Update(0.1f);
+        Console.WriteLine(phy.World.NumCollisionObjects);
 /*
         var desc = VertexDescriptor.make(NetGL.dev.VertexAttribute.Position, NetGL.dev.VertexAttribute.Normal);
         desc.allocate(100);
@@ -73,9 +79,9 @@ public class Engine: GameWindow {
         world.add_ambient_light(0.5f, 0.5f, 0.5f);
         world.add_directional_light(
             direction:(0, 0, -1),
-            ambient:new(55, 55, 55, 255),
-            diffuse:new(0.75f, 0.6f, 0.60f, 1f),
-            specular:new(0.25f, 0.25f, 0.2f, 1f)
+            ambient:(0.25f, 0.25f, 0.25f),
+            diffuse:(0.75f, 0.6f, 0.60f),
+            specular:(0.25f, 0.25f, 0.2f)
             );
 
         Entity player = world.create_entity("Player");
@@ -216,15 +222,15 @@ public class Engine: GameWindow {
     }
 
     private void add_entities_to_gui(Entity entity) {
-        ImGui.PushStyleColor(ImGuiCol.Header, Color4i.random_for(entity.name).to_int());
+        ImGui.PushStyleColor(ImGuiCol.Header, Color.random_for(entity.name).to_int());
         if (ImGui.TreeNodeEx(
                 $"{entity.name}##{entity.get_path()}",
                 entity.name == "World" | entity.name == "74656"
                     ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
                     : ImGuiTreeNodeFlags.Framed, entity.name)) {
-            ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Color4(65, 55, 65, 255).to_int());
-            ImGui.PushStyleColor(ImGuiCol.HeaderActive, new Color4(65, 55, 65, 255).to_int());
-            ImGui.PushStyleColor(ImGuiCol.Header, new Color4(30, 25, 28, 255).to_int());
+            ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Color.make(55, 65, 255).to_int());
+            ImGui.PushStyleColor(ImGuiCol.HeaderActive, Color.make(65, 55, 65, 255).to_int());
+            ImGui.PushStyleColor(ImGuiCol.Header, Color.make(30, 25, 28, 255).to_int());
             ImGui.Unindent();
 
             foreach (var comp in entity.components) {
@@ -302,11 +308,11 @@ public class Engine: GameWindow {
                         ImGui.Unindent();
 
                         ImGui.ColorEdit3($"Ambient##{entity}.{mat.name}.ambient",
-                            ref mat.material.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                            ref mat.material.ambient.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
                         ImGui.ColorEdit3($"Diffuse##{entity}.{mat.name}.diffuse",
-                            ref mat.material.diffuse.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                            ref mat.material.diffuse.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
                         ImGui.ColorEdit3($"Specular##{entity}.{mat.name}.specular",
-                            ref mat.material.specular.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                            ref mat.material.specular.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
                         ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.material.shininess, -1, 1);
 
                         ImGui.Indent();
@@ -316,16 +322,16 @@ public class Engine: GameWindow {
                     if (ImGui.TreeNodeEx($"{amb.name}##{entity.name}_{amb.name}_node", ImGuiTreeNodeFlags.DefaultOpen)) {
                         ImGui.Unindent();
                         ImGui.ColorEdit3($"Ambient##{entity}.{comp.name}.ambi.color",
-                            ref amb.data.color.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
+                            ref amb.data.color.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.Indent();
                         ImGui.TreePop();
                     }
                 } else if (comp is DirectionalLight dir) {
                     if (ImGui.TreeNodeEx($"{dir.name}##{entity.name}_{dir.name}_node", ImGuiTreeNodeFlags.DefaultOpen)) {
                         ImGui.Unindent();
-                        ImGui.ColorEdit3($"Ambient##{entity}.{comp.name}.ambient", ref dir.data.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
-                        ImGui.ColorEdit3($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
-                        ImGui.ColorEdit3($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
+                        ImGui.ColorEdit3($"Ambient##{entity}.{comp.name}.ambient", ref dir.data.ambient.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
+                        ImGui.ColorEdit3($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
+                        ImGui.ColorEdit3($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.SliderFloat3($"Direction→##{entity}.{comp.name}.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
                         ImGui.Indent();
                         ImGui.TreePop();

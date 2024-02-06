@@ -33,6 +33,15 @@
       <None Update="runtimes\osx-arm64\native\libassimp.dylib">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="runtimes\osx-arm64\native\libbulletc.dylib">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="BulletSharp">
+        <HintPath>..\..\BulletSharpPInvoke\BulletSharp\bin\Debug\net8.0\BulletSharp.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 <!--
