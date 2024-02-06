@@ -47,6 +47,7 @@ public class Viewport {
         this.width = width;
         this.height = height;
         resized = true;
+
     }
 
     public void clear() {
