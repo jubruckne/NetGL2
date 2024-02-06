@@ -131,9 +131,7 @@ public class Engine: GameWindow {
         if (cursor_state_last_switch >= 1f) {
             if (KeyboardState.IsKeyDown(Keys.Tab)) {
                 CursorState = CursorState == CursorState.Normal ? CursorState.Grabbed : CursorState.Normal;
-                if (CursorState == CursorState.Normal) {
-                    UpdateFrequency = 60;
-                }
+                UpdateFrequency = CursorState == CursorState.Normal ? 30: 0;
                 Title = $"fps: {frame_count:F0}, last_frame: {e.Time * 1000:F1} - {CursorState}";
                 cursor_state_last_switch = 0f;
                 world.for_all_components_with<Camera>(c1 => c1.enable_input = CursorState == CursorState.Grabbed);
