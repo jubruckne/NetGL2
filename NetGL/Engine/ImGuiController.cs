@@ -38,8 +38,7 @@ public class ImGuiController : IDisposable {
     /// Constructs a new ImGuiController.
     /// </summary>
     public ImGuiController(int width, int height, float scaleFactorX = 1, float scaleFactorY = 1,
-        string font = "")
-    {
+        string font = "") {
         _windowWidth = width;
         _windowHeight = height;
 
@@ -53,18 +52,29 @@ public class ImGuiController : IDisposable {
 
         KHRDebugAvailable = (major == 4 && minor >= 3) || IsExtensionSupported("KHR_debug");
 
-        CompatibilityProfile = (GL.GetInteger((GetPName)All.ContextProfileMask) & (int)All.ContextCompatibilityProfileBit) != 0;
+        CompatibilityProfile =
+            (GL.GetInteger((GetPName)All.ContextProfileMask) & (int)All.ContextCompatibilityProfileBit) != 0;
 
         IntPtr context = ImGui.CreateContext();
         ImGui.SetCurrentContext(context);
         var io = ImGui.GetIO();
-        io.Fonts.AddFontFromFileTTF(font, 13.5f);
+        ImFontGlyphRangesBuilderPtr builder;
+        unsafe {
+            var b = ImGuiNative.ImFontGlyphRangesBuilder_ImFontGlyphRangesBuilder();
+            builder = new ImFontGlyphRangesBuilderPtr(b);
+        }
+
+        builder.AddChar('\u2192');
+        builder.AddRanges(io.Fonts.GetGlyphRangesDefault());
+        builder.BuildRanges(out var glyph_ranges);
+        var fnt = io.Fonts.AddFontFromFileTTF(font, 17f, null, glyph_ranges.Address<ImVector>(0));
+        fnt.ConfigData.RasterizerDensity = 2f;
 
         // io.Fonts.AddFontDefault();
 
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
         // Enable Docking
-        //io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.DpiEnableScaleFonts;
+        // io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.DpiEnableScaleFonts;
         io.ConfigMacOSXBehaviors = true;
 
         CreateDeviceResources();
@@ -248,7 +258,6 @@ outputColor = color * texture(in_fontTexture, texCoord);
 
     private void UpdateImGuiInput(GameWindow wnd) {
         ImGuiIOPtr io = ImGui.GetIO();
-
         MouseState MouseState = wnd.MouseState;
         KeyboardState KeyboardState = wnd.KeyboardState;
 
@@ -280,12 +289,12 @@ outputColor = color * texture(in_fontTexture, texCoord);
             io.KeyShift = KeyboardState.IsKeyDown(Keys.LeftShift) || KeyboardState.IsKeyDown(Keys.RightShift);
             io.KeySuper = KeyboardState.IsKeyDown(Keys.LeftSuper) || KeyboardState.IsKeyDown(Keys.RightSuper);
         } else PressedChars.Clear();
-
     }
 
     internal void PressChar(char keyChar)
     {
-        PressedChars.Add(keyChar);
+        if(ImGui.GetIO().WantTextInput)
+            PressedChars.Add(keyChar);
     }
 
     internal void MouseScroll(Vector2 offset)

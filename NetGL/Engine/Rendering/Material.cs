@@ -4,6 +4,7 @@ namespace NetGL;
 
 public class Material {
     public readonly string name;
+    public Texture? ambient_texture;
     public Color4 ambient;
     public Color4 diffuse;
     public Color4 specular;
@@ -12,6 +13,7 @@ public class Material {
     public Material(in string name, in Color4 ambient, in Color4 diffuse, in Color4 specular, in float shininess) {
         this.name = name;
         this.ambient = ambient;
+        this.ambient_texture = null;
         this.diffuse = diffuse;
         this.specular = specular;
         this.shininess = shininess;

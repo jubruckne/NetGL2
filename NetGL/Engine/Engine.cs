@@ -56,7 +56,7 @@ public class Engine: GameWindow {
         GL.DepthFunc(DepthFunction.Less);
 
         world = new World();
-        if (debug) handler_imgui = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2, "/Users/julia/Library/Fonts/FiraCodeNerdFontMono-Retina.ttf");
+        if (debug) handler_imgui = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2, "/System/Library/Fonts/Supplemental/Arial Unicode.ttf");
     }
 
     protected override void OnLoad() {
@@ -70,8 +70,6 @@ public class Engine: GameWindow {
         return;*/
         world.add_ambient_light(0.5f, 0.4f, 0.3f);
         world.add_directional_light((0, 0, -1), Color4.Aqua, Color4.Bisque, Color4.Gold);
-
-        Model model = Model.from_file("1701d.fbx");
 
         Entity player = world.create_entity("Player");
         player.transform.position = (0, 0, 0);
@@ -100,8 +98,8 @@ public class Engine: GameWindow {
         rect.add_material(Material.Chrome);
         Console.WriteLine("");
 
-        Entity entd = world.create_model("1701-D", Model.from_file("1701d.fbx"));
-        entd.transform.position = (-.17f, 0.1f, -.8f);
+        Entity entd = world.create_model("74656", Model.from_file("74656.glb")); // "1701d.fbx"));
+        entd.transform.position = (-.17f, 0.1f, -.5f);
         entd.transform.attitude.yaw = -105f;
         entd.transform.attitude.pitch = -5f;
         entd.transform.attitude.roll = 2.5f;
@@ -134,21 +132,15 @@ public class Engine: GameWindow {
 
         if (cursor_state_last_switch >= 1f) {
             if (KeyboardState.IsKeyDown(Keys.Tab)) {
-                CursorState = CursorState == CursorState.Normal ? CursorState.Grabbed : CursorState.Normal;
-                UpdateFrequency = CursorState == CursorState.Normal ? 30: 0;
-                Title = $"fps: {frame_count:F0}, last_frame: {e.Time * 1000:F1} - {CursorState}";
+                grabbed = !grabbed;
                 cursor_state_last_switch = 0f;
-                world.for_all_components_with<Camera>(c1 => c1.enable_input = CursorState == CursorState.Grabbed);
             } else if (CursorState == CursorState.Normal) {
                 if (KeyboardState.IsKeyDown(Keys.A) |
                     KeyboardState.IsKeyDown(Keys.S) |
                     KeyboardState.IsKeyDown(Keys.D) |
                     KeyboardState.IsKeyDown(Keys.W)) {
-                    CursorState = CursorState.Grabbed;
-                    UpdateFrequency = 0;
-                    Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
-                    cursor_state_last_switch = 0f;
-                    world.for_all_components_with<Camera>(c1 => c1.enable_input = CursorState == CursorState.Grabbed);
+
+                    grabbed = true;
                 }
             }
         } else cursor_state_last_switch += delta_time;
@@ -181,6 +173,7 @@ public class Engine: GameWindow {
     }
 
     private void render_ui() {
+        ImGui.ShowMetricsWindow();
         // ImGui.DockSpaceOverViewport(ImGui.GetMainViewport());
         ImGui.Begin("Entities",
             CursorState == CursorState.Grabbed
@@ -237,11 +230,11 @@ public class Engine: GameWindow {
                         ImGui.Spacing();
 
                         var attitudeDirection = t.attitude.direction;
-                        ImGui.DragFloat3($"Direction\u20D7{entity.name}.direction", ref attitudeDirection.as_sys_num_ref(), 0f, -1, 1, "%.1f",
+                        ImGui.DragFloat3($"Direction→##{entity.name}.direction", ref attitudeDirection.as_sys_num_ref(), 0f, -1, 1, "%.1f",
                             ImGuiSliderFlags.NoInput);
 
                         var attitudeUp = t.attitude.up;
-                        ImGui.DragFloat3($"Up##{entity.name}.up", ref attitudeUp.as_sys_num_ref(), 0f, -1, 1, "%.1f",
+                        ImGui.DragFloat3($"Up→##{entity.name}.up", ref attitudeUp.as_sys_num_ref(), 0f, -1, 1, "%.1f",
                             ImGuiSliderFlags.NoInput);
 
                         //ImGui.Spacing();
@@ -316,7 +309,7 @@ public class Engine: GameWindow {
                         ImGui.ColorEdit3($"Ambient##{entity}.{comp.name}.ambient", ref dir.data.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.ColorEdit3($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.ColorEdit3($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
-                        ImGui.SliderFloat3($"Direction##{entity}.{comp.name}.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
+                        ImGui.SliderFloat3($"Direction→##{entity}.{comp.name}.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
                         ImGui.Indent();
                         ImGui.TreePop();
                     }
@@ -354,10 +347,24 @@ public class Engine: GameWindow {
         if (debug) handler_imgui.WindowResized(ClientSize.X, ClientSize.Y);
     }
 
+    private bool grabbed {
+        get => CursorState == CursorState.Grabbed;
+        set {
+            if (value) {
+                CursorState = CursorState.Grabbed;
+                UpdateFrequency = 0;
+                world.for_all_components_with<Camera>(c1 => c1.enable_input = true);
+            } else {
+                CursorState = CursorState.Normal;
+                UpdateFrequency = 30;
+                world.for_all_components_with<Camera>(c1 => c1.enable_input = false);
+            }
+        }
+    }
+
     protected override void OnTextInput(TextInputEventArgs e) {
         base.OnTextInput(e);
-
-        if(debug) handler_imgui.PressChar((char)e.Unicode);
+        if(debug && !grabbed) handler_imgui.PressChar((char)e.Unicode);
     }
 
     protected override void OnMouseWheel(MouseWheelEventArgs e) {

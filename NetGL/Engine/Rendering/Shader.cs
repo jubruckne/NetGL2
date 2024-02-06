@@ -174,7 +174,6 @@ public class Shader {
     }
 
     public void set_light(IEnumerable<Light> lights) {
-        int num_ambient_lights = 0;
         int num_directional_lights = 0;
         int num_point_lights = 0;
 
@@ -182,7 +181,6 @@ public class Shader {
             switch (light) {
                 case AmbientLight ambient:
                     set_uniform("ambient_light", ambient.data.color.as_vector3());
-                    num_ambient_lights++;
                     break;
                 case DirectionalLight directional:
                     if(directional.data.direction.LengthSquared != 0) directional.data.direction.Normalize();
@@ -193,6 +191,7 @@ public class Shader {
                     num_directional_lights++;
                     break;
                 case PointLight pointlight:
+                    num_point_lights++;
                     break;
                 default:
                     throw new NotImplementedException(light.name);
@@ -322,5 +321,4 @@ public class Shader {
         Shader.current_shader = null;
         GL.UseProgram(0);
     }
-
 }

@@ -49,17 +49,16 @@ public class Model {
         //importer.SetConfig(new MeshVertexLimitConfig(165000));
 
         importer.Scale = 0.1f;
-        var model = importer.ImportFile(filename, PostProcessSteps.EmbedTextures | /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
+        var assimp = importer.ImportFile(filename, PostProcessSteps.EmbedTextures | /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
+        foreach (var tex in assimp.Textures) {
+            Console.WriteLine(tex.Filename);
+            Console.WriteLine(tex.Width + ":" + tex.Height);
+        }
 
         var result = new Model(Path.GetFileName(filename));
 
-        Console.WriteLine("Textures:");
-        foreach (var tex in model.Textures) {
-            Console.WriteLine($"{tex.ToString()} {tex.Filename}");
-        }
-
         Console.WriteLine("Materials:");
-        foreach (var mat in model.Materials) {
+        foreach (var mat in assimp.Materials) {
             Console.WriteLine(mat.TextureAmbient.ToString());
             result.add_material(new(
                 mat.Name,
@@ -67,12 +66,24 @@ public class Model {
                 specular: (mat.ColorSpecular.R, mat.ColorSpecular.G, mat.ColorSpecular.B),
                 diffuse: (mat.ColorDiffuse.R, mat.ColorDiffuse.G, mat.ColorDiffuse.B),
                 shininess: mat.Shininess));
+            if (mat.HasTextureDiffuse) {
+                Console.WriteLine(mat.TextureDiffuse.TextureIndex);
+                Console.WriteLine(mat.TextureDiffuse.TextureType);
+                Console.WriteLine(mat.TextureDiffuse.ToString());
+                Console.WriteLine(mat.TextureDiffuse.Flags);
+                Console.WriteLine(mat.TextureDiffuse.FilePath);
+                Console.WriteLine(mat.TextureDiffuse.UVIndex);
+                Console.WriteLine(mat.TextureDiffuse.WrapModeU);
+                Console.WriteLine(mat.TextureDiffuse.WrapModeV);
+                Console.WriteLine(mat.TextureDiffuse.Operation);
+            }
         }
 
-        foreach (var mesh in model.Meshes) {
+        foreach (var mesh in assimp.Meshes) {
             Console.WriteLine();
             Console.WriteLine("Mesh: " + mesh.Name);
-            Console.WriteLine("Material: " + model.Materials[mesh.MaterialIndex].Name);
+            Console.WriteLine("Material: " + assimp.Materials[mesh.MaterialIndex].Name);
+            Console.WriteLine("MaterialIndex: " + mesh.MaterialIndex);
 
             var vb_pos = new VertexBuffer<Assimp.Vector3D>(mesh.Vertices, VertexAttribute.Position);
             vb_pos.upload();
