@@ -1,6 +1,7 @@
 using ImGuiNET;
 using NetGL;
 using NetGL.ECS;
+using NetGL.Engine;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
@@ -14,6 +15,7 @@ public class Engine: GameWindow {
     protected readonly World world;
     protected readonly ImGuiController handler_imgui = null!;
 
+    private RevolvingList<float> frame_times = new(100);
     protected float game_time;
     protected int frame;
 
@@ -154,7 +156,10 @@ public class Engine: GameWindow {
         //Console.WriteLine($"frame:{frame}, {GC.CollectionCount(2)}");
 
         frame_time += e.Time;
-        if (frame_time >= 1.0) {
+
+        if (frame_time >= 1f) {
+            frame_times.add((float)(frame_time/frame_count) * 10f);
+
             Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
             frame_count = 0;
             frame_time = 0;
@@ -188,6 +193,12 @@ public class Engine: GameWindow {
         ImGui.PushStyleVar(ImGuiStyleVar.Alpha, CursorState == CursorState.Grabbed ? 0.35f : 1f);
 
         ImGui.StyleColorsClassic();
+
+        if (frame_times.count != 0) {
+            ImGui.Text("Frame Time (ms):");
+            ImGui.PlotLines($"##frame: {frame_times.last * 100f:F2}  ", ref frame_times.as_span()[0], frame_times.count);
+            ImGui.PlotHistogram($"##fradme: {frame_times.last * 100f:F2}  ", ref frame_times.as_span()[0], frame_times.count);
+        }
 
         add_entities_to_gui(world);
 
