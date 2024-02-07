@@ -70,16 +70,20 @@ public class Engine: GameWindow {
         desc.buffer.
 
         return;*/
-        world.add_ambient_light(0.1f, 0.1f, 0.1f);
-        world.add_directional_light((-0.45f, -0.25f, 0.25f), Color4.Black, new Color4(0.25f, 0.1f, 0.1f, 1f), new Color4(0.25f, 0.25f, 0.1f, 1f));
+        world.add_ambient_light(0.5f, 0.5f, 0.5f);
+        world.add_directional_light(
+            direction:(0, 0, -1),
+            ambient:new(55, 55, 55, 255),
+            diffuse:new(0.75f, 0.6f, 0.60f, 1f),
+            specular:new(0.25f, 0.25f, 0.2f, 1f)
+            );
 
         Entity player = world.create_entity("Player");
-        player.transform.position = (0, 0, 0);
+        player.transform.position = (0, 0, 10);
         player.transform.attitude.direction = (0, 0, -1);
-        player.add_first_person_camera(Viewport.Gameplay, field_of_view:75f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false);
+        player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false);
 
-        /*
-        Entity hud = world.create_entity("Hud");
+        /* Entity hud = world.create_entity("Hud");
         var oc2 = hud.add_orthographic_camera(Viewport.Hud.copy("O2", x:25, y:25), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
         var oc4 = hud.add_orthographic_camera(Viewport.Hud.copy("04", x:25, y:350), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
 
@@ -87,22 +91,21 @@ public class Engine: GameWindow {
         oc2.transform.attitude.direction = (0, 0, 0);
 
         oc4.transform.position = (0, 0, -1);
-        oc4.transform.attitude.direction = (0, 0, 0);
-*/
+        oc4.transform.attitude.direction = (0, 0, 0); */
+
         Entity ball = world.create_sphere_uv("Ball");
         ball.transform.position = (-5, -2, -8);
 
-        //Entity box = world.create_cube("Box");
-        //box.transform.position = (-2, -2, -8);
-
         Entity rect = world.create_rectangle("Rectangle", divisions:16);
-        rect.transform.position = (-.5f, 0.4f, -1.3f);
+        rect.transform.position = (0, 0, 0);
         rect.add_material(Material.Chrome);
         Console.WriteLine("");
 
-        Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
-        entd.transform.position = (-.17f, 0.1f, -.5f);
-        entd.transform.attitude.yaw = -105f;
+       // Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
+        Entity entd = world.create_model("74656", Model.from_file("DragonAttenuation.glb"));
+
+        entd.transform.position = (-4, 0, 0);
+        entd.transform.attitude.yaw = -120;
         entd.transform.attitude.pitch = -5f;
         entd.transform.attitude.roll = 2.5f;
 

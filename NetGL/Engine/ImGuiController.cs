@@ -56,7 +56,10 @@ public class ImGuiController : IDisposable {
             (GL.GetInteger((GetPName)All.ContextProfileMask) & (int)All.ContextCompatibilityProfileBit) != 0;
 
         var context = ImGui.CreateContext();
+
         ImGui.SetCurrentContext(context);
+        ImGuizmo.SetImGuiContext(context);
+
         var io = ImGui.GetIO();
         ImFontGlyphRangesBuilderPtr builder;
         unsafe {

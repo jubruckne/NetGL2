@@ -48,7 +48,7 @@ public class Model {
         importer.SetConfig(new NormalSmoothingAngleConfig(66.0f));
         //importer.SetConfig(new MeshVertexLimitConfig(165000));
 
-        importer.Scale = 0.01f;
+        importer.Scale = 3f;
         var assimp = importer.ImportFile(filename, PostProcessSteps.EmbedTextures | /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
         foreach (var tex in assimp.Textures) {
             Console.WriteLine(tex.Filename);
@@ -59,24 +59,16 @@ public class Model {
 
         Console.WriteLine("Materials:");
         foreach (var mat in assimp.Materials) {
-            Console.WriteLine(mat.TextureAmbient.ToString());
+            Console.WriteLine($"{mat.Name}: shniy:{mat.Shininess}, str: {mat.ShininessStrength}");
             result.add_material(new(
                 mat.Name,
                 ambient: (mat.ColorAmbient.R, mat.ColorAmbient.G, mat.ColorAmbient.B),
                 specular: (mat.ColorSpecular.R, mat.ColorSpecular.G, mat.ColorSpecular.B),
                 diffuse: (mat.ColorDiffuse.R, mat.ColorDiffuse.G, mat.ColorDiffuse.B),
-                shininess: mat.Shininess));
+                shininess: mat.Shininess / 1000f + 0.0001f));
 
             if (mat.HasTextureDiffuse) {
                 Console.WriteLine(mat.TextureDiffuse.TextureIndex);
-                Console.WriteLine(mat.TextureDiffuse.TextureType);
-                Console.WriteLine(mat.TextureDiffuse.ToString());
-                Console.WriteLine(mat.TextureDiffuse.Flags);
-                Console.WriteLine(mat.TextureDiffuse.FilePath);
-                Console.WriteLine(mat.TextureDiffuse.UVIndex);
-                Console.WriteLine(mat.TextureDiffuse.WrapModeU);
-                Console.WriteLine(mat.TextureDiffuse.WrapModeV);
-                Console.WriteLine(mat.TextureDiffuse.Operation);
             }
         }
 
