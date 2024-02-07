@@ -13,6 +13,7 @@ public class DirectionalLight: Light<DirectionalLight.Data>, IComponent<AmbientL
 
         public Data(in Vector3 direction, in Color4 ambient, in Color4 diffuse, in Color4 specular) {
             this.direction = direction;
+            this.direction.Normalize();
             this.ambient = ambient;
             this.diffuse = diffuse;
             this.specular = specular;

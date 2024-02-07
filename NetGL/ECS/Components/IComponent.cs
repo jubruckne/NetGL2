@@ -14,6 +14,8 @@ public interface IRenderableComponent {
 public interface IComponent {
     Entity entity { get; }
     string name { get; }
+
+    string get_path() => $"{entity.get_path()}:{name}";
 }
 
 public interface IComponent<T>: IComponent where T: IComponent<T> {

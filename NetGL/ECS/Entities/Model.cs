@@ -65,7 +65,8 @@ public class Model {
                 ambient: (mat.ColorAmbient.R, mat.ColorAmbient.G, mat.ColorAmbient.B),
                 specular: (mat.ColorSpecular.R, mat.ColorSpecular.G, mat.ColorSpecular.B),
                 diffuse: (mat.ColorDiffuse.R, mat.ColorDiffuse.G, mat.ColorDiffuse.B),
-                shininess: mat.Shininess));
+                shininess: mat.Shininess / 100f + 0.001f));
+
             if (mat.HasTextureDiffuse) {
                 Console.WriteLine(mat.TextureDiffuse.TextureIndex);
                 Console.WriteLine(mat.TextureDiffuse.TextureType);

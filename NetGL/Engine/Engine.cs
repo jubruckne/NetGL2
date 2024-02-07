@@ -1,10 +1,11 @@
+using ImGuiNET;
 using NetGL;
 using NetGL.ECS;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using ImGuiNET;
+using NetGL.Engine;
 using OpenTK.Mathematics;
 using Vector2 = System.Numerics.Vector2;
 
@@ -69,7 +70,7 @@ public class Engine: GameWindow {
 
         return;*/
         world.add_ambient_light(0.5f, 0.4f, 0.3f);
-        world.add_directional_light((0, 0, -1), Color4.Aqua, Color4.Bisque, Color4.Gold);
+        world.add_directional_light((-0.45f, -0.25f, 0.25f), Color4.Aqua, Color4.Bisque, Color4.Gold);
 
         Entity player = world.create_entity("Player");
         player.transform.position = (0, 0, 0);
@@ -173,12 +174,12 @@ public class Engine: GameWindow {
     }
 
     private void render_ui() {
-        ImGui.ShowMetricsWindow();
+        // ImGui.ShowMetricsWindow();
         // ImGui.DockSpaceOverViewport(ImGui.GetMainViewport());
         ImGui.Begin("Entities",
             CursorState == CursorState.Grabbed
-                ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
-                : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar);
+                ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
+                : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar);
         ImGui.SetWindowSize(new Vector2(260, 680));
         ImGui.SetWindowPos(new Vector2(755, 10));
 
@@ -205,7 +206,7 @@ public class Engine: GameWindow {
         ImGui.PushStyleColor(ImGuiCol.Header, Color4i.random_for(entity.name).to_int());
         if (ImGui.TreeNodeEx(
                 $"{entity.name}##{entity.get_path()}",
-                entity.name == "World" | entity.name == "Player"
+                entity.name == "World" | entity.name == "74656"
                     ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
                     : ImGuiTreeNodeFlags.Framed, entity.name)) {
             ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Color4(65, 55, 65, 255).to_int());
@@ -220,8 +221,12 @@ public class Engine: GameWindow {
                     continue;
 
                 if (comp is Transform t) {
-                    if (ImGui.TreeNodeEx($"{t.name}##{entity.name}_{t.name}_node", entity.name == "Player" ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None)) {
+                    if (ImGui.TreeNodeEx($"{t.name}##{entity.name}_{t.name}_node", entity.name == "74656" ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None)) {
                         ImGui.Unindent();
+
+                        //ImGui2.Joystick(25);
+                        ImGuiExtensions.Joystick2(t, 25);
+
                         ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100, "%.1f");
 
                         ImGui.DragFloat3($"Attitude##{entity.name}.attitude",
@@ -280,9 +285,8 @@ public class Engine: GameWindow {
                         ImGui.TreePop();
                     }
                 } else if (comp is MaterialComponent mat) {
-                    if (ImGui.TreeNodeEx($"{mat.name}##{entity.name}_{mat.name}_node", ImGuiTreeNodeFlags.None, mat.name)) {
+                    if (ImGui.TreeNodeEx($"{mat.name}##{entity.name}_{mat.name}_node", ImGuiTreeNodeFlags.None, $"{mat.name.Replace("Component", "")}: {mat.material.name}")) {
                         ImGui.Unindent();
-                        ImGui.Text(mat.name);
 
                         ImGui.ColorEdit3($"Ambient##{entity}.{mat.name}.ambient",
                             ref mat.material.ambient.as_sys_num_ref3(), ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);

@@ -1,10 +1,10 @@
-using ImGuiNET;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System.Diagnostics;
+using ImGuiNET;
 using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
 public class ImGuiController : IDisposable {
@@ -55,7 +55,7 @@ public class ImGuiController : IDisposable {
         CompatibilityProfile =
             (GL.GetInteger((GetPName)All.ContextProfileMask) & (int)All.ContextCompatibilityProfileBit) != 0;
 
-        IntPtr context = ImGui.CreateContext();
+        var context = ImGui.CreateContext();
         ImGui.SetCurrentContext(context);
         var io = ImGui.GetIO();
         ImFontGlyphRangesBuilderPtr builder;
@@ -67,7 +67,7 @@ public class ImGuiController : IDisposable {
         builder.AddChar('\u2192');
         builder.AddRanges(io.Fonts.GetGlyphRangesDefault());
         builder.BuildRanges(out var glyph_ranges);
-        var fnt = io.Fonts.AddFontFromFileTTF(font, 17f, null, glyph_ranges.Address<ImVector>(0));
+        var fnt = io.Fonts.AddFontFromFileTTF(font, 17f, null, glyph_ranges.Data);
         fnt.ConfigData.RasterizerDensity = 2f;
 
         // io.Fonts.AddFontDefault();
@@ -362,7 +362,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
         for (int i = 0; i < draw_data.CmdListsCount; i++)
         {
-            ImDrawListPtr cmd_list = draw_data.CmdLists[i];
+            ImDrawListPtr cmd_list = draw_data.CmdLists[0];
 
             int vertexSize = cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>();
             if (vertexSize > _vertexBufferSize)
@@ -587,8 +587,8 @@ outputColor = color * texture(in_fontTexture, texCoord);
         if (key >= Keys.KeyPad0 && key <= Keys.KeyPad9)
             return key - Keys.KeyPad0 + ImGuiKey.Keypad0;
 
-        if (key >= Keys.F1 && key <= Keys.F24)
-            return key - Keys.F1 + ImGuiKey.F24;
+        if (key >= Keys.F1 && key <= Keys.F12)
+            return key - Keys.F1 + ImGuiKey.F12;
 
         switch (key)
         {
