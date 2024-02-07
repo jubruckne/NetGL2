@@ -48,7 +48,7 @@ public class Model {
         importer.SetConfig(new NormalSmoothingAngleConfig(66.0f));
         //importer.SetConfig(new MeshVertexLimitConfig(165000));
 
-        importer.Scale = 0.1f;
+        importer.Scale = 0.01f;
         var assimp = importer.ImportFile(filename, PostProcessSteps.EmbedTextures | /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
         foreach (var tex in assimp.Textures) {
             Console.WriteLine(tex.Filename);
@@ -65,7 +65,7 @@ public class Model {
                 ambient: (mat.ColorAmbient.R, mat.ColorAmbient.G, mat.ColorAmbient.B),
                 specular: (mat.ColorSpecular.R, mat.ColorSpecular.G, mat.ColorSpecular.B),
                 diffuse: (mat.ColorDiffuse.R, mat.ColorDiffuse.G, mat.ColorDiffuse.B),
-                shininess: mat.Shininess / 100f + 0.001f));
+                shininess: mat.Shininess));
 
             if (mat.HasTextureDiffuse) {
                 Console.WriteLine(mat.TextureDiffuse.TextureIndex);
@@ -81,11 +81,6 @@ public class Model {
         }
 
         foreach (var mesh in assimp.Meshes) {
-            Console.WriteLine();
-            Console.WriteLine("Mesh: " + mesh.Name);
-            Console.WriteLine("Material: " + assimp.Materials[mesh.MaterialIndex].Name);
-            Console.WriteLine("MaterialIndex: " + mesh.MaterialIndex);
-
             var vb_pos = new VertexBuffer<Assimp.Vector3D>(mesh.Vertices, VertexAttribute.Position);
             vb_pos.upload();
             var vb_norm = new VertexBuffer<Assimp.Vector3D>(mesh.Normals, VertexAttribute.Normal);
@@ -106,5 +101,4 @@ public class Model {
     public override string ToString() {
         return $"Model[name:{name}]";
     }
-
 }

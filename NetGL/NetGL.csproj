@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Optimize>true</Optimize>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -23,18 +24,19 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="ECS\Component.cs" />
+      <None Update="runtimes\osx-arm64\native\cimgui.dylib">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="runtimes\osx-arm64\native\cimguizmo.dylib">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="runtimes\osx-arm64\native\libassimp.dylib">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
+<!--
     <ItemGroup>
-      <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\cimgui.dylib" />
-      <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\cimguizmo.dylib" />
-      <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\cimnodes.dylib" />
-      <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\cimplot.dylib" />
-      <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\native\cimgui.dylib" />
-      <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\native\cimguizmo.dylib" />
-      <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\native\cimnodes.dylib" />
-      <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\native\cimplot.dylib" />
       <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\native\libassimp.dylib" />
       <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\native\libglfw.3.dylib" />
     </ItemGroup>
@@ -42,5 +44,6 @@
     <ItemGroup>
       <None Include="bin\Debug\net8.0\runtimes\osx-arm64\native\cimgui.dylib" />
     </ItemGroup>
+-->
 
 </Project>

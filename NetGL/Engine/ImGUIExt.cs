@@ -104,8 +104,8 @@ public static partial class ImGui {
 
             // Adjust rotation based on initial angles and drag displacement
             Vector2 angleChange = (dragVec - (joystick_data.drag_start_mouse_position - centerPos)) / radius * 180f;
-            transform.attitude.yaw = joystick_data.initial_angles.X + angleChange.X * 0.25f;
-            transform.attitude.pitch = joystick_data.initial_angles.Y - angleChange.Y * 0.25f; // Assuming Y-axis inversion for pitch control
+            transform.attitude.yaw = joystick_data.initial_angles.X - angleChange.X * 0.75f;
+            transform.attitude.pitch = joystick_data.initial_angles.Y - angleChange.Y * 0.75f; // Assuming Y-axis inversion for pitch control
         }
 
         ImDrawListPtr drawList = ImGui.GetWindowDrawList();

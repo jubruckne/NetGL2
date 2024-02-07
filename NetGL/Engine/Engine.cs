@@ -68,8 +68,8 @@ public class Engine: GameWindow {
         desc.buffer.
 
         return;*/
-        world.add_ambient_light(0.5f, 0.4f, 0.3f);
-        world.add_directional_light((-0.45f, -0.25f, 0.25f), Color4.Aqua, Color4.Bisque, Color4.Gold);
+        world.add_ambient_light(0.1f, 0.1f, 0.1f);
+        world.add_directional_light((-0.45f, -0.25f, 0.25f), Color4.Black, new Color4(0.25f, 0.1f, 0.1f, 1f), new Color4(0.25f, 0.25f, 0.1f, 1f));
 
         Entity player = world.create_entity("Player");
         player.transform.position = (0, 0, 0);
@@ -98,7 +98,7 @@ public class Engine: GameWindow {
         rect.add_material(Material.Chrome);
         Console.WriteLine("");
 
-        Entity entd = world.create_model("74656", Model.from_file("74656.glb")); // "1701d.fbx"));
+        Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
         entd.transform.position = (-.17f, 0.1f, -.5f);
         entd.transform.attitude.yaw = -105f;
         entd.transform.attitude.pitch = -5f;
