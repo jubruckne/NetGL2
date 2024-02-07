@@ -1,9 +1,7 @@
-using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using ImGuiNET;
 
-namespace ImGuizmoNET
+namespace ImGuiNET
 {
     public static unsafe partial class ImGuizmoNative
     {

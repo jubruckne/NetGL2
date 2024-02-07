@@ -1,10 +1,9 @@
 using System.Numerics;
-using ImGuiNET;
 using NetGL.ECS;
 
-namespace NetGL.Engine;
+namespace ImGuiNET;
 
-public static class ImGuiExtensions {
+public static partial class ImGui {
     private class JoystickData {
         public bool is_dragging;
         public Vector2 initial_angles;

@@ -9,7 +9,7 @@ using System.Text;
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 namespace ImGuiNET
 {
-    public static unsafe partial class ImGui
+    public unsafe partial class ImGui
     {
         public static bool InputText(
             ReadOnlySpan<char> label,

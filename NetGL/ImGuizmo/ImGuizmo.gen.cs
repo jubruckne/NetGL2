@@ -1,10 +1,6 @@
-using System;
 using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Text;
-using ImGuiNET;
 
-namespace ImGuizmoNET
+namespace ImGuiNET
 {
     public static unsafe partial class ImGuizmo
     {

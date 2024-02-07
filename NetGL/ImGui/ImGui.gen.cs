@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ImGuiNET
 {
-    public static unsafe partial class ImGui
+    public unsafe partial class ImGui
     {
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         public static ImGuiPayloadPtr AcceptDragDropPayload(ReadOnlySpan<char> type)

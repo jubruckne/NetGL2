@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ImGuiNET
 {
-    public static unsafe partial class ImGui
+    public unsafe partial class ImGui
     {
         public static bool InputText(
             string label,

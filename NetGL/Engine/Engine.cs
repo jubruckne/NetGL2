@@ -5,7 +5,6 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using NetGL.Engine;
 using OpenTK.Mathematics;
 using Vector2 = System.Numerics.Vector2;
 
@@ -225,7 +224,7 @@ public class Engine: GameWindow {
                         ImGui.Unindent();
 
                         //ImGui2.Joystick(25);
-                        ImGuiExtensions.Joystick2(t, 25);
+                        ImGui.Joystick2(t, 25);
 
                         ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100, "%.1f");
 

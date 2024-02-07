@@ -1,4 +1,4 @@
-namespace ImGuizmoNET
+namespace ImGuiNET
 {
     public enum MODE
     {
