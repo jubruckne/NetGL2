@@ -35,16 +35,4 @@ public static class ArrayExt {
             result += sum_function(e);
         return result;
     }
-
-}
-
-public static class VectorExt {
-    public static ref System.Numerics.Vector3 as_sys_num_ref(ref this Vector3 vector) {
-        return ref MemoryMarshal.Cast<Vector3, System.Numerics.Vector3>(MemoryMarshal.CreateSpan(ref vector, 1))[0];
-    }
-
-    public static ref System.Numerics.Vector4 as_sys_num_ref(ref this Vector4 vector) {
-        return ref MemoryMarshal.Cast<Vector4, System.Numerics.Vector4>(MemoryMarshal.CreateSpan(ref vector, 1))[0];
-    }
-
 }

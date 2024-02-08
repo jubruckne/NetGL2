@@ -7,7 +7,6 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using OpenTK.Mathematics;
 using Vector2 = System.Numerics.Vector2;
 
 public class Engine: GameWindow {
@@ -16,7 +15,7 @@ public class Engine: GameWindow {
     protected readonly World world;
     protected readonly ImGuiController handler_imgui = null!;
 
-    private RevolvingList<float> frame_times = new(100);
+    private readonly RevolvingList<float> frame_times = new(12);
     protected float game_time;
     protected int frame;
 
@@ -115,7 +114,6 @@ public class Engine: GameWindow {
         entd.transform.attitude.pitch = -5f;
         entd.transform.attitude.roll = 2.5f;
 
-
         GL.Enable(EnableCap.ProgramPointSize);
 
         Error.check();
@@ -167,7 +165,7 @@ public class Engine: GameWindow {
         frame_time += e.Time;
 
         if (frame_time >= 1f) {
-            frame_times.add((float)(frame_time/frame_count) * 10f);
+            frame_times.add((float)(frame_time/frame_count));
 
             Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
             frame_count = 0;
@@ -205,8 +203,15 @@ public class Engine: GameWindow {
 
         if (frame_times.count != 0) {
             ImGui.Text("Frame Time (ms):");
-            ImGui.PlotLines($"##frame: {frame_times.last * 100f:F2}  ", ref frame_times.as_span()[0], frame_times.count);
-            ImGui.PlotHistogram($"##fradme: {frame_times.last * 100f:F2}  ", ref frame_times.as_span()[0], frame_times.count);
+            ImGui.PlotLines(
+                $"##frame_time",
+                ref frame_times.as_span()[0],
+                frame_times.count,
+                0,
+                $"avg:{frame_times.average() * 1000:F1}, min:{frame_times.minimum() * 1000:F1}, max:{frame_times.maximum() * 1000:F1}",
+                scale_min:frame_times.minimum(),
+                scale_max:frame_times.maximum(),
+                new Vector2(240, 20));
         }
 
         add_entities_to_gui(world);
@@ -246,19 +251,19 @@ public class Engine: GameWindow {
                         //ImGui2.Joystick(25);
                         ImGui.Joystick2(t, 25);
 
-                        ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.as_sys_num_ref(), 0.05f, -100, 100, "%.1f");
+                        ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0.05f, -100, 100, "%.1f");
 
                         ImGui.DragFloat3($"Attitude##{entity.name}.attitude",
-                            ref t.attitude.yaw_pitch_roll_degrees.as_sys_num_ref(), 1f, -180, 180, "%.0f");
+                            ref t.attitude.yaw_pitch_roll_degrees.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 1f, -180, 180, "%.0f");
 
                         ImGui.Spacing();
 
                         var attitudeDirection = t.attitude.direction;
-                        ImGui.DragFloat3($"Direction→##{entity.name}.direction", ref attitudeDirection.as_sys_num_ref(), 0f, -1, 1, "%.1f",
+                        ImGui.DragFloat3($"Direction→##{entity.name}.direction", ref attitudeDirection.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
                             ImGuiSliderFlags.NoInput);
 
                         var attitudeUp = t.attitude.up;
-                        ImGui.DragFloat3($"Up→##{entity.name}.up", ref attitudeUp.as_sys_num_ref(), 0f, -1, 1, "%.1f",
+                        ImGui.DragFloat3($"Up→##{entity.name}.up", ref attitudeUp.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
                             ImGuiSliderFlags.NoInput);
 
                         //ImGui.Spacing();
@@ -267,13 +272,19 @@ public class Engine: GameWindow {
                         ImGui.TreePop();
                     }
                 } else if (comp is FirstPersonCamera cam) {
-                    if (ImGui.TreeNodeEx($"{cam.name}##{entity.name}_{cam.name}_node", ImGuiTreeNodeFlags.DefaultOpen)) {
+                    if (ImGui.TreeNodeEx($"{cam.name}##{entity.name}_{cam.name}_node",
+                            ImGuiTreeNodeFlags.DefaultOpen)) {
                         ImGui.Unindent();
 
                         var camEnableInput = cam.enable_input;
-                        ImGui.Checkbox("Enable Input", ref camEnableInput);
+                        if (ImGui.Checkbox("Enable Input", ref camEnableInput)) {
+                            cam.enable_input = camEnableInput;
+                        }
+
                         var camEnableUpdate = cam.enable_update;
-                        ImGui.Checkbox("Enable Update", ref camEnableUpdate);
+                        if (ImGui.Checkbox("Enable Update", ref camEnableUpdate)) {
+                            cam.enable_update = camEnableUpdate;
+                        }
 
                         ImGui.InputInt4($"Viewport##{entity.name}.viewport.pos", ref cam.viewport.x);
                         ImGui.SliderFloat($"Speed##{entity.name}.cam.speed", ref cam.speed, 0, 10);
@@ -332,7 +343,7 @@ public class Engine: GameWindow {
                         ImGui.ColorEdit3($"Ambient##{entity}.{comp.name}.ambient", ref dir.data.ambient.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.ColorEdit3($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.ColorEdit3($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
-                        ImGui.SliderFloat3($"Direction→##{entity}.{comp.name}.direction", ref dir.data.direction.as_sys_num_ref(), -1, 1);
+                        ImGui.SliderFloat3($"Direction→##{entity}.{comp.name}.direction", ref dir.data.direction.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), -1, 1);
                         ImGui.Indent();
                         ImGui.TreePop();
                     }

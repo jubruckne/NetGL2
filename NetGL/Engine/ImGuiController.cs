@@ -58,7 +58,7 @@ public class ImGuiController : IDisposable {
         var context = ImGui.CreateContext();
 
         ImGui.SetCurrentContext(context);
-        ImGuizmo.SetImGuiContext(context);
+        //ImGuizmo.SetImGuiContext(context);
 
         var io = ImGui.GetIO();
         ImFontGlyphRangesBuilderPtr builder;
@@ -85,6 +85,7 @@ public class ImGuiController : IDisposable {
         SetPerFrameImGuiData(1f / 60f);
 
         ImGui.NewFrame();
+
         _frameBegun = true;
     }
 

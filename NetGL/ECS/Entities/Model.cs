@@ -48,7 +48,7 @@ public class Model {
         importer.SetConfig(new NormalSmoothingAngleConfig(66.0f));
         //importer.SetConfig(new MeshVertexLimitConfig(165000));
 
-        importer.Scale = 3f;
+        importer.Scale = 5f;
         var assimp = importer.ImportFile(filename, PostProcessSteps.EmbedTextures | /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
         foreach (var tex in assimp.Textures) {
             Console.WriteLine(tex.Filename);
@@ -59,7 +59,7 @@ public class Model {
 
         Console.WriteLine("Materials:");
         foreach (var mat in assimp.Materials) {
-            Console.WriteLine($"{mat.Name}: shniy:{mat.Shininess}, str: {mat.ShininessStrength}");
+            Console.WriteLine($"{mat.Name}: shininess:{mat.Shininess}, strength: {mat.ShininessStrength}");
             result.add_material(new(
                 mat.Name,
                 ambient: (mat.ColorAmbient.R, mat.ColorAmbient.G, mat.ColorAmbient.B),
