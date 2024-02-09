@@ -5,6 +5,14 @@ namespace NetGL;
 [StructLayout(LayoutKind.Explicit, Pack = 0)]
 public struct Color {
     public static Color Black => new(0, 0, 0, 1);
+    public static Color White => new(1, 1, 1, 1);
+
+    public static Color PastelRed => new(1f, 0.4117647f, 0.4117647f, 1); // #FF6961
+    public static Color PastelGreen => new(0.5960784f, 0.9843137f, 0.5960784f, 1); // #98FB98
+    public static Color PastelBlue => new(0.6784314f, 0.8470588f, 0.9019608f, 1); // #AEC6CF
+    public static Color PastelYellow => new(0.9921569f, 0.9215686f, 0.7058824f, 1); // #FDFD96
+    public static Color PastelPurple => new(0.8705882f, 0.6196078f, 0.8392157f, 1); // #DEA5A4
+    public static Color PastelOrange => new(1f, 0.7019608f, 0.4431373f, 1); // #FFB347
 
     [FieldOffset(0)] public System.Numerics.Vector4 vector4;
     [FieldOffset(0)] public System.Numerics.Vector3 vector3;

@@ -3,6 +3,8 @@ namespace NetGL;
 using StbImageSharp;
 
 public class Texture {
+    public static string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../../Assets/Textures/";
+
     public readonly string name;
     public readonly int width;
     public readonly int height;
@@ -14,9 +16,9 @@ public class Texture {
         byte[] image_data;
 
         StbImage.stbi_set_flip_vertically_on_load(1);
-        
-        if(File.Exists("assets/textures/" + path))
-            path = "assets/textures/" + path;
+
+        if (File.Exists($"{base_path}" + path))
+            path = $"{base_path}" + path;
 
         if(!File.Exists(path))
             throw new FileNotFoundException(path);

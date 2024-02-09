@@ -20,7 +20,6 @@ public abstract class Buffer: IBuffer {
 
     public abstract void bind();
     public abstract void unbind();
-    public abstract void upload();
 }
 
 public abstract class Buffer<T>: Buffer where T: struct {
@@ -104,7 +103,7 @@ public abstract class Buffer<T>: Buffer where T: struct {
         GL.BindBuffer(target, 0);
     }
 
-    public override void upload() {
+    public virtual void upload() {
         if (handle == 0) {
             handle = GL.GenBuffer();
         }

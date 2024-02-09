@@ -1,0 +1,29 @@
+using OpenTK.Graphics.OpenGL4;
+
+namespace NetGL;
+
+public abstract class TextureBuffer: Buffer {
+    protected int handle;
+    protected TextureTarget target;
+
+    public int width { get; protected init; }
+    public int height { get; protected init; }
+
+    public TextureBuffer(TextureTarget target) {
+        this.target = target;
+    }
+
+    public override void bind() {
+        if (handle == 0)
+            throw new NotSupportedException("no handle has been allocated yet!");
+
+        GL.BindTexture(target, handle);
+    }
+
+    public override void unbind() {
+        if (handle == 0)
+            throw new NotSupportedException("no handle has been allocated yet!");
+
+        GL.BindTexture(target, 0);
+    }
+}

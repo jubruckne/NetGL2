@@ -47,9 +47,9 @@ public class Rectangle: IShape<Rectangle> {
         }
     }
 
-    public IEnumerable<ushort> get_indices() => get_indices(1);
+    public IEnumerable<Vector3i> get_indices() => get_indices(1);
 
-    public IEnumerable<ushort> get_indices(int divisions) {
+    public IEnumerable<Vector3i> get_indices(int divisions) {
         // Generate triangles (indices)
         for (int i = 0; i < divisions; i++) {
             for (int j = 0; j < divisions; j++) {
@@ -59,13 +59,8 @@ public class Rectangle: IShape<Rectangle> {
                 int v3 = v2 + 1;
 
                 // Two triangles for each square
-                yield return (ushort)v0;
-                yield return (ushort)v1;
-                yield return (ushort)v2;
-
-                yield return (ushort)v1;
-                yield return (ushort)v3;
-                yield return (ushort)v2;
+                yield return (v0, v1, v2);
+                yield return (v1, v3, v2);
             }
         }
     }

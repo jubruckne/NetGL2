@@ -22,7 +22,7 @@ public class Model {
 
     public static Model from_shape<T>(IShape<T> shape) {
         VertexBuffer<Vector3> vb = new(shape.get_vertices());
-        var ib = IndexBuffer.make(shape.get_indices());
+        var ib = IndexBuffer<byte>.make(shape.get_indices());
         vb.upload();
         ib.upload();
 
@@ -48,7 +48,7 @@ public class Model {
         importer.SetConfig(new NormalSmoothingAngleConfig(66.0f));
         //importer.SetConfig(new MeshVertexLimitConfig(165000));
 
-        importer.Scale = 5f;
+        importer.Scale = 1f;
         var assimp = importer.ImportFile(filename, PostProcessSteps.EmbedTextures | /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
         foreach (var tex in assimp.Textures) {
             Console.WriteLine(tex.Filename);
@@ -78,7 +78,7 @@ public class Model {
             var vb_norm = new VertexBuffer<Assimp.Vector3D>(mesh.Normals, VertexAttribute.Normal);
             vb_norm.upload();
 
-            var ib = IndexBuffer.make(mesh.GetIndices());
+            var ib = IndexBuffer<int>.make(mesh.GetIndices());
             ib.upload();
 
             var va = new VertexArrayIndexed(ib, vb_pos, vb_norm);

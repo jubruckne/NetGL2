@@ -68,6 +68,17 @@ public class Engine: GameWindow {
         phy.World.AddRigidBody(new RigidBody(new RigidBodyConstructionInfo(12, new DefaultMotionState(), new BoxShape(1f))));
         phy.Update(0.1f);
         Console.WriteLine(phy.World.NumCollisionObjects);
+
+        TextureCubemapBuffer cubemap = new(
+            Texture.load_from_file("bluecloud_rt.jpg"),
+            Texture.load_from_file("bluecloud_lf.jpg"),
+            Texture.load_from_file("bluecloud_up.jpg"),
+            Texture.load_from_file("bluecloud_dn.jpg"),
+            Texture.load_from_file("bluecloud_ft.jpg"),
+            Texture.load_from_file("bluecloud_bk.jpg")
+        );
+        cubemap.upload();
+
 /*
         var desc = VertexDescriptor.make(NetGL.dev.VertexAttribute.Position, NetGL.dev.VertexAttribute.Normal);
         desc.allocate(100);
@@ -101,9 +112,13 @@ public class Engine: GameWindow {
         Entity ball = world.create_sphere_uv("Ball");
         ball.transform.position = (-5, -2, -8);
 
-        Entity rect = world.create_rectangle("Rectangle", divisions:16);
-        rect.transform.position = (0, 0, 0);
-        rect.add_material(Material.Chrome);
+        Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);
+        Entity cube = world.create_cube("Cube");
+       // ((cube.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer as IndexBuffer<byte>).reverse_winding();
+       // ((cube.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer as IndexBuffer<byte>).upload();
+
+        cube.transform.position = (0, 0, 0);
+        cube.add_material(Material.Chrome);
         Console.WriteLine("");
 
        // Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
@@ -176,6 +191,10 @@ public class Engine: GameWindow {
         frame++;
 
         if (debug) handler_imgui.Update(this, (float)e.Time);
+
+        GL.FrontFace(FrontFaceDirection.Ccw);
+        GL.CullFace(CullFaceMode.Back);
+        GL.Enable(EnableCap.CullFace);
 
         world.render();
         Viewport.Gameplay.make_current();

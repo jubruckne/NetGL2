@@ -40,9 +40,9 @@ internal class Sphere: IShape<Sphere> {
         }
     }
 
-    public IEnumerable<ushort> get_indices() => get_indices(1f, 32, 24);
+    public IEnumerable<Vector3i> get_indices() => get_indices(1f, 32, 24);
 
-    public IEnumerable<ushort> get_indices(float radius, int meridians, int parallels) {
+    public IEnumerable<Vector3i> get_indices(float radius, int meridians, int parallels) {
         for (int i = 1; i <= parallels; ++i) {
             for (int j = 1; j <= meridians; ++j) {
                 int a = i * (meridians + 1) + j;
@@ -50,13 +50,8 @@ internal class Sphere: IShape<Sphere> {
                 int c = (i - 1) * (meridians + 1) + j - 1;
                 int d = (i - 1) * (meridians + 1) + j;
 
-                yield return (ushort)c;
-                yield return (ushort)b;
-                yield return (ushort)a;
-
-                yield return (ushort)d;
-                yield return (ushort)c;
-                yield return (ushort)a;
+                yield return (c, b, a);
+                yield return (d, c, a);
             }
         }
     }

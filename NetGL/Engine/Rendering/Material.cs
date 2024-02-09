@@ -1,10 +1,7 @@
-using OpenTK.Mathematics;
-
 namespace NetGL;
 
 public class Material {
     public readonly string name;
-    public Texture? ambient_texture;
     public Color ambient;
     public Color diffuse;
     public Color specular;
@@ -13,7 +10,6 @@ public class Material {
     public Material(in string name, in Color ambient, in Color diffuse, in Color specular, in float shininess) {
         this.name = name;
         this.ambient = ambient;
-        this.ambient_texture = null;
         this.diffuse = diffuse;
         this.specular = specular;
         this.shininess = shininess;

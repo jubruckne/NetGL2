@@ -2,19 +2,15 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
 
-public class Texture2DArrayBuffer: Buffer {
-    private int handle;
-    private readonly Texture[] textures;
-
-    public int width { get; }
-    public int height { get; }
+public class Texture2DArrayBuffer: TextureBuffer {
+    protected readonly Texture[] textures;
 
     public override int count { get; }
     public override int item_size { get; }
     public override Type item_type { get; }
     public override int size { get; }
 
-    public Texture2DArrayBuffer(in Texture[] textures) {
+    protected Texture2DArrayBuffer(TextureTarget target, in Texture[] textures): base(target) {
         handle = 0;
 
         count = textures.Length;
@@ -25,35 +21,23 @@ public class Texture2DArrayBuffer: Buffer {
         size = textures.Length * textures[0].image_data.Length;
         this.textures = textures;
     }
-    
-    public override void bind() {
-        if (handle == 0)
-            throw new NotSupportedException("no handle has been allocated yet!");
 
-        GL.BindTexture(TextureTarget.Texture2DArray, handle);
-    }
+    public Texture2DArrayBuffer(in Texture[] textures): this(TextureTarget.Texture2DArray, textures) {}
 
-    public override void unbind() {
-        if (handle == 0)
-            throw new NotSupportedException("no handle has been allocated yet!");
-
-        GL.BindTexture(TextureTarget.Texture2DArray, 0);
-    }
-
-    public override void upload() {
-        GL.ActiveTexture(TextureUnit.Texture0);
+    public void upload(TextureUnit texture_unit = TextureUnit.Texture0) {
+        GL.ActiveTexture(texture_unit);
         if (handle == 0) 
             handle = GL.GenTexture();
         
-        GL.BindTexture(TextureTarget.Texture2DArray, handle);
-        GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-        GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-        GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMaxAnisotropy, 8);
+        GL.BindTexture(target, handle);
+        GL.TexParameter(target, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+        GL.TexParameter(target, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+        GL.TexParameter(target, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(target, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(target, TextureParameterName.TextureMaxAnisotropy, 8);
 
         GL.TexImage3D(
-            TextureTarget.Texture2DArray,
+            target,
             level: 0,
             PixelInternalFormat.Rgba,
             width,
@@ -67,7 +51,7 @@ public class Texture2DArrayBuffer: Buffer {
 
         for (int tex_idx = 0; tex_idx < textures.Length; tex_idx++) {
             GL.TexSubImage3D(
-                TextureTarget.Texture2DArray,
+                target,
                 level: 0,
                 xoffset: 0,
                 yoffset: 0,

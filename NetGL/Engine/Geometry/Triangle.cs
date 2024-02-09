@@ -15,7 +15,7 @@ public class Triangle: IShape<Triangle> {
         throw new NotImplementedException();
     }
 
-    public IEnumerable<ushort> get_indices() {
+    public IEnumerable<Vector3i> get_indices() {
         throw new NotImplementedException();
     }
 

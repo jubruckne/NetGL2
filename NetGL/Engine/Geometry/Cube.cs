@@ -1,6 +1,4 @@
-using System.Numerics;
-using Microsoft.VisualBasic.CompilerServices;
-using Vector3 = OpenTK.Mathematics.Vector3;
+using OpenTK.Mathematics;
 
 namespace NetGL;
 
@@ -19,41 +17,37 @@ public class Cube: IShape<Cube> {
     }
 
     public IEnumerable<Vector3> get_vertices() {
-        var halfWidth = width * 0.5f;
-        var halfHeight = height * 0.5f;
-        var halfDepth = depth * 0.5f;
+        var half_width = width * 0.5f;
+        var half_height = height * 0.5f;
+        var half_depth = depth * 0.5f;
 
-        // Define the eight vertices of the cube
-        yield return new Vector3(-halfWidth, -halfHeight, -halfDepth);   // Bottom front left
-        yield return new Vector3(halfWidth, -halfHeight, -halfDepth);    // Bottom front right
-        yield return new Vector3(-halfWidth, halfHeight, -halfDepth);    // Top front left
-        yield return new Vector3(halfWidth, halfHeight, -halfDepth);     // Top front right
-        yield return new Vector3(-halfWidth, -halfHeight, halfDepth);    // Bottom back left
-        yield return new Vector3(halfWidth, -halfHeight, halfDepth);     // Bottom back right
-        yield return new Vector3(-halfWidth, halfHeight, halfDepth);     // Top back left
-        yield return new Vector3(halfWidth, halfHeight, halfDepth);      // Top back right
+        return [
+            new Vector3(-half_width, -half_height, half_depth),    // 0
+            new Vector3(half_width, -half_height, half_depth),     // 1
+            new Vector3(half_width, half_height, half_depth),      // 2
+            new Vector3(-half_width, half_height, half_depth),     // 3
+            new Vector3(-half_width, -half_height, -half_depth),   // 4
+            new Vector3(half_width, -half_height, -half_depth),    // 5
+            new Vector3(half_width, half_height, -half_depth),     // 6
+            new Vector3(-half_width, half_height, -half_depth)     // 7
+        ];
     }
 
-    public IEnumerable<ushort> get_indices() {
-        // Define the indices for each face (two triangles per face) in clockwise order
-        ushort[][] face_indices = [
-            [0, 1, 2, 3], // Front face
-            [4, 6, 5, 7], // Back face
-            [1, 5, 3, 7], // Right face
-            [0, 2, 4, 6], // Left face
-            [0, 4, 1, 5], // Bottom face
-            [2, 3, 6, 7]  // Top face
+    public IEnumerable<Vector3i> get_indices() {
+        return [
+            // front face
+            (0, 1, 2), (2, 3, 0),
+            // top face
+            (3, 2, 6), (6, 7, 3),
+            // back face
+            (7, 6, 5), (5, 4, 7),
+            // left face
+            (4, 0, 3), (3, 7, 4),
+            // bottom face
+            (1, 4, 5), (1, 0, 4),
+            // right face
+            (1, 5, 6), (6, 2, 1)
         ];
-
-        foreach (var face in face_indices) {
-            yield return face[0];
-            yield return face[1];
-            yield return face[2];
-
-            yield return face[2];
-            yield return face[1];
-            yield return face[3];
-        }
     }
 
     public override string ToString() {
