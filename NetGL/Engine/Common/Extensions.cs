@@ -1,10 +1,35 @@
-using System.Runtime.InteropServices;
 using System.Text;
 using OpenTK.Mathematics;
-using Vector3 = OpenTK.Mathematics.Vector3;
-using Vector4 = OpenTK.Mathematics.Vector4;
 
 namespace NetGL;
+
+public static class RandomExt {
+    public static T random<T>(this IReadOnlyList<T> list) {
+        return list[Random.Shared.Next(list.Count)];
+    }
+
+    public static IEnumerable<T> random<T>(this IReadOnlyList<T> list, int count) {
+        for(int i = 0; i < count; i++)
+            yield return list[Random.Shared.Next(list.Count)];
+    }
+}
+
+public static class VectorExt {
+    public static ref Vector3 randomize(this ref Vector3 vector, float min, float max) {
+        vector.X = Random.Shared.NextSingle() * (max - min) + min;
+        vector.Y = Random.Shared.NextSingle() * (max - min) + min;
+        vector.Z = Random.Shared.NextSingle() * (max - min) + min;
+        return ref vector;
+    }
+
+    public static ref Vector3 add(this ref Vector3 vector, float x = 0f, float y = 0f, float z = 0f) {
+        vector.X += x;
+        vector.Y += y;
+        vector.Z += z;
+        return ref vector;
+    }
+
+}
 
 public static class AngleExt {
     public static float degree_to_radians(this float degrees) =>

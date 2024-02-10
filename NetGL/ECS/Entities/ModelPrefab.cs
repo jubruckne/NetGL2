@@ -7,7 +7,7 @@ public static class ModelPrefab {
         foreach (var mat in model.materials)
             entity.add_material(mat);
 
-        entity.add_shader(AutoShader.for_vertex_type(model.name, model.vertex_arrays[0]));
+        entity.add_shader(AutoShader.for_vertex_type(model.name, model.vertex_arrays[0], model.materials[0]));
         entity.add_vertex_array_renderer(model.vertex_arrays);
 
         return entity;

@@ -31,6 +31,46 @@ public class Cube: IShape<Cube> {
             new Vector3(half_width, half_height, -half_depth),     // 6
             new Vector3(-half_width, half_height, -half_depth)     // 7
         ];
+/*
+        return [
+            new Vector3(-1.0f, 1.0f, -1.0f),
+            new Vector3(-1.0f, -1.0f, -1.0f),
+            new Vector3(1.0f, -1.0f, -1.0f),
+            new Vector3(1.0f, -1.0f, -1.0f),
+            new Vector3(1.0f, 1.0f, -1.0f),
+            new Vector3(-1.0f, 1.0f, -1.0f),
+            new Vector3(-1.0f, -1.0f, 1.0f),
+            new Vector3(-1.0f, -1.0f, -1.0f),
+            new Vector3(-1.0f, 1.0f, -1.0f),
+            new Vector3(-1.0f, 1.0f, -1.0f),
+            new Vector3(-1.0f, 1.0f, 1.0f),
+            new Vector3(-1.0f, -1.0f, 1.0f),
+            new Vector3(1.0f, -1.0f, -1.0f),
+            new Vector3(1.0f, -1.0f, 1.0f),
+            new Vector3(1.0f, 1.0f, 1.0f),
+            new Vector3(1.0f, 1.0f, 1.0f),
+            new Vector3(1.0f, 1.0f, -1.0f),
+            new Vector3(1.0f, -1.0f, -1.0f),
+            new Vector3(-1.0f, -1.0f, 1.0f),
+            new Vector3(-1.0f, 1.0f, 1.0f),
+            new Vector3(1.0f, 1.0f, 1.0f),
+            new Vector3(1.0f, 1.0f, 1.0f),
+            new Vector3(1.0f, -1.0f, 1.0f),
+            new Vector3(-1.0f, -1.0f, 1.0f),
+            new Vector3(-1.0f, 1.0f, -1.0f),
+            new Vector3(1.0f, 1.0f, -1.0f),
+            new Vector3(1.0f, 1.0f, 1.0f),
+            new Vector3(1.0f, 1.0f, 1.0f),
+            new Vector3(-1.0f, 1.0f, 1.0f),
+            new Vector3(-1.0f, 1.0f, -1.0f),
+            new Vector3(-1.0f, -1.0f, -1.0f),
+            new Vector3(-1.0f, -1.0f, 1.0f),
+            new Vector3(1.0f, -1.0f, -1.0f),
+            new Vector3(1.0f, -1.0f, -1.0f),
+            new Vector3(-1.0f, -1.0f, 1.0f),
+            new Vector3(1.0f, -1.0f, 1.0f)
+        ];
+        */
     }
 
     public IEnumerable<Vector3i> get_indices() {

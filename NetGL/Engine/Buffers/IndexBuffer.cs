@@ -7,10 +7,23 @@ namespace NetGL;
 public interface IIndexBuffer : IBuffer {
     DrawElementsType draw_element_type { get; }
     PrimitiveType primitive_type { get; }
+    int get_max_vertex_count();
+    void reverse_winding();
 }
 
 public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
     where T: unmanaged, IBinaryInteger<T> {
+
+    int IIndexBuffer.get_max_vertex_count() => get_max_vertex_count();
+
+    public static int get_max_vertex_count() => new T() switch {
+        byte => byte.MaxValue,
+        ushort => ushort.MaxValue,
+        short => short.MaxValue,
+        int => int.MaxValue,
+        uint => int.MaxValue,
+        _ => throw new ArgumentOutOfRangeException(nameof(T), $"Unecpected type {typeof(T).Name}!")
+    };
 
     internal IndexBuffer(int triangle_count)
         : base(BufferTarget.ElementArrayBuffer, triangle_count * 3) {
@@ -29,6 +42,16 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
         throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
     }
 
+    public static IndexBuffer<T> make(in ushort[] items) {
+        T test = T.Zero;
+
+        if (test is ushort)
+            return new IndexBuffer<T>(items.reinterpret_cast<ushort, T>());
+
+        throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
+    }
+
+
     public static IndexBuffer<T> make(in int[] items) {
         T test = T.Zero;
 
@@ -45,9 +68,29 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
             byte[] target_items = new byte[items.Length * 3];
 
             for (int index = 0; index < items.Length; index++) {
-                target_items[index * 3] = (byte)items[index].X;
-                target_items[index * 3 + 1] = (byte)items[index].Y;
-                target_items[index * 3 + 2] = (byte)items[index].Z;
+                ref var item = ref items[index];
+                if (item.X > byte.MaxValue || item.Y > byte.MaxValue || item.Z > byte.MaxValue)
+                    throw new OverflowException();
+
+                target_items[index * 3] = (byte)item.X;
+                target_items[index * 3 + 1] = (byte)item.Y;
+                target_items[index * 3 + 2] = (byte)item.Z;
+            }
+
+            return make(target_items);
+        }
+
+        if (test is ushort) {
+            ushort[] target_items = new ushort[items.Length * 3];
+
+            for (int index = 0; index < items.Length; index++) {
+                ref var item = ref items[index];
+                if (item.X > ushort.MaxValue || item.Y > ushort.MaxValue || item.Z > ushort.MaxValue)
+                    throw new OverflowException();
+
+                target_items[index * 3] = (ushort)item.X;
+                target_items[index * 3 + 1] = (ushort)item.Y;
+                target_items[index * 3 + 2] = (ushort)item.Z;
             }
 
             return make(target_items);

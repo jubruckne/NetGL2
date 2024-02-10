@@ -9,6 +9,8 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public class Shader {
+    public static string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../../Assets/Shaders/";
+
     public readonly string name;
     private readonly int handle;
     private readonly Dictionary<string, int> uniform_locations;
@@ -89,8 +91,6 @@ public class Shader {
     }
 
     protected void compile_from_file(string vertex_program, string fragment_program, string geometry_program="") {
-        string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../../Assets/Shaders/";
-
         Console.WriteLine("Compiling " + vertex_program + "...\n");
 
         if(File.Exists(vertex_program))
@@ -163,10 +163,13 @@ public class Shader {
     public void set_game_time(in float game_time) => set_uniform("game_time", game_time);
 
     public void set_material(Material material) {
-        set_uniform("material.ambient", material.ambient.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
-        set_uniform("material.diffuse", material.diffuse.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
-        set_uniform("material.specular", material.specular.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
-        set_uniform("material.shininess", material.shininess);
+        set_uniform("material.ambient_color", material.ambient_color.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
+        set_uniform("material.diffuse", material.diffuse_color.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
+        set_uniform("material.specular", material.specular_color.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
+        set_uniform("material.shininess", material.shininess * 1f);
+        if (material.ambient_texture != null) {
+            set_uniform("material.ambient_texture", 0);
+        }
     }
 
     public void set_camera_position(in Vector3 pos) {
@@ -244,8 +247,10 @@ public class Shader {
     ///   </para>
     /// </remarks>
     protected void set_uniform(string name, Matrix4 data) {
-        GL.UseProgram(handle);
-        GL.UniformMatrix4(uniform_locations[name], transpose:true, matrix:ref data);
+        if (has_uniform(name)) {
+            GL.UseProgram(handle);
+            GL.UniformMatrix4(uniform_locations[name], transpose: true, matrix: ref data);
+        }
     }
 
     protected bool has_uniform(string name) => uniform_locations.ContainsKey(name);

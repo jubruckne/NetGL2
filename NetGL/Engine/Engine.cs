@@ -63,19 +63,29 @@ public class Engine: GameWindow {
 
     protected override void OnLoad() {
         base.OnLoad();
+/*
 
-        Physics phy = new();
-        phy.World.AddRigidBody(new RigidBody(new RigidBodyConstructionInfo(12, new DefaultMotionState(), new BoxShape(1f))));
         phy.Update(0.1f);
         Console.WriteLine(phy.World.NumCollisionObjects);
 
+*/
+        /*
         TextureCubemapBuffer cubemap = new(
-            Texture.load_from_file("bluecloud_rt.jpg"),
-            Texture.load_from_file("bluecloud_lf.jpg"),
-            Texture.load_from_file("bluecloud_up.jpg"),
-            Texture.load_from_file("bluecloud_dn.jpg"),
-            Texture.load_from_file("bluecloud_ft.jpg"),
-            Texture.load_from_file("bluecloud_bk.jpg")
+            Texture.load_from_file("test.png"),
+            Texture.load_from_file("test.png"),
+            Texture.load_from_file("test.png"),
+            Texture.load_from_file("test.png"),
+            Texture.load_from_file("test.png"),
+            Texture.load_from_file("test.png")
+        );*/
+
+        TextureCubemapBuffer cubemap = new(
+            Texture.load_from_file("right.jpg"),
+            Texture.load_from_file("left.jpg"),
+            Texture.load_from_file("top.jpg"),
+            Texture.load_from_file("bottom.jpg"),
+            Texture.load_from_file("front.jpg"),
+            Texture.load_from_file("back.jpg")
         );
         cubemap.upload();
 
@@ -86,39 +96,48 @@ public class Engine: GameWindow {
         desc.buffer.
 
         return;*/
-        world.add_ambient_light(0.5f, 0.5f, 0.5f);
+
+        var mat = Material.Chrome;
+        mat.ambient_texture = cubemap;
+        Entity environment = world.create_cube("Environment", material:mat, radius:.100f);
+        ((environment.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
+        ((environment.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
+        environment.get<VertexArrayRenderer>().depth_test = false;
+
+        world.add_ambient_light(0.25f, 0.25f, 0.25f);
         world.add_directional_light(
-            direction:(0, 0, -1),
-            ambient:(0.25f, 0.25f, 0.25f),
-            diffuse:(0.75f, 0.6f, 0.60f),
-            specular:(0.25f, 0.25f, 0.2f)
+            direction:(0.2f, -1f, -.955f),
+            diffuse:(0.65f, 0.65f, 0.65f)
+            //specular:(0.95f, 0.95f, 0.65f)
             );
 
         Entity player = world.create_entity("Player");
-        player.transform.position = (0, 0, 10);
+        player.transform.position = (1, +2, 20);
         player.transform.attitude.direction = (0, 0, -1);
-        player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false);
+        player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:8f, sensitivity:0.75f);
 
-        /* Entity hud = world.create_entity("Hud");
-        var oc2 = hud.add_orthographic_camera(Viewport.Hud.copy("O2", x:25, y:25), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
-        var oc4 = hud.add_orthographic_camera(Viewport.Hud.copy("04", x:25, y:350), x:-2, y:-2, width:4, height:4, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:true);
+        var oc1 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:325, y:200), field_of_view:60f, enable_input:false);
+        var oc2 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:125, y:25), field_of_view:60f, enable_input:false);
+        var oc3 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:25, y:200), field_of_view:60f, enable_input:false);
+        var oc4 = player.add_first_person_camera(Viewport.Hud.copy("04", x:125, y:350), field_of_view:60f, enable_input:false);
 
-        oc2.transform.position = (0, -1, 0);
-        oc2.transform.attitude.direction = (0, 0, 0);
+        oc1.transform.position = (1, 2, 20);
+        oc1.transform.attitude.direction = (0, -1, 0);
 
-        oc4.transform.position = (0, 0, -1);
-        oc4.transform.attitude.direction = (0, 0, 0); */
+        oc2.transform.position = (1, 2, 20);
+        oc2.transform.attitude.direction = (1, 0, 0);
 
-        Entity ball = world.create_sphere_uv("Ball");
-        ball.transform.position = (-5, -2, -8);
+        oc3.transform.position = (1, 2, 20);
+        oc3.transform.attitude.direction = (0, 1, 0);
 
-        Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);
-        Entity cube = world.create_cube("Cube");
-       // ((cube.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer as IndexBuffer<byte>).reverse_winding();
-       // ((cube.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer as IndexBuffer<byte>).upload();
+        oc4.transform.position = (1, 2, 20);
+        oc4.transform.attitude.direction = (-1, 0, 0);
 
-        cube.transform.position = (0, 0, 0);
-        cube.add_material(Material.Chrome);
+        Entity ball = world.create_sphere_uv("Ball", radius:5f, rows:256, colums: 128, material:Material.random);
+
+        ball.transform.position = (0, 3, 5);
+        //Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);
+
         Console.WriteLine("");
 
        // Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
@@ -128,6 +147,13 @@ public class Engine: GameWindow {
         entd.transform.attitude.yaw = -120;
         entd.transform.attitude.pitch = -5f;
         entd.transform.attitude.roll = 2.5f;
+
+        foreach (var b in Enumerable.Range(1, 250)) {
+            Entity cube = world.create_sphere_uv($"Cube{b}", radius:0.25f, material:Material.random);
+            cube.transform.position.randomize(-10f, 10f).add(x:-3.5f, y:10f);
+            cube.transform.attitude.yaw_pitch_roll_degrees.randomize(-180, 180);
+            cube.add_rigid_body();
+        }
 
         GL.Enable(EnableCap.ProgramPointSize);
 
@@ -191,10 +217,6 @@ public class Engine: GameWindow {
         frame++;
 
         if (debug) handler_imgui.Update(this, (float)e.Time);
-
-        GL.FrontFace(FrontFaceDirection.Ccw);
-        GL.CullFace(CullFaceMode.Back);
-        GL.Enable(EnableCap.CullFace);
 
         world.render();
         Viewport.Gameplay.make_current();
@@ -338,11 +360,11 @@ public class Engine: GameWindow {
                         ImGui.Unindent();
 
                         ImGui.ColorEdit3($"Ambient##{entity}.{mat.name}.ambient",
-                            ref mat.material.ambient.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                            ref mat.material.ambient_color.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
                         ImGui.ColorEdit3($"Diffuse##{entity}.{mat.name}.diffuse",
-                            ref mat.material.diffuse.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                            ref mat.material.diffuse_color.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
                         ImGui.ColorEdit3($"Specular##{entity}.{mat.name}.specular",
-                            ref mat.material.specular.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
+                            ref mat.material.specular_color.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
                         ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.material.shininess, -1, 1);
 
                         ImGui.Indent();
@@ -363,6 +385,31 @@ public class Engine: GameWindow {
                         ImGui.ColorEdit3($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.ColorEdit3($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.SliderFloat3($"Direction→##{entity}.{comp.name}.direction", ref dir.data.direction.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), -1, 1);
+                        ImGui.Indent();
+                        ImGui.TreePop();
+                    }
+                } else if (comp is Component<Physics> phy) {
+                    if (ImGui.TreeNodeEx($"{phy.name}##{entity.name}_node", ImGuiTreeNodeFlags.DefaultOpen)) {
+                        ImGui.Unindent();
+
+                        ImGui.Text($"World type: {phy.data.World.WorldType}");
+                        ImGui.Text($"Physics objects: {phy.data.World.NumCollisionObjects}");
+
+                        var worldGravity = phy.data.World.Gravity;
+                        if (ImGui.DragFloat3($"Gravity", ref worldGravity, 0.05f, -10, 10, "%.2f")) {
+                            phy.data.World.Gravity = worldGravity;
+                        }
+
+
+                        ImGui.Indent();
+                        ImGui.TreePop();
+                    }
+                } else if (comp is Component<RigidBody> body) {
+                    if (ImGui.TreeNodeEx($"RigidBody {body.name}##{entity.name}.{body.name}", ImGuiTreeNodeFlags.DefaultOpen)) {
+                        ImGui.Unindent();
+
+                        ImGui.Text($"CenterOfMassPosition: {body.data.CenterOfMassPosition}");
+
                         ImGui.Indent();
                         ImGui.TreePop();
                     }

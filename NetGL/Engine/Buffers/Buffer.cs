@@ -8,6 +8,7 @@ public interface IBuffer {
     int item_size{ get; }
     Type item_type { get; }
     int size { get; }
+    void upload();
     void bind();
     void unbind();
 }
@@ -18,6 +19,7 @@ public abstract class Buffer: IBuffer {
     public abstract Type item_type { get; }
     public abstract int size { get; }
 
+    public abstract void upload();
     public abstract void bind();
     public abstract void unbind();
 }
@@ -103,7 +105,7 @@ public abstract class Buffer<T>: Buffer where T: struct {
         GL.BindBuffer(target, 0);
     }
 
-    public virtual void upload() {
+    public override void upload() {
         if (handle == 0) {
             handle = GL.GenBuffer();
         }

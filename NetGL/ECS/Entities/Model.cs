@@ -1,6 +1,7 @@
 using Assimp;
 using Assimp.Configs;
 using OpenTK.Mathematics;
+using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 
 namespace NetGL.ECS;
 
@@ -21,8 +22,8 @@ public class Model {
     private void add_material(in Material mat) => ((List<Material>)materials).Add(mat);
 
     public static Model from_shape<T>(IShape<T> shape) {
-        VertexBuffer<Vector3> vb = new(shape.get_vertices());
-        var ib = IndexBuffer<byte>.make(shape.get_indices());
+        VertexBuffer<Struct<Vector3, Vector3>> vb = new(shape.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
+        var ib = IndexBuffer<ushort>.make(shape.get_indices());
         vb.upload();
         ib.upload();
 
@@ -48,7 +49,7 @@ public class Model {
         importer.SetConfig(new NormalSmoothingAngleConfig(66.0f));
         //importer.SetConfig(new MeshVertexLimitConfig(165000));
 
-        importer.Scale = 1f;
+        importer.Scale = 5f;
         var assimp = importer.ImportFile(filename, PostProcessSteps.EmbedTextures | /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
         foreach (var tex in assimp.Textures) {
             Console.WriteLine(tex.Filename);
@@ -62,9 +63,9 @@ public class Model {
             Console.WriteLine($"{mat.Name}: shininess:{mat.Shininess}, strength: {mat.ShininessStrength}");
             result.add_material(new(
                 mat.Name,
-                ambient: (mat.ColorAmbient.R, mat.ColorAmbient.G, mat.ColorAmbient.B),
-                specular: (mat.ColorSpecular.R, mat.ColorSpecular.G, mat.ColorSpecular.B),
-                diffuse: (mat.ColorDiffuse.R, mat.ColorDiffuse.G, mat.ColorDiffuse.B),
+                ambient_color: (mat.ColorAmbient.R, mat.ColorAmbient.G, mat.ColorAmbient.B),
+                specular_color: (mat.ColorSpecular.R, mat.ColorSpecular.G, mat.ColorSpecular.B),
+                diffuse_color: (mat.ColorDiffuse.R, mat.ColorDiffuse.G, mat.ColorDiffuse.B),
                 shininess: mat.Shininess / 1000f + 0.0001f));
 
             if (mat.HasTextureDiffuse) {

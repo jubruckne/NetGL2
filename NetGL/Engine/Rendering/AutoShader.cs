@@ -5,12 +5,12 @@ namespace NetGL;
 public class AutoShader: Shader {
     private AutoShader(in string name) : base(name) { }
 
-    public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array) {
+    public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array, in Material material) {
         Console.WriteLine();
         Console.WriteLine();
         Console.WriteLine($"Creating shader {name} for {vertex_array}");
         var vertex_code = new StringBuilder();
-        var shader = new AutoShader("AUTO: " + name);
+        var shader = new AutoShader(name);
 
         vertex_code.AppendLine("#version 410\n");
 
@@ -28,6 +28,8 @@ public class AutoShader: Shader {
         vertex_code.AppendLine("  vec3 world_position;");
         if(vertex_array.has_normals)
             vertex_code.AppendLine("  vec3 normal;");
+        if(material.ambient_texture != null)
+            vertex_code.AppendLine("  vec3 texcoord;");
         vertex_code.AppendLine("  vec3 frag_position;");
         vertex_code.AppendLine("} vertex;\n");
 
@@ -36,12 +38,15 @@ public class AutoShader: Shader {
         vertex_code.AppendLine("  vertex.world_position = (vec4(position, 1) * model).xyz;");
         if(vertex_array.has_normals)
             vertex_code.AppendLine("  vertex.normal = normal * mat3(transpose(inverse(model)));");
+        if(material.ambient_texture != null)
+            vertex_code.AppendLine("  vertex.texcoord = normalize(position);");
         vertex_code.AppendLine("  vertex.frag_position = vec3(vec4(position, 1.0) * model);");
-        vertex_code.AppendLine("  gl_Position = vec4(vertex.world_position, 1) * camera * projection;");
-        vertex_code.AppendLine("}");
+        if(material.ambient_texture == null)
+            vertex_code.AppendLine("  gl_Position = vec4(vertex.world_position, 1) * camera * projection;");
+        else
+            vertex_code.AppendLine("  gl_Position = vec4(position, 1) * mat4(mat3(camera)) * projection; gl_Position = gl_Position.xyww;\n");
 
-        if(vertex_array.has_normals)
-             Console.WriteLine($"AutoShader:\n{vertex_code}\n");
+        vertex_code.AppendLine("}");
 
         var fragment_code = new StringBuilder();
 
@@ -52,6 +57,8 @@ public class AutoShader: Shader {
         fragment_code.AppendLine("  vec3 world_position;");
         if(vertex_array.has_normals)
             fragment_code.AppendLine("  vec3 normal;");
+        if(material.ambient_texture != null)
+            fragment_code.AppendLine("  vec3 texcoord;");
         fragment_code.AppendLine("  vec3 frag_position;");
         fragment_code.AppendLine("} vertex;\n");
 
@@ -64,33 +71,37 @@ public class AutoShader: Shader {
         fragment_code.AppendLine("  vec3 ambient;");
         fragment_code.AppendLine("  vec3 diffuse;");
         fragment_code.AppendLine("  vec3 specular;");
-        fragment_code.AppendLine("};");
+        fragment_code.AppendLine("};\n");
         fragment_code.AppendLine("uniform DirectionalLight[2] directional_light;\n");
 
         fragment_code.AppendLine("struct Material {");
-        fragment_code.AppendLine("  vec3 ambient;");
+        if(material.ambient_texture != null)
+            fragment_code.AppendLine($"  {material.ambient_texture.glsl_type} ambient_texture;");
+        else
+            fragment_code.AppendLine("  vec3 ambient_color;");
+
         fragment_code.AppendLine("  vec3 diffuse;");
         fragment_code.AppendLine("  vec3 specular;");
         fragment_code.AppendLine("  float shininess;");
-        fragment_code.AppendLine("};");
+        fragment_code.AppendLine("};\n");
         fragment_code.AppendLine("uniform Material material;\n");
 
         fragment_code.AppendLine("out vec4 frag_color;\n");
         fragment_code.AppendLine("""
-                                   vec3 calculate_directional_light(DirectionalLight light, vec3 normal, vec3 view_direction)
-                                   {
-                                       vec3 light_direction = normalize(-light.direction);
-                                       //diffuse shading
-                                       float diff = max(dot(normal, light_direction), 0.0);
-                                       //specular shading
-                                       vec3 reflect_direction = reflect(-light_direction, normal);
-                                       float spec = pow(max(dot(view_direction, reflect_direction), 0.0), material.shininess);
-                                       //combine results
-                                       vec3 ambient  = light.ambient  * material.ambient;
-                                       vec3 diffuse  = light.diffuse  * diff * material.diffuse;
-                                       vec3 specular = light.specular * spec * material.specular;
-                                       return (ambient + diffuse + specular);
-                                   }
+                                 vec3 calculate_directional_light(DirectionalLight light, vec3 normal, vec3 view_direction, vec3 ambient_color)
+                                 {
+                                     vec3 light_direction = normalize(-light.direction);
+                                     //diffuse shading
+                                     float diff = max(dot(normal, light_direction), 0.0);
+                                     //specular shading
+                                     vec3 reflect_direction = reflect(-light_direction, normal);
+                                     float spec = pow(max(dot(view_direction, reflect_direction), 0.0), material.shininess);
+                                     //combine results
+                                     vec3 ambient  = light.ambient  * ambient_color;
+                                     vec3 diffuse  = light.diffuse  * diff * material.diffuse;
+                                     vec3 specular = light.specular * spec * material.specular;
+                                     return (ambient + diffuse + specular);
+                                 }
                                  """);
         fragment_code.AppendLine();
         fragment_code.AppendLine("void main() {");
@@ -99,24 +110,40 @@ public class AutoShader: Shader {
             fragment_code.AppendLine("  vec3 view_direction = normalize(camera_position - vertex.frag_position);");
 
             fragment_code.AppendLine("  //------- Ambient lighting -------");
-            fragment_code.AppendLine("  vec3 light = material.ambient * ambient_light;");
+
+            if(material.ambient_texture != null)
+                fragment_code.AppendLine("  vec3 ambient_color = texture(material.ambient_texture, vertex.texcoord).rgb;");
+            else
+                fragment_code.AppendLine("  vec3 ambient_color = material.ambient_color;");
+
+            fragment_code.AppendLine("  vec3 light = ambient_color * ambient_light;");
 
             fragment_code.AppendLine("  //----- Directional lighting -----");
-            fragment_code.AppendLine("  light += calculate_directional_light(directional_light[0], normal, view_direction);");
+            fragment_code.AppendLine("  light += calculate_directional_light(directional_light[0], normal, view_direction, ambient_color);");
             fragment_code.AppendLine("  frag_color = vec4(light, 1);");
         } else {
-            fragment_code.AppendLine("  vec3 d = directional_light[0].direction;");
-            fragment_code.AppendLine(
-                "  frag_color = vec4(material.ambient * (ambient_light + directional_light[0].ambient) + 0.25f, 1);");
+            if(material.ambient_texture != null)
+                fragment_code.AppendLine("  frag_color = texture(material.ambient_texture, vertex.texcoord);\n");
+            else
+                fragment_code.AppendLine("  frag_color = vec4(material.ambient, 1);");
         }
 
         fragment_code.AppendLine("}");
 
-        if(vertex_array.has_normals)
+        if (material.ambient_texture != null) {
+            Console.WriteLine($"AutoShader:\n{vertex_code}\n");
             Console.WriteLine(fragment_code);
+        }
+
+        save_to_file(name, vertex_code.ToString(), fragment_code.ToString());
 
         shader.compile_from_text(vertex_code.ToString(), fragment_code.ToString());
 
         return shader;
+    }
+
+    private static void save_to_file(string name, string vertex_code, string fragment_code) {
+        File.WriteAllText($"{base_path}generated/{name}.vert.glsl", vertex_code);
+        File.WriteAllText($"{base_path}generated/{name}.frag.glsl", fragment_code);
     }
 }

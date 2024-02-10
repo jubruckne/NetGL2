@@ -24,7 +24,11 @@ public class Texture2DArrayBuffer: TextureBuffer {
 
     public Texture2DArrayBuffer(in Texture[] textures): this(TextureTarget.Texture2DArray, textures) {}
 
-    public void upload(TextureUnit texture_unit = TextureUnit.Texture0) {
+    public override void upload() {
+        upload(TextureUnit.Texture0);
+    }
+
+    public void upload(TextureUnit texture_unit) {
         GL.ActiveTexture(texture_unit);
         if (handle == 0) 
             handle = GL.GenTexture();

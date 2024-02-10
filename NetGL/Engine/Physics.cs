@@ -1,6 +1,7 @@
 using System.Numerics;
+using NetGL.ECS;
 
-namespace NetGL.Engine;
+namespace NetGL;
 
 using BulletSharp;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ public class Physics {
     ///create 125 (5x5x5) dynamic objects
     private const int ArraySizeX = 5, ArraySizeY = 5, ArraySizeZ = 5;
 
-    private Vector3 _startPosition = new Vector3(-5, 1, -3) - new Vector3(ArraySizeX / 2, 0, ArraySizeZ / 2);
+    private Vector3 _startPosition = new Vector3(-5, 1, -3) - new Vector3(ArraySizeX / 2f, 0, ArraySizeZ / 2f);
 
     public DiscreteDynamicsWorld World { get; }
 
@@ -26,11 +27,6 @@ public class Physics {
         _broadphase = new DbvtBroadphase();
         World = new DiscreteDynamicsWorld(_dispatcher, _broadphase, null, _collisionConf);
 
-        // create the ground
-        var groundShape = new BoxShape(50, 50, 50);
-        _collisionShapes.Add(groundShape);
-        CollisionObject ground = CreateStaticBody(Matrix4x4.CreateTranslation(0, -50, 0), groundShape);
-        ground.UserObject = "Ground";
 
         // create a few dynamic rigidbodies
         var colShape = new BoxShape(1);
@@ -103,11 +99,6 @@ public class Physics {
         _collisionConf.Dispose();
     }
 
-    private RigidBody CreateStaticBody(Matrix4x4 startTransform, CollisionShape shape) {
-        Vector3 localInertia = Vector3.Zero;
-        return CreateBody(0, startTransform, shape, localInertia);
-    }
-
     private RigidBody CreateDynamicBody(float mass, Matrix4x4 startTransform, CollisionShape shape) {
         Vector3 localInertia = shape.CalculateLocalInertia(mass);
         return CreateBody(mass, startTransform, shape, localInertia);
@@ -120,5 +111,28 @@ public class Physics {
             World.AddRigidBody(body);
             return body;
         }
+    }
+}
+
+public static class PhysicsExt {
+    public static Component<RigidBody> add_rigid_body(this Entity entity, in RigidBody body) {
+        return add_rigid_body(entity, body.GetType().Name, body);
+    }
+
+    public static Component<RigidBody> add_rigid_body(this Entity entity, string name, in RigidBody body) {
+        entity.world.physics.World.AddRigidBody(body);
+        entity.add(name, body);
+        return entity.get<Component<RigidBody>>();
+    }
+
+    public static Component<RigidBody> add_rigid_body(this Entity entity, string? name = null, float mass = 1f) {
+        var body = new RigidBody(
+            new RigidBodyConstructionInfo(
+                mass,
+                new DefaultMotionState(),
+                new BoxShape(.001f)
+            )
+        );
+        return add_rigid_body(entity, name ?? body.GetType().Name, body);
     }
 }

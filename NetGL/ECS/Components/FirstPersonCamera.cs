@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -36,7 +37,6 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
     public override void update(in float game_time, in float delta_time) {
         if (enable_input) {
             var speed = this.speed * delta_time;
-            var sensitivity = this.sensitivity * this.speed * delta_time * 180f;
 
             if (keyboard_state != null) {
                 if (keyboard_state.IsKeyDown(Keys.W))
@@ -98,11 +98,15 @@ public static class FirstPersonCameraExt {
         KeyboardState? keyboard_state = null,
         MouseState? mouse_state = null,
         bool? enable_input = true,
-        bool? enable_update = true
+        bool? enable_update = true,
+        float speed = 2.5f,
+        float sensitivity = 0.5f
     ) {
         var cam = new FirstPersonCamera(entity, viewport, field_of_view, aspect_ratio, near, far, keyboard_state, mouse_state);
         if (enable_input != null) cam.enable_input = (bool)enable_input;
         if (enable_update != null) cam.enable_update = (bool)enable_update;
+        cam.speed = speed;
+        cam.sensitivity = sensitivity;
         entity.add(cam);
         return cam;
     }

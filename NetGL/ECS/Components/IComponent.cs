@@ -18,7 +18,8 @@ public interface IComponent {
     string get_path() => $"{entity.get_path()}:{name}";
 }
 
-public interface IComponent<T>: IComponent where T: IComponent<T> {
+public interface IComponent<T>: IComponent {
+
 //    Type type_of() => typeof(T);
 //    int size_of() => Marshal.SizeOf<T>();
 }

@@ -44,6 +44,10 @@
       </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Assets\Shaders\generated\" />
+    </ItemGroup>
+
 <!--
     <ItemGroup>
       <Content Include="bin\Debug\net8.0\runtimes\osx-arm64\native\libassimp.dylib" />

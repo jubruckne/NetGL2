@@ -1,3 +1,4 @@
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 namespace NetGL.ECS;
@@ -8,6 +9,8 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
     public bool enable_updates { get; set; }
 
     public IReadOnlyList<VertexArray> vertex_arrays { get; }
+    public bool cull_face = true;
+    public bool depth_test = true;
 
     internal VertexArrayRenderer(in Entity entity, IReadOnlyList<VertexArray> vertex_arrays) {
         this.entity = entity;
@@ -28,6 +31,8 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
         shader.set_camera_position(camera_pos);
 
         if (entity.try_get<MaterialComponent>(out var mat)) {
+            if (mat!.material.ambient_texture != null)
+                mat.material.ambient_texture.bind();
             shader.set_material(mat!.material);
         }
 
@@ -37,6 +42,17 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
         // Console.WriteLine($"projection:\n{projection_matrix}");
         // Console.WriteLine($"camera:\n{camera_matrix}");
         // Console.WriteLine($"model:\n{model_matrix}");
+
+        if(depth_test)
+            GL.Enable(EnableCap.DepthTest);
+        else
+            GL.Disable(EnableCap.DepthTest);
+
+        if(cull_face)
+            GL.Enable(EnableCap.CullFace);
+        else {
+            GL.Disable(EnableCap.CullFace);
+        }
 
         foreach (var va in vertex_arrays) {
             va.bind();

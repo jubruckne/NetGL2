@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 
 namespace NetGL.ECS;
 
-public class DirectionalLight: Light<DirectionalLight.Data>, IComponent<AmbientLight> {
+public class DirectionalLight: Light<DirectionalLight.Data>, IComponent<DirectionalLight> {
     [StructLayout(LayoutKind.Sequential)]
     public struct Data {
         public Vector3 direction;

@@ -1,13 +1,27 @@
+using System.Numerics;
+using BulletSharp;
 using OpenTK.Mathematics;
+using Quaternion = System.Numerics.Quaternion;
+using Vector3 = OpenTK.Mathematics.Vector3;
 
 namespace NetGL.ECS;
 
 public class World: Entity {
     private readonly EntityList world_entities;
+    internal readonly Physics physics;
 
     public World(): base("World", null, null) {
         world_entities = new();
+        physics = new();
+        add(new Physics());
+
+
+        // create the ground
+        var groundShape = new BoxShape(50, 50, 50);
+        var v = this.add_rigid_body("Ground", new RigidBody(new RigidBodyConstructionInfo(0, new DefaultMotionState(), groundShape)));
+        v.data.Translate(new System.Numerics.Vector3(0f, -53f, 0f));
     }
+
 
     public void for_all_components_with<C1>(Action<C1> action) where C1: class, IComponent {
         foreach(var entity in world_entities)
@@ -85,11 +99,34 @@ public class World: Entity {
 
     public void update(in float game_time, in float delta_time) {
         foreach (var entity in children) {
+            update_entity_pre_physics(entity);
+        }
+
+        physics.World.StepSimulation(delta_time);
+
+        foreach (var entity in children) {
             update_entity(game_time, delta_time, entity);
         }
     }
 
+    private void update_entity_pre_physics(in Entity entity) {
+        if (entity.try_get<RigidBody>(out var body)) {
+             body.CenterOfMassTransform = Matrix4x4.CreateTranslation(entity.transform.position.X,
+                entity.transform.position.Y, entity.transform.position.Z);
+        }
+
+        foreach (Entity child in entity.children) {
+            update_entity_pre_physics(child);
+        }
+    }
+
     private void update_entity(in float game_time, in float delta_time, in Entity entity) {
+        if (entity.try_get<RigidBody>(out var body)) {
+            entity.transform.position.X = body.CenterOfMassPosition.X;
+            entity.transform.position.Y = body.CenterOfMassPosition.Y;
+            entity.transform.position.Z = body.CenterOfMassPosition.Z;
+        }
+
         foreach (var updateable in entity.get_updateable_components()) {
             //Console.WriteLine("update: " + updateable);
             if(updateable.enable_update)

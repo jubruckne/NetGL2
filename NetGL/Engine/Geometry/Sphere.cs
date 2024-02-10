@@ -9,7 +9,7 @@ internal class Sphere: IShape<Sphere> {
         this.radius = radius;
     }
 
-    public IEnumerable<Vector3> get_vertices() => get_vertices(32, 24);
+    public IEnumerable<Vector3> get_vertices() => get_vertices(64, 48);
 
     public IEnumerable<Vector3> get_vertices(int meridians, int parallels) {
         float x, y, z, xy;
@@ -40,7 +40,7 @@ internal class Sphere: IShape<Sphere> {
         }
     }
 
-    public IEnumerable<Vector3i> get_indices() => get_indices(1f, 32, 24);
+    public IEnumerable<Vector3i> get_indices() => get_indices(1f, 64, 48);
 
     public IEnumerable<Vector3i> get_indices(float radius, int meridians, int parallels) {
         for (int i = 1; i <= parallels; ++i) {

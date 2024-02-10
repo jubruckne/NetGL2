@@ -18,6 +18,6 @@ void main() {
     if(gl_FrontFacing)
         f_color = v_color;
     else
-        f_color = v_color * 0.1;
+        f_color = v_color;
 
 }

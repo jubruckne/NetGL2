@@ -6,7 +6,7 @@ public static class RectanglePrefab {
 
         var model = Model.from_shape(Rectangle.make());
 
-        entity.add_shader(AutoShader.for_vertex_type($"{name}_shader", model.vertex_arrays[0]));
+        entity.add_shader(AutoShader.for_vertex_type($"{name}_shader", model.vertex_arrays[0], Material.Brass));
         entity.add_vertex_array_renderer(model.vertex_arrays[0]);
 
         return entity;

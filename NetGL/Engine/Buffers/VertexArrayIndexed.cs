@@ -9,6 +9,11 @@ public class VertexArrayIndexed: VertexArray {
     public VertexArrayIndexed(IIndexBuffer index_buffer, params IVertexBuffer[] vertex_buffers
         ): base(index_buffer.primitive_type, vertex_buffers) {
 
+        foreach (var vb in vertex_buffers) {
+            if (vb.count > index_buffer.get_max_vertex_count())
+                throw new ArgumentOutOfRangeException(nameof(index_buffer), $"IndexBuffer<{index_buffer.item_type.Name}> too small for VertexBuffer(count={vb.count})!");
+        }
+
         this.index_buffer = index_buffer;
     }
 
@@ -34,7 +39,7 @@ public class VertexArrayIndexed: VertexArray {
     }
 
     public override void draw() {
-        Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.size}, {index_buffer.draw_element_type}, 0)");
+        //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.size}, {index_buffer.draw_element_type}, 0)");
         GL.DrawElements(PrimitiveType.Triangles, index_buffer.size, index_buffer.draw_element_type, 0);
     }
 }

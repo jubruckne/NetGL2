@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using Assimp;
+
 namespace NetGL.ECS;
 
 public class Entity {
@@ -33,7 +36,7 @@ public class Entity {
     /// <summary>
     /// Get the first component T in the current entity.
     /// </summary>
-    public T get<T>() where T: class, IComponent {
+    public T get<T>() {
         foreach (var component in component_list) {
             if (component is T t) return t;
             if (component.GetType().IsAssignableTo(typeof(T))) return (T)component;
@@ -148,31 +151,42 @@ public class Entity {
         }
     }
 
-    public void add<T>(in T component) where T: class, IComponent {
-        add(typeof(T).Name, component);
-    }
+    public void add<T>(in T component) where T:notnull => add(component.GetType().Name, component);
 
-    public void add<T>(string name, in T component) where T: class, IComponent {
-        if(component is IUpdatableComponent upd)
+    public void add<T>(string name, in T component) where T:notnull {
+        IComponent icomp = component as IComponent ?? new Component<T>(this, name, component);
+
+        if(icomp is IUpdatableComponent upd)
             updateable_components.Add(upd);
-        if(component is IRenderableComponent rnd)
+        if(icomp is IRenderableComponent rnd)
             renderable_components.Add(rnd);
 
-        component_list.add(component);
+        component_list.add(icomp);
     }
 
     internal IEnumerable<IUpdatableComponent> get_updateable_components() => updateable_components;
     internal IEnumerable<IRenderableComponent> get_renderable_components() => renderable_components;
 
-    public bool try_get<T>(out T? value, string? name = null) where T: class, IComponent {
-        value = null;
-
+    public bool try_get<T>(out T value) where T: class {
         foreach (var component in component_list) {
-            if (component is T t) value = t;
-            if (component.GetType().IsAssignableTo(typeof(T))) value = (T)component;
+            if (component is T t) {
+                value = t;
+                return true;
+            }
+
+            if (component is Component<T>) {
+                value = ((Component<T>)component).data;
+                return true;
+            }
+
+            if (component.GetType().IsAssignableTo(typeof(T))) {
+                value = (T)component;
+                return true;
+            }
         }
 
-        return value != null;
+        value = null;
+        return false;
     }
 
     public bool has<C1>() where C1: IComponent {
@@ -219,5 +233,17 @@ public class Entity {
         }
 
         return path;
+    }
+
+    public World world {
+        get {
+            var e = this;
+            while (e != null) {
+                if (e is World) return (World)e;
+                e = e.parent;
+            }
+
+            throw new IndexOutOfRangeException("world not found!");
+        }
     }
 }
