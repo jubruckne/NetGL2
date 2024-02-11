@@ -135,8 +135,8 @@ public class Engine: GameWindow {
         oc4.transform.attitude.direction = (-1, 0, 0);
 */
         Entity ball = world.create_sphere_cube("Ball", radius:5f, material:Material.random);
-        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
-        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
+//        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
+//        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
 
         ball.transform.position = (0, 3, 5);
         //Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);

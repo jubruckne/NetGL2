@@ -54,6 +54,8 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
             GL.Disable(EnableCap.CullFace);
         }
 
+        GL.Enable(EnableCap.LineSmooth);
+
         foreach (var va in vertex_arrays) {
             va.bind();
             va.draw();

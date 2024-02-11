@@ -1,6 +1,7 @@
 #version 410
 
 in vec4 v_color;
+in vec4 v_normal;
 
 /*
 struct Material {
@@ -15,9 +16,9 @@ uniform Material material;
 out vec4 f_color;
 
 void main() {
-    if(gl_FrontFacing)
+   // if(gl_FrontFacing)
         f_color = v_color;
-    else
-        f_color = v_color;
+    //else
+    //    f_color = v_color;
 
 }

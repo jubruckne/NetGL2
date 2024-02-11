@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.JavaScript;
 using NetGL.ECS;
 
 namespace NetGL;
@@ -30,7 +31,7 @@ public class Shader {
     }
 
     protected void compile_from_text(string vertex_program, string fragment_program, string geometry_program = "") {
-        Console.WriteLine("compiling vertex shader...");
+        Console.WriteLine("\ncompiling vertex shader...");
         var vertex_shader_handle = GL.CreateShader(ShaderType.VertexShader);
         GL.ShaderSource(vertex_shader_handle, vertex_program);
         compile(vertex_shader_handle);
@@ -47,14 +48,15 @@ public class Shader {
             geometry_shader_handle = GL.CreateShader(ShaderType.GeometryShader);
             GL.ShaderSource(geometry_shader_handle, geometry_program);
             compile(geometry_shader_handle);
-            GL.AttachShader(handle, geometry_shader_handle);
         }
+
+        Console.WriteLine("attaching shaders...");
 
         // Attach shaders...
         GL.AttachShader(handle, vertex_shader_handle);
-        GL.AttachShader(handle, fragment_shader_handle);
         if(geometry_shader_handle != -1)
             GL.AttachShader(handle, geometry_shader_handle);
+        GL.AttachShader(handle, fragment_shader_handle);
 
         // And then link them together.
         Console.WriteLine("linking shaders...");
@@ -70,6 +72,8 @@ public class Shader {
         GL.DeleteShader(vertex_shader_handle);
         if(geometry_shader_handle != -1)
             GL.DeleteShader(geometry_shader_handle);
+
+        Error.check();
 
         // cache uniform locations.
         GL.GetProgram(handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);

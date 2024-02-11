@@ -10,7 +10,7 @@ public class Cube: IShape<Cube> {
     public static Cube make(float width, float height, float depth) => new Cube(width, height, depth);
     public static Cube make(float radius) => make(radius * 2f, radius * 2f, radius * 2f);
 
-    private Cube(float width, float height, float depth) {
+    public Cube(float width, float height, float depth) {
         this.width = width;
         this.height = height;
         this.depth = depth;
