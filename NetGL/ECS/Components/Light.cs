@@ -31,8 +31,8 @@ public static class LightComponentExt {
         return light;
     }
 
-    public static DirectionalLight add_directional_light(this Entity entity, in Vector3 direction, in Color? ambient = default, Color? diffuse = default, in Color? specular = default) {
-        var light = new DirectionalLight(entity, direction, ambient ?? Color.Black, diffuse ?? Color.Black, specular ?? Color.Black);
+    public static DirectionalLight add_directional_light(this Entity entity, in Vector3 direction = default, in Color ambient = default, Color diffuse = default, in Color specular = default) {
+        var light = new DirectionalLight(entity, direction, ambient, diffuse, specular);
         entity.add(light);
         return light;
     }

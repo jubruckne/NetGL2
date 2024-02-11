@@ -92,7 +92,7 @@ public class AutoShader: Shader {
                                  {
                                      vec3 light_direction = normalize(-light.direction);
                                      //diffuse shading
-                                     float diff = max(dot(normal, light_direction), 0.0);
+                                     float diff = max(dot(normal, -light_direction), 0.0);
                                      //specular shading
                                      vec3 reflect_direction = reflect(-light_direction, normal);
                                      float spec = pow(max(dot(view_direction, reflect_direction), 0.0), material.shininess);

@@ -1,3 +1,4 @@
+using System.Numerics;
 using BulletSharp;
 using ImGuiNET;
 using NetGL;
@@ -8,6 +9,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Vector2 = System.Numerics.Vector2;
+using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Engine: GameWindow {
     public readonly bool debug;
@@ -104,18 +106,17 @@ public class Engine: GameWindow {
         ((environment.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
         environment.get<VertexArrayRenderer>().depth_test = false;
 
-        world.add_ambient_light(0.25f, 0.25f, 0.25f);
         world.add_directional_light(
-            direction:(0.2f, -1f, -.955f),
-            diffuse:(0.65f, 0.65f, 0.65f)
-            //specular:(0.95f, 0.95f, 0.65f)
-            );
+            ambient:(0.4f, 0.4f, 0.4f),
+            diffuse:(0.9f, 0.9f, 0.9f),
+            specular:(1.0f, 1.0f, 1.0f)
+            ).data.direction.set_azimuth_altitude(90, 45);
 
         Entity player = world.create_entity("Player");
         player.transform.position = (1, +2, 20);
         player.transform.attitude.direction = (0, 0, -1);
         player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:8f, sensitivity:0.75f);
-
+/*
         var oc1 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:325, y:200), field_of_view:60f, enable_input:false);
         var oc2 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:125, y:25), field_of_view:60f, enable_input:false);
         var oc3 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:25, y:200), field_of_view:60f, enable_input:false);
@@ -132,8 +133,10 @@ public class Engine: GameWindow {
 
         oc4.transform.position = (1, 2, 20);
         oc4.transform.attitude.direction = (-1, 0, 0);
-
-        Entity ball = world.create_sphere_uv("Ball", radius:5f, rows:256, colums: 128, material:Material.random);
+*/
+        Entity ball = world.create_sphere_cube("Ball", radius:5f, material:Material.random);
+        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
+        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
 
         ball.transform.position = (0, 3, 5);
         //Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);
@@ -149,7 +152,7 @@ public class Engine: GameWindow {
         entd.transform.attitude.roll = 2.5f;
 
         foreach (var b in Enumerable.Range(1, 250)) {
-            Entity cube = world.create_sphere_uv($"Cube{b}", radius:0.25f, material:Material.random);
+            Entity cube = world.create_cube($"Cube{b}", radius:0.25f, material:Material.random);
             cube.transform.position.randomize(-10f, 10f).add(x:-3.5f, y:10f);
             cube.transform.attitude.yaw_pitch_roll_degrees.randomize(-180, 180);
             cube.add_rigid_body();
@@ -271,7 +274,7 @@ public class Engine: GameWindow {
         ImGui.PushStyleColor(ImGuiCol.Header, Color.random_for(entity.name).to_int());
         if (ImGui.TreeNodeEx(
                 $"{entity.name}##{entity.get_path()}",
-                entity.name == "World" | entity.name == "74656"
+                entity.name == "World" | entity.name == "Player"
                     ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
                     : ImGuiTreeNodeFlags.Framed, entity.name)) {
             ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Color.make(55, 65, 255).to_int());
@@ -307,7 +310,8 @@ public class Engine: GameWindow {
                         ImGui.DragFloat3($"Up→##{entity.name}.up", ref attitudeUp.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
                             ImGuiSliderFlags.NoInput);
 
-                        //ImGui.Spacing();
+                        ImGui.Spacing();
+
                         //ImGui.Text($"Aizmuth:{t.attitude.azimuth:N1}, Polar: {t.attitude.polar:N1}");
                         ImGui.Indent();
                         ImGui.TreePop();
@@ -365,7 +369,7 @@ public class Engine: GameWindow {
                             ref mat.material.diffuse_color.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
                         ImGui.ColorEdit3($"Specular##{entity}.{mat.name}.specular",
                             ref mat.material.specular_color.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions);
-                        ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.material.shininess, -1, 1);
+                        ImGui.SliderFloat($"Shininess##{entity}.{mat.name}.shininess", ref mat.material.shininess, 0, 100);
 
                         ImGui.Indent();
                         ImGui.TreePop();
@@ -384,7 +388,15 @@ public class Engine: GameWindow {
                         ImGui.ColorEdit3($"Ambient##{entity}.{comp.name}.ambient", ref dir.data.ambient.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.ColorEdit3($"Diffuse##{entity}.{comp.name}.diffuse", ref dir.data.diffuse.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
                         ImGui.ColorEdit3($"Specular##{entity}.{comp.name}.specular", ref dir.data.specular.vector3, ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoOptions | ImGuiColorEditFlags.NoInputs);
-                        ImGui.SliderFloat3($"Direction→##{entity}.{comp.name}.direction", ref dir.data.direction.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), -1, 1);
+                        //ImGui.SliderFloat3($"Direction→##{entity}.{comp.name}.direction", ref dir.data.direction.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), -1, 1);
+
+                        var (azimuth, altitude) = dir.data.direction.to_azimuth_altitude();
+
+                        if (ImGui.DragFloat($"Azimuth##{entity.name}.azimuth", ref azimuth, 1f, -181f, 181f, "%.1f")
+                           || ImGui.DragFloat($"Altitude##{entity.name}.altitude", ref altitude, 1f, -90f, 90f, "%.1f")) {
+                            dir.data.direction.set_azimuth_altitude(azimuth, altitude);
+                        }
+
                         ImGui.Indent();
                         ImGui.TreePop();
                     }

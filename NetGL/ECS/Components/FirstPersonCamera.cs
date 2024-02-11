@@ -11,7 +11,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
     public float speed = 2.5f;
     public float sensitivity = 0.5f;
 
-    public readonly Vector2 pitch_clamp = new(20, -20);
+    public readonly Vector2 pitch_clamp = new(33, -33);
 
     internal FirstPersonCamera (
         in Entity entity,

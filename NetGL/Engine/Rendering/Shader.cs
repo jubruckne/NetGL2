@@ -9,7 +9,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 public class Shader {
-    public static string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../../Assets/Shaders/";
+    public static string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../Assets/Shaders/";
 
     public readonly string name;
     private readonly int handle;
@@ -186,7 +186,7 @@ public class Shader {
                     set_uniform("ambient_light", ambient.data.color.reinterpret_cast<Color,Vector3>());
                     break;
                 case DirectionalLight directional:
-                    if(directional.data.direction.LengthSquared != 0) directional.data.direction.Normalize();
+                    // if(directional.data.direction.LengthSquared != 0) directional.data.direction.Normalize();
                     set_uniform($"directional_light[{num_directional_lights}].direction", directional.data.direction);
                     set_uniform($"directional_light[{num_directional_lights}].ambient", directional.data.ambient.reinterpret_cast<Color, Vector3>());
                     set_uniform($"directional_light[{num_directional_lights}].specular", directional.data.specular.reinterpret_cast<Color, Vector3>());

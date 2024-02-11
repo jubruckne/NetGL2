@@ -79,8 +79,33 @@ public struct Attitude {
         }
     }
 
-    public float azimuth => spherical.X;
-    public float polar => spherical.Y;
+    public float azimuth {
+        get => spherical.X;
+        set {
+            // Convert azimuth (θ) and current polar (φ) to a direction vector
+            // Note: Assumes φ is kept constant, replace with current polar if needed
+            var phiRadians = MathF.Acos(-1) * degrees_to_radian; // For (0, 0, -1), φ = 180 degrees
+            var thetaRadians = value * degrees_to_radian;
+            var x = MathF.Sin(phiRadians) * MathF.Cos(thetaRadians);
+            var y = MathF.Sin(phiRadians) * MathF.Sin(thetaRadians);
+            var z = MathF.Cos(phiRadians);
+            this.direction = new Vector3(x, y, z);
+        }
+    }
+
+    public float polar {
+        get => spherical.Y;
+        set {
+            // Convert current azimuth (θ) and new polar (φ) to a direction vector
+            // Note: Assumes θ is kept constant, replace with current azimuth if needed
+            var thetaRadians = this.azimuth * degrees_to_radian;
+            var phiRadians = value * degrees_to_radian;
+            var x = MathF.Sin(phiRadians) * MathF.Cos(thetaRadians);
+            var y = MathF.Sin(phiRadians) * MathF.Sin(thetaRadians);
+            var z = MathF.Cos(phiRadians);
+            this.direction = new Vector3(x, y, z);
+        }
+    }
 
     public Vector3 up {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -3,7 +3,7 @@ namespace NetGL;
 using StbImageSharp;
 
 public class Texture {
-    public static string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../../Assets/Textures/";
+    public static string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../Assets/Textures/";
 
     public readonly string name;
     public readonly int width;

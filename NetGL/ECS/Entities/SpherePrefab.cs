@@ -29,14 +29,17 @@ public static class SpherePrefab {
         return entity;
     }
 
-    public static Entity create_sphere_cube(this World world, string name, Entity? parent = null, Transform? transform = null, float radius = 0.5f, int segments = 16) {
+    public static Entity create_sphere_cube(this World world, string name, Entity? parent = null, Transform? transform = null, float radius = 0.5f, int segments = 16, Material? material = null) {
         var entity = world.create_entity(name, parent, transform);
 
-        var model = Model.from_shape(new Sphere(radius));
+        var model = Model.from_shape(new CubeSphere(radius));
 
-        Shader shader = new Shader("default shader", "vert.glsl", "frag.glsl");
+        if(material == null) material = Material.Chrome;
 
-        entity.add_shader(new Shader("default shader", "vert.glsl", "frag.glsl"));
+        var shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], material);
+
+        entity.add_material(material);
+        entity.add_shader(shader);
         entity.add_vertex_array_renderer(model.vertex_arrays[0]);
 
         return entity;

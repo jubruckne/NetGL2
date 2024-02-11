@@ -1,11 +1,12 @@
 using Assimp;
 using Assimp.Configs;
 using OpenTK.Mathematics;
-using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 
 namespace NetGL.ECS;
 
 public class Model {
+    public static string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../Assets/Models/";
+
     public readonly string name;
     public readonly IReadOnlyList<VertexArray> vertex_arrays;
     public readonly IReadOnlyList<Material> materials;
@@ -38,7 +39,6 @@ public class Model {
     }
 
     public static Model from_file(string filename) {
-        string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../../Assets/Models/";
         if (!File.Exists(filename))
             filename = base_path + filename;
 
