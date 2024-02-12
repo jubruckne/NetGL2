@@ -1,11 +1,12 @@
 using OpenTK.Graphics.OpenGL4;
+using ArbTextureFilterAnisotropic = OpenTK.Graphics.OpenGL.ArbTextureFilterAnisotropic;
 
 namespace NetGL;
 
 public class TextureCubemapBuffer: Texture2DArrayBuffer {
     public TextureCubemapBuffer(in Texture right, in Texture left, in Texture top, in Texture bottom, in Texture front,
         in Texture back)
-        : base(TextureTarget.TextureCubeMap, [right, left, top, bottom, front, back]) {
+        : base(TextureTarget.TextureCubeMap, [right, left, bottom, top, front, back]) {
     }
 
     public void upload(TextureUnit texture_unit = TextureUnit.Texture0) {
@@ -20,6 +21,8 @@ public class TextureCubemapBuffer: Texture2DArrayBuffer {
         GL.TexParameter(target, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
         GL.TexParameter(target, TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge);
         GL.TexParameter(target, TextureParameterName.TextureMaxAnisotropy, 8);
+
+        GL.Enable(EnableCap.TextureCubeMapSeamless);
 
         for (int tex_idx = 0; tex_idx < textures.Length; tex_idx++) {
             GL.TexImage2D(

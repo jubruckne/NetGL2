@@ -8,7 +8,6 @@ public interface IIndexBuffer : IBuffer {
     DrawElementsType draw_element_type { get; }
     PrimitiveType primitive_type { get; }
     int get_max_vertex_count();
-    void reverse_winding();
 }
 
 public class IndexBuffer<T>: Buffer<T>, IIndexBuffer

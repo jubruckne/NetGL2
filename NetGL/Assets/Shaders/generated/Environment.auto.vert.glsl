@@ -19,7 +19,10 @@ void main() {
   vertex.local_position = position;
   vertex.world_position = (vec4(position, 1) * model).xyz;
   vertex.normal = normal * mat3(transpose(inverse(model)));
-  vertex.texcoord = normalize(position);
+  // flip y because skybox is rendered inside out
+  vertex.texcoord = position;
+  vertex.texcoord.y = 1.0 - vertex.texcoord.y;
+  vertex.texcoord = normalize(vertex.texcoord);
   vertex.frag_position = vec3(vec4(position, 1.0) * model);
   gl_Position = vec4(position, 1) * mat4(mat3(camera)) * projection; gl_Position = gl_Position.xyww;
 

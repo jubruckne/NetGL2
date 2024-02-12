@@ -13,6 +13,7 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
     public bool depth_test = true;
     public bool wireframe = false;
     public bool blending = false;
+    public bool front_facing = true;
 
     internal VertexArrayRenderer(in Entity entity, IReadOnlyList<VertexArray> vertex_arrays) {
         this.entity = entity;
@@ -67,6 +68,12 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
         } else {
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+        }
+
+        if (front_facing) {
+            GL.FrontFace(FrontFaceDirection.Ccw);
+        } else {
+            GL.FrontFace(FrontFaceDirection.Cw);
         }
 
         foreach (var va in vertex_arrays) {

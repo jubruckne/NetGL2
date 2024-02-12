@@ -41,10 +41,21 @@ public class AutoShader: Shader {
         vertex_code.AppendLine("void main() {");
         vertex_code.AppendLine("  vertex.local_position = position;");
         vertex_code.AppendLine("  vertex.world_position = (vec4(position, 1) * model).xyz;");
+
         if(vertex_array.has_normals)
             vertex_code.AppendLine("  vertex.normal = normal * mat3(transpose(inverse(model)));");
-        if(material.ambient_texture != null)
-            vertex_code.AppendLine("  vertex.texcoord = normalize(position);");
+
+        if (material.ambient_texture != null) {
+            if (material.ambient_texture is TextureCubemapBuffer) {
+                vertex_code.AppendLine("  // flip y because skybox is rendered inside out");
+                vertex_code.AppendLine("  vertex.texcoord = position;");
+                vertex_code.AppendLine("  vertex.texcoord.y = 1.0 - vertex.texcoord.y;");
+                vertex_code.AppendLine("  vertex.texcoord = normalize(vertex.texcoord);");
+            } else {
+                vertex_code.AppendLine("  vertex.texcoord = normalize(position);");
+            }
+        }
+
         vertex_code.AppendLine("  vertex.frag_position = vec3(vec4(position, 1.0) * model);");
         if(material.ambient_texture == null)
             vertex_code.AppendLine("  gl_Position = vec4(vertex.world_position, 1) * camera * projection;");

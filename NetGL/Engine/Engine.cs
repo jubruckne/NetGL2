@@ -109,10 +109,13 @@ public class Engine: GameWindow {
 
         var mat = Material.Chrome;
         mat.ambient_texture = cubemap;
-        Entity environment = world.create_cube("Environment", material:mat, radius:.100f);
-        ((environment.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
-        ((environment.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
-        environment.get<VertexArrayRenderer>().depth_test = false;
+        Entity environment = world.create_cube("Environment", material:mat, radius:100f);
+        //((environment.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
+       //((environment.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
+       environment.get<VertexArrayRenderer>().front_facing = false;
+       environment.get<VertexArrayRenderer>().depth_test = false;
+       environment.get<VertexArrayRenderer>().cull_face = true;
+
 
         world.add_directional_light(
             ambient:(0.4f, 0.4f, 0.4f),
