@@ -5,6 +5,11 @@ namespace NetGL;
 public class AutoShader: Shader {
     private AutoShader(in string name) : base(name) { }
 
+    static AutoShader() {
+        foreach (var file in Directory.GetFiles($"{base_path}generated/"))
+            File.Delete(file);
+    }
+
     public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array, in Material material) {
         Console.WriteLine();
         Console.WriteLine();

@@ -8,6 +8,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using ContextProfileMask = OpenTK.Graphics.OpenGL.ContextProfileMask;
 using Vector2 = System.Numerics.Vector2;
 using Vector3 = OpenTK.Mathematics.Vector3;
 
@@ -44,11 +45,18 @@ public class Engine: GameWindow {
 
         Console.WriteLine($"OpenGL Version: {GL.GetString(StringName.Version)}");
         Console.WriteLine($"Shading Language Version: {GL.GetString(StringName.ShadingLanguageVersion)}");
+        Console.WriteLine($"Vendor: {GL.GetString(StringName.Vendor)}");
+        Console.WriteLine($"Renderer: {GL.GetString(StringName.Renderer)}");
+        Console.WriteLine($"ContextFlags: {(ContextFlagMask)GL.GetInteger(GetPName.ContextFlags)}");
+        Console.WriteLine();
+
         Console.WriteLine($"Extensions: {GL.GetString(StringNameIndexed.Extensions, 0)}");
         Console.WriteLine();
         Console.WriteLine($"MaxElementsVertices: {GL.GetInteger(GetPName.MaxElementsVertices)}");
         Console.WriteLine($"MaxElementsIndices: {GL.GetInteger(GetPName.MaxElementsIndices)}");
         Console.WriteLine();
+
+
 
         GL.CullFace(CullFaceMode.Back);
         GL.Enable(EnableCap.CullFace);
@@ -137,6 +145,10 @@ public class Engine: GameWindow {
         Entity ball = world.create_sphere_cube("Ball", radius:5f, material:Material.random);
 //        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
 //        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
+        ball.get<VertexArrayRenderer>().wireframe = false;
+        ball.get<VertexArrayRenderer>().cull_face = true;
+        ball.get<VertexArrayRenderer>().depth_test = true;
+        ball.get<VertexArrayRenderer>().blending = false;
 
         ball.transform.position = (0, 3, 5);
         //Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);
@@ -152,7 +164,7 @@ public class Engine: GameWindow {
         entd.transform.attitude.roll = 2.5f;
 
         foreach (var b in Enumerable.Range(1, 250)) {
-            Entity cube = world.create_cube($"Cube{b}", radius:0.25f, material:Material.random);
+            Entity cube = world.create_sphere_uv($"Sphere{b}", radius:0.25f, material:Material.random);
             cube.transform.position.randomize(-10f, 10f).add(x:-3.5f, y:10f);
             cube.transform.attitude.yaw_pitch_roll_degrees.randomize(-180, 180);
             cube.add_rigid_body();

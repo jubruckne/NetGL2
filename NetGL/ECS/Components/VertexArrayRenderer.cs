@@ -11,6 +11,8 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
     public IReadOnlyList<VertexArray> vertex_arrays { get; }
     public bool cull_face = true;
     public bool depth_test = true;
+    public bool wireframe = false;
+    public bool blending = false;
 
     internal VertexArrayRenderer(in Entity entity, IReadOnlyList<VertexArray> vertex_arrays) {
         this.entity = entity;
@@ -54,7 +56,18 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
             GL.Disable(EnableCap.CullFace);
         }
 
-        GL.Enable(EnableCap.LineSmooth);
+        if (blending) {
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        } else {
+            GL.Disable(EnableCap.Blend);
+        }
+
+        if (wireframe) {
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+        } else {
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+        }
 
         foreach (var va in vertex_arrays) {
             va.bind();
