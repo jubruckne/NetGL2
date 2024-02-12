@@ -1,6 +1,3 @@
-using System.ComponentModel;
-using Assimp;
-
 namespace NetGL.ECS;
 
 public class Entity {

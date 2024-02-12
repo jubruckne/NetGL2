@@ -15,9 +15,8 @@ public class World: Entity {
         physics = new();
         add(new Physics());
 
-
         // create the ground
-        var groundShape = new BoxShape(50, 50, 50);
+        var groundShape = new BoxShape(10, 50, 10);
         var v = this.add_rigid_body("Ground", new RigidBody(new RigidBodyConstructionInfo(0, new DefaultMotionState(), groundShape)));
         v.data.Translate(new System.Numerics.Vector3(0f, -53f, 0f));
     }

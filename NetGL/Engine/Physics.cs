@@ -130,7 +130,7 @@ public static class PhysicsExt {
             new RigidBodyConstructionInfo(
                 mass,
                 new DefaultMotionState(),
-                new BoxShape(.001f)
+                new SphereShape(0.25f)
             )
         );
         return add_rigid_body(entity, name ?? body.GetType().Name, body);

@@ -56,8 +56,6 @@ public class Engine: GameWindow {
         Console.WriteLine($"MaxElementsIndices: {GL.GetInteger(GetPName.MaxElementsIndices)}");
         Console.WriteLine();
 
-
-
         GL.CullFace(CullFaceMode.Back);
         GL.Enable(EnableCap.CullFace);
 
@@ -116,7 +114,6 @@ public class Engine: GameWindow {
        environment.get<VertexArrayRenderer>().depth_test = false;
        environment.get<VertexArrayRenderer>().cull_face = true;
 
-
         world.add_directional_light(
             ambient:(0.4f, 0.4f, 0.4f),
             diffuse:(0.9f, 0.9f, 0.9f),
@@ -166,9 +163,9 @@ public class Engine: GameWindow {
         entd.transform.attitude.pitch = -5f;
         entd.transform.attitude.roll = 2.5f;
 
-        foreach (var b in Enumerable.Range(1, 250)) {
+        foreach (var b in Enumerable.Range(1, 750)) {
             Entity cube = world.create_sphere_uv($"Sphere{b}", radius:0.25f, material:Material.random);
-            cube.transform.position.randomize(-10f, 10f).add(x:-3.5f, y:10f);
+            cube.transform.position.randomize(-3.5f, 3.5f).add(x:-1.5f, y:15, 5.5f);
             cube.transform.attitude.yaw_pitch_roll_degrees.randomize(-180, 180);
             cube.add_rigid_body();
         }

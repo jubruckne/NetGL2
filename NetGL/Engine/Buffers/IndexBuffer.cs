@@ -85,7 +85,7 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
             for (int index = 0; index < items.Length; index++) {
                 ref var item = ref items[index];
                 if (item.X > ushort.MaxValue || item.Y > ushort.MaxValue || item.Z > ushort.MaxValue)
-                    throw new OverflowException();
+                    throw new OverflowException($"{item} does not fit in IndexBuffer<{typeof(T).Name}>!");
 
                 target_items[index * 3] = (ushort)item.X;
                 target_items[index * 3 + 1] = (ushort)item.Y;

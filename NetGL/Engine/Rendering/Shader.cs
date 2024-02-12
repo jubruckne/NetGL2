@@ -317,11 +317,15 @@ public class Shader {
         return $"{name}";
     }
 
-    public void bind() {
+    public bool bind() {
         if (Shader.current_shader != this) {
             Shader.current_shader = this;
             GL.UseProgram(handle);
+
+            return true;
         }
+
+        return false;
     }
 
     public void unbind() {

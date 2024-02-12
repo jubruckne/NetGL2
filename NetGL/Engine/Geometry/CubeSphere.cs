@@ -10,7 +10,7 @@ public class CubeSphere: IShape<Sphere> {
     }
 
     // Generates vertices for a cube sphere
-    public IEnumerable<Vector3> get_vertices() => get_vertices(3); // Default resolution
+    public IEnumerable<Vector3> get_vertices() => get_vertices(102); // Default resolution
 
     public IEnumerable<Vector3> get_vertices(int subdivisions) {
         // Generate vertices for 6 faces of a cube
@@ -40,12 +40,12 @@ public class CubeSphere: IShape<Sphere> {
             for (int x = 0; x <= subdivisions; x++) {
                 Vector3 point = normal + right * ((x / (float)subdivisions) - 0.5f) * 2f + up * ((y / (float)subdivisions) - 0.5f) * 2f;
                 Vector3 pointOnSphere = point.Normalized() * radius;
-                yield return pointOnSphere;
+                yield return pointOnSphere.Zyx;
             }
         }
     }
 
-    public IEnumerable<Vector3i> get_indices() => get_indices(3);
+    public IEnumerable<Vector3i> get_indices() => get_indices(102);
 
     public IEnumerable<Vector3i> get_indices(int subdivisions) {
         int verticesPerRow = subdivisions + 1;
