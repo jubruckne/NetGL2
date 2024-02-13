@@ -9,7 +9,7 @@ public class TextureCubemapBuffer: Texture2DArrayBuffer {
         : base(TextureTarget.TextureCubeMap, [right, left, bottom, top, front, back]) {
     }
 
-    public void upload(TextureUnit texture_unit = TextureUnit.Texture0) {
+    public override void upload(TextureUnit texture_unit) {
         GL.ActiveTexture(texture_unit);
         if (handle == 0)
             handle = GL.GenTexture();

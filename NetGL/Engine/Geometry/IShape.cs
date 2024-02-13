@@ -2,7 +2,11 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public interface IShape <in T> {
+public interface IShape <T> {
+    IShapeGenerator generate();
+}
+
+public interface IShapeGenerator {
     IEnumerable<Vector3> get_vertices();
     IEnumerable<Vector3i> get_indices();
 

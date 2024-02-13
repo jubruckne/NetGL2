@@ -8,19 +8,11 @@ public class Rectangle: IShape<Rectangle> {
     public readonly float width;
     public readonly float height;
 
-    private Rectangle(float x = -0.5f, float y = -0.5f, float width = 1f, float height = 1f) {
+    public Rectangle(float x = -0.5f, float y = -0.5f, float width = 1f, float height = 1f) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-    }
-
-    public static Rectangle make(float width = 1f, float height = 1f) {
-        return new Rectangle(-width * 0.5f, -height * 0.5f, width, height);
-    }
-
-    public static Rectangle make(float x, float y, float width, float height) {
-        return new Rectangle(x, y, width, height);
     }
 
     public static implicit operator Rectangle((float x, float y, float width, float height) tuple) {
@@ -63,6 +55,10 @@ public class Rectangle: IShape<Rectangle> {
                 yield return (v1, v3, v2);
             }
         }
+    }
+
+    public IShapeGenerator generate() {
+        throw new NotImplementedException();
     }
 
     public override string ToString() {

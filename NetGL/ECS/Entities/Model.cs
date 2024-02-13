@@ -22,9 +22,9 @@ public class Model {
     private void add_vertex_array(in VertexArray va) => ((List<VertexArray>)vertex_arrays).Add(va);
     private void add_material(in Material mat) => ((List<Material>)materials).Add(mat);
 
-    public static Model from_shape<T>(IShape<T> shape) {
-        VertexBuffer<Struct<Vector3, Vector3>> vb = new(shape.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
-        var ib = IndexBuffer<ushort>.make(shape.get_indices());
+    public static Model from_shape(IShapeGenerator shape_generator) {
+        VertexBuffer<Struct<Vector3, Vector3>> vb = new(shape_generator.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
+        var ib = IndexBuffer<ushort>.make(shape_generator.get_indices());
         vb.upload();
         ib.upload();
 
@@ -32,7 +32,7 @@ public class Model {
 
         va.upload();
 
-        var result = new Model(shape.ToString() ?? typeof(T).Name);
+        var result = new Model(shape_generator.ToString() ?? "Shape");
         result.add_vertex_array(va);
 
         return result;

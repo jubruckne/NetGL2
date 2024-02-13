@@ -3,18 +3,38 @@ using OpenTK.Mathematics;
 namespace NetGL;
 
 public class Cube: IShape<Cube> {
-    public float width;
-    public float height;
-    public float depth;
+    public readonly float width;
+    public readonly float height;
+    public readonly float depth;
 
-    public static Cube make(float width, float height, float depth) => new Cube(width, height, depth);
-    public static Cube make(float radius) => make(radius * 2f, radius * 2f, radius * 2f);
-
-    private Cube(float width, float height, float depth) {
+    public Cube(float width, float height, float depth) {
         this.width = width;
         this.height = height;
         this.depth = depth;
     }
+
+    public Cube(float radius): this(radius * 2f, radius * 2f, radius * 2f) { }
+    public Cube(): this(1f, 1f, 1f) { }
+
+    public IShapeGenerator generate() => new CubeShapeGenerator(this);
+
+    public override string ToString() {
+        return $"Cube[width:{width}, height:{height}, depth:{depth}]";
+    }
+}
+
+file class CubeShapeGenerator: IShapeGenerator {
+    private readonly float width;
+    private readonly float height;
+    private readonly float depth;
+
+    public CubeShapeGenerator(in Cube cube) {
+        width = cube.width;
+        height = cube.height;
+        depth = cube.depth;
+    }
+
+    public override string ToString() => "Cube";
 
     public IEnumerable<Vector3> get_vertices() {
         var half_width = width * 0.5f;
@@ -88,9 +108,5 @@ public class Cube: IShape<Cube> {
             // right face
             (1, 5, 6), (6, 2, 1)
         ];
-    }
-
-    public override string ToString() {
-        return $"Cube[width:{width}, height:{height}, depth:{depth}]";
     }
 }

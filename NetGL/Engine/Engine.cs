@@ -18,7 +18,7 @@ public class Engine: GameWindow {
     protected readonly World world;
     protected readonly ImGuiController handler_imgui = null!;
 
-    private readonly RevolvingList<float> frame_times = new(12);
+    private readonly RevolvingList<float> frame_times = new(60);
     protected float game_time;
     protected int frame;
 
@@ -163,8 +163,8 @@ public class Engine: GameWindow {
         entd.transform.attitude.pitch = -5f;
         entd.transform.attitude.roll = 2.5f;
 
-        foreach (var b in Enumerable.Range(1, 750)) {
-            Entity cube = world.create_sphere_uv($"Sphere{b}", radius:0.25f, material:Material.random);
+        foreach (var b in Enumerable.Range(1, 250)) {
+            Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.25f, material:Material.random);
             cube.transform.position.randomize(-3.5f, 3.5f).add(x:-1.5f, y:15, 5.5f);
             cube.transform.attitude.yaw_pitch_roll_degrees.randomize(-180, 180);
             cube.add_rigid_body();
@@ -221,7 +221,8 @@ public class Engine: GameWindow {
         frame_time += e.Time;
 
         if (frame_time >= 1f) {
-            frame_times.add((float)(frame_time/frame_count));
+            if(game_time > 2f)
+                frame_times.add((float)(frame_time/frame_count));
 
             Title = $"fps: {frame_count}, last_frame: {e.Time * 1000:F2} - {CursorState}";
             frame_count = 0;
@@ -257,9 +258,9 @@ public class Engine: GameWindow {
 
         ImGui.StyleColorsClassic();
 
-        if (frame_times.count != 0) {
+        if (frame_times.count > 5) {
             ImGui.Text("Frame Time (ms):");
-            ImGui.PlotLines(
+            ImGui.PlotHistogram(
                 $"##frame_time",
                 ref frame_times.as_span()[0],
                 frame_times.count,
@@ -267,7 +268,7 @@ public class Engine: GameWindow {
                 $"avg:{frame_times.average() * 1000:F1}, min:{frame_times.minimum() * 1000:F1}, max:{frame_times.maximum() * 1000:F1}",
                 scale_min:frame_times.minimum(),
                 scale_max:frame_times.maximum(),
-                new Vector2(240, 20));
+                new Vector2(240, 80));
         }
 
         add_entities_to_gui(world);

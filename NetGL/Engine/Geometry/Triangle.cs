@@ -19,6 +19,10 @@ public class Triangle: IShape<Triangle> {
         throw new NotImplementedException();
     }
 
+    public IShapeGenerator generate() {
+        throw new NotImplementedException();
+    }
+
     public override string ToString() {
         return $"Triangle[p1:{p1}, p2:{p2}, p3:{p3}]";
     }
