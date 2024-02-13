@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.VisualBasic;
+
 namespace NetGL.ECS;
 
 public class Entity {
@@ -164,7 +167,7 @@ public class Entity {
     internal IEnumerable<IUpdatableComponent> get_updateable_components() => updateable_components;
     internal IEnumerable<IRenderableComponent> get_renderable_components() => renderable_components;
 
-    public bool try_get<T>(out T value) where T: class {
+    public bool try_get<T>([MaybeNullWhen(false)] out T value) where T: class {
         foreach (var component in component_list) {
             if (component is T t) {
                 value = t;

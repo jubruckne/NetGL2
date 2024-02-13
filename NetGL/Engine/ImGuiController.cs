@@ -276,7 +276,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         io.MousePos = new System.Numerics.Vector2(point.X, point.Y);
 
         if (io.WantTextInput) {
-            foreach (Keys key in Enum.GetValues(typeof(Keys))) {
+            foreach (Keys key in Enum.GetValues<Keys>()) {
                 if (key == Keys.Unknown) {
                     continue;
                 }

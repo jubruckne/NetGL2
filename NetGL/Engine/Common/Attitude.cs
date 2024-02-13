@@ -49,14 +49,6 @@ public struct Attitude {
                     MathF.Cos(yaw_pitch_roll_rad.Y) * MathF.Cos(yaw_pitch_roll_rad.X),
                     MathF.Sin(yaw_pitch_roll_rad.Y),
                     MathF.Cos(yaw_pitch_roll_rad.Y) * MathF.Sin(yaw_pitch_roll_rad.X));
-            /*
-            Console.WriteLine(v);
-            v.X = float.Clamp(v.X, -1e-6f, 1e6f);
-            v.Y = float.Clamp(v.Y, -1e-6f, 1e6f);
-            v.Z = float.Clamp(v.Z, -1e-6f, 1e6f);
-            v.Normalize();
-            Console.WriteLine(v);
-            */
 
             return v.Normalized();
         }

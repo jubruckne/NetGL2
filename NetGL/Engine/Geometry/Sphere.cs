@@ -36,7 +36,6 @@ file class UVSphereGenerator: IShapeGenerator {
 
     public IEnumerable<Vector3> get_vertices() {
         float x, y, z, xy;
-        float u, v;
         float sectorStep = (float)(2f * Math.PI / meridians);
         float stackStep = (float)(Math.PI / parallels);
 

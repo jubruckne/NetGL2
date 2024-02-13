@@ -357,7 +357,7 @@ public class Engine: GameWindow {
 
                         foreach (var va in var.vertex_arrays) {
                             ImGui.Text($"{va.primitive_type} ({va.vertex_buffers.Length})");
-                            va.vertex_buffers.for_each(buffer => ImGui.TextWrapped(buffer.ToString()));
+                            va.vertex_buffers.for_each(buffer => ImGui.TextWrapped(buffer.ToString() ?? string.Empty));
                             ImGui.Text(va.ToString());
                             ImGui.Spacing();
                         }

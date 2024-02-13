@@ -1,5 +1,4 @@
 using System.Numerics;
-using System.Reflection;
 using NetGL.ECS;
 
 namespace NetGL;
@@ -8,17 +7,14 @@ using BulletSharp;
 using System.Collections.Generic;
 
 public class Physics {
-    ///create 125 (5x5x5) dynamic objects
     private const int ArraySizeX = 5, ArraySizeY = 5, ArraySizeZ = 5;
-
-    private Vector3 _startPosition = new Vector3(-5, 1, -3) - new Vector3(ArraySizeX / 2f, 0, ArraySizeZ / 2f);
 
     public DiscreteDynamicsWorld World { get; }
 
-    private CollisionDispatcher _dispatcher;
-    private DbvtBroadphase _broadphase;
-    private List<CollisionShape> _collisionShapes = new List<CollisionShape>();
-    private CollisionConfiguration _collisionConf;
+    private readonly CollisionDispatcher _dispatcher;
+    private readonly DbvtBroadphase _broadphase;
+    private readonly List<CollisionShape> _collisionShapes = new List<CollisionShape>();
+    private readonly CollisionConfiguration _collisionConf;
 
     public Physics() {
         // collision configuration contains default setup for memory, collision setup
@@ -32,32 +28,6 @@ public class Physics {
         // create a few dynamic rigidbodies
         var colShape = new BoxShape(1);
         _collisionShapes.Add(colShape);
-
-        float mass = 1.0f;
-        Vector3 localInertia = colShape.CalculateLocalInertia(mass);
-
-        var rbInfo = new RigidBodyConstructionInfo(mass, null, colShape, localInertia);
-
-        for (int y = 0; y < ArraySizeY; y++) {
-            for (int x = 0; x < ArraySizeX; x++) {
-                for (int z = 0; z < ArraySizeZ; z++) {
-                    Matrix4x4 startTransform = Matrix4x4.CreateTranslation(
-                        _startPosition + 2 * new Vector3(x, y, z));
-
-                    // using motionstate is recommended, it provides interpolation capabilities
-                    // and only synchronizes 'active' objects
-                    rbInfo.MotionState = new DefaultMotionState(startTransform);
-                    var body = new RigidBody(rbInfo);
-
-                    // make it drop from a height
-                    body.Translate(new Vector3(0, 15, 0));
-
-                    World.AddRigidBody(body);
-                }
-            }
-        }
-
-        rbInfo.Dispose();
     }
 
     public virtual void Update(float elapsedTime) {
@@ -75,7 +45,7 @@ public class Physics {
         // remove the rigidbodies from the dynamics world and delete them
         for (int i = World.NumCollisionObjects - 1; i >= 0; i--) {
             CollisionObject obj = World.CollisionObjectArray[i];
-            RigidBody body = obj as RigidBody;
+            RigidBody body = (RigidBody)obj;
             if (body != null && body.MotionState != null) {
                 body.MotionState.Dispose();
             }

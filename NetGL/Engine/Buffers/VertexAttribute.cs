@@ -20,7 +20,9 @@ public abstract class VertexAttribute {
     public static VertexAttribute<Vector3> Normal =>
         new (name:"normal", count: 3, pointer_type: VertexAttribPointerType.Float);
 
+#pragma warning disable CS8618
     protected VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false) {
+#pragma warning restore CS8618
         this.name = name;
         this.offset = -1;
         this.location = -1;
@@ -31,12 +33,10 @@ public abstract class VertexAttribute {
 
     public string glsl_type {
         get {
-            switch (pointer_type) {
-                case VertexAttribPointerType.Float:
-                    return $"vec{count}";
-            }
-
-            throw new NotImplementedException($"glsl_type for {name}, {pointer_type}, {count}!");
+            return pointer_type switch {
+                VertexAttribPointerType.Float => $"vec{count}",
+                _ => throw new NotImplementedException($"glsl_type for {name}, {pointer_type}, {count}!")
+            };
         }
     }
 

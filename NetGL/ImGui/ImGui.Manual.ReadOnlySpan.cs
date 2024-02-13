@@ -1,7 +1,7 @@
-using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 
 // NOTE:
 // This is a direct copy from ImGui.Manual.cs with all string parameters (not ref string) changed to ReadOnlySpan<char>.

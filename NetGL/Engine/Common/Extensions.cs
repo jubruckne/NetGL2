@@ -118,7 +118,7 @@ public static class ArrayExt {
         StringBuilder sb = new();
 
         foreach (var x in array)
-            sb.AppendLine(x.ToString());
+            sb.AppendLine(x?.ToString());
 
         return sb.ToString();
     }

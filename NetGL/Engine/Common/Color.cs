@@ -55,8 +55,8 @@ public struct Color {
         (uint)(r * 255f);
 
 
-    public static Color random_for(string name) {
-        Random rnd = new(name.GetHashCode());
+    public static Color random_for<T>(in T obj) where T:notnull {
+        Random rnd = new(obj.GetHashCode());
         float r = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
         float g = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
         float b = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
