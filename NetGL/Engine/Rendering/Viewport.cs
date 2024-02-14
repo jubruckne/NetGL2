@@ -70,6 +70,7 @@ public class Viewport {
 
             current_viewport = this;
             resized = false;
+
         }
     }
 
