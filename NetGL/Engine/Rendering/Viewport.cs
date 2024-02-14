@@ -55,7 +55,6 @@ public class Viewport {
         if (this == Gameplay) {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         } else {
-
             GL.Enable(EnableCap.ScissorTest);
             GL.Scissor(x, y, width, height);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
