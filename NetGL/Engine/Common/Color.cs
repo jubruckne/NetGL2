@@ -30,11 +30,24 @@ public struct Color {
         this.a = a;
     }
 
+    public Color(float r, float g, float b) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = 1.0f;
+    }
+
+    public Color(byte r, byte g, byte b) {
+        this.r = r / 255f;
+        this.g = g / 255f;
+        this.b = b / 255f;
+        this.a = 1f;
+    }
+
     public static Color make(float r, float g, float b, float a) => new(r, g, b, a);
     public static Color make(float r, float g, float b) => new(r, g, b, 1f);
     public static Color make((float r, float g, float b) color) => new(color.r, color.g, color.b, 1);
     public static Color make((float r, float g, float b, float a) color) => new(color.r, color.g, color.b, color.a);
-    public static Color make(byte r, byte g, byte b) => new(r / 256f, g / 256f, b / 256f, 1f);
     public static Color make(byte r, byte g, byte b, byte a) => new(r / 256f, g / 256f, b / 256f, a / 256f);
     public static Color make(System.Numerics.Vector3 color) => new(color.X, color.Y, color.Z, 1f);
     public static Color make(System.Numerics.Vector4 color) => new(color.X, color.Y, color.Z, color.W);
@@ -56,11 +69,21 @@ public struct Color {
 
 
     public static Color random_for<T>(in T obj) where T:notnull {
-        Random rnd = new(obj.GetHashCode());
+/*        Random rnd = new(obj.GetHashCode());
         float r = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
         float g = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
         float b = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
-        return new Color(r, g, b, 1.0f);
+        */
+
+        var color = new Color(
+            obj.hash<T, byte>(40, 135, 1445332),
+            obj.hash<T, byte>(40, 135, 92432),
+            obj.hash<T, byte>(40, 135, -4233)
+            );
+
+        Console.WriteLine(color);
+
+        return color;
     }
 
     public static implicit operator Color(System.Numerics.Vector3 color) => make(color);

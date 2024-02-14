@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices.JavaScript;
+using System.Runtime.CompilerServices;
 using NetGL.ECS;
 
 namespace NetGL;
@@ -167,9 +167,9 @@ public class Shader {
     public void set_game_time(in float game_time) => set_uniform("game_time", game_time);
 
     public void set_material(Material material) {
-        set_uniform("material.ambient_color", material.ambient_color.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
-        set_uniform("material.diffuse", material.diffuse_color.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
-        set_uniform("material.specular", material.specular_color.reinterpret_cast<Color, OpenTK.Mathematics.Vector3>());
+        set_uniform("material.ambient_color", material.ambient_color.reinterpret_ref<Color, OpenTK.Mathematics.Vector3>());
+        set_uniform("material.diffuse", material.diffuse_color.reinterpret_ref<Color, OpenTK.Mathematics.Vector3>());
+        set_uniform("material.specular", material.specular_color.reinterpret_ref<Color, OpenTK.Mathematics.Vector3>());
         set_uniform("material.shininess", material.shininess * 1f);
         if (material.ambient_texture != null) {
             set_uniform("material.ambient_texture", 0);
@@ -180,6 +180,7 @@ public class Shader {
         set_uniform("cam_position", pos);
     }
 
+
     public void set_light(IEnumerable<Light> lights) {
         int num_directional_lights = 0;
         int num_point_lights = 0;
@@ -187,14 +188,14 @@ public class Shader {
         foreach (var light in lights) {
             switch (light) {
                 case AmbientLight ambient:
-                    set_uniform("ambient_light", ambient.data.color.reinterpret_cast<Color,Vector3>());
+                    set_uniform("ambient_light", ambient.data.color.reinterpret_ref<Color,Vector3>());
                     break;
                 case DirectionalLight directional:
                     // if(directional.data.direction.LengthSquared != 0) directional.data.direction.Normalize();
                     set_uniform($"directional_light[{num_directional_lights}].direction", directional.data.direction);
-                    set_uniform($"directional_light[{num_directional_lights}].ambient", directional.data.ambient.reinterpret_cast<Color, Vector3>());
-                    set_uniform($"directional_light[{num_directional_lights}].specular", directional.data.specular.reinterpret_cast<Color, Vector3>());
-                    set_uniform($"directional_light[{num_directional_lights}].diffuse", directional.data.diffuse.reinterpret_cast<Color, Vector3>());
+                    set_uniform($"directional_light[{num_directional_lights}].ambient", directional.data.ambient.reinterpret_ref<Color, Vector3>());
+                    set_uniform($"directional_light[{num_directional_lights}].specular", directional.data.specular.reinterpret_ref<Color, Vector3>());
+                    set_uniform($"directional_light[{num_directional_lights}].diffuse", directional.data.diffuse.reinterpret_ref<Color, Vector3>());
                     num_directional_lights++;
                     break;
                 case PointLight pointlight:
@@ -257,6 +258,7 @@ public class Shader {
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected bool has_uniform(string name) => uniform_locations.ContainsKey(name);
 
     /// <summary>
@@ -287,7 +289,7 @@ public class Shader {
     protected void set_uniform(string name, Color data) {
         if (has_uniform(name)) {
             GL.UseProgram(handle);
-            GL.Uniform4(uniform_locations[name], data.reinterpret_cast<Color, OpenTK.Mathematics.Vector4>());
+            GL.Uniform4(uniform_locations[name], data.reinterpret_ref<Color, OpenTK.Mathematics.Vector4>());
         } else {
             Console.WriteLine($"{this.name} doesn't have uniform {name}!");
         }

@@ -163,7 +163,7 @@ public class Engine: GameWindow {
         entd.transform.attitude.pitch = -5f;
         entd.transform.attitude.roll = 2.5f;
 
-        foreach (var b in Enumerable.Range(1, 250)) {
+        foreach (var b in Enumerable.Range(1, 100)) {
             Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.25f, material:Material.random);
             cube.transform.position.randomize(-3.5f, 3.5f).add(x:-1.5f, y:15, 5.5f);
             cube.transform.attitude.yaw_pitch_roll_degrees.randomize(-180, 180);
@@ -308,19 +308,19 @@ public class Engine: GameWindow {
                         //ImGui2.Joystick(25);
                         ImGui.Joystick2(t, 25);
 
-                        ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0.05f, -100, 100, "%.1f");
+                        ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0.05f, -100, 100, "%.1f");
 
                         ImGui.DragFloat3($"Attitude##{entity.name}.attitude",
-                            ref t.attitude.yaw_pitch_roll_degrees.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 1f, -180, 180, "%.0f");
+                            ref t.attitude.yaw_pitch_roll_degrees.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 1f, -180, 180, "%.0f");
 
                         ImGui.Spacing();
 
                         var attitudeDirection = t.attitude.direction;
-                        ImGui.DragFloat3($"Direction→##{entity.name}.direction", ref attitudeDirection.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
+                        ImGui.DragFloat3($"Direction→##{entity.name}.direction", ref attitudeDirection.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
                             ImGuiSliderFlags.NoInput);
 
                         var attitudeUp = t.attitude.up;
-                        ImGui.DragFloat3($"Up→##{entity.name}.up", ref attitudeUp.reinterpret_cast<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
+                        ImGui.DragFloat3($"Up→##{entity.name}.up", ref attitudeUp.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
                             ImGuiSliderFlags.NoInput);
 
                         ImGui.Spacing();

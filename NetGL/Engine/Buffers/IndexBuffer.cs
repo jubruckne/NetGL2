@@ -36,7 +36,7 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
         T test = T.Zero;
 
         if (test is byte)
-            return new IndexBuffer<T>(items.reinterpret_cast<byte, T>());
+            return new IndexBuffer<T>(items.reinterpret_ref<byte, T>());
 
         throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
     }
@@ -45,7 +45,7 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
         T test = T.Zero;
 
         if (test is ushort)
-            return new IndexBuffer<T>(items.reinterpret_cast<ushort, T>());
+            return new IndexBuffer<T>(items.reinterpret_ref<ushort, T>());
 
         throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
     }
@@ -55,7 +55,7 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
         T test = T.Zero;
 
         if (test is int)
-            return new IndexBuffer<T>(items.reinterpret_cast<int, T>());
+            return new IndexBuffer<T>(items.reinterpret_ref<int, T>());
 
         throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
     }

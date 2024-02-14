@@ -37,7 +37,7 @@ public class Viewport {
         set {
             _clear_color = value;
             if(is_current)
-                GL.ClearColor(_clear_color.reinterpret_cast<Color, OpenTK.Mathematics.Color4>());
+                GL.ClearColor(_clear_color.reinterpret_ref<Color, OpenTK.Mathematics.Color4>());
         }
     }
 
@@ -64,7 +64,7 @@ public class Viewport {
     public void make_current() {
         if (current_viewport != this || resized) {
             GL.Viewport(x, y, width, height);
-            GL.ClearColor(_clear_color.reinterpret_cast<Color, OpenTK.Mathematics.Color4>());
+            GL.ClearColor(_clear_color.reinterpret_ref<Color, OpenTK.Mathematics.Color4>());
 
             current_viewport = this;
             resized = false;
