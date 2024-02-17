@@ -2,42 +2,17 @@ using System.Collections;
 
 namespace NetGL.ECS;
 
-public class ReadOnlyComponentList: IReadOnlyCollection<IComponent> {
+public class ReadOnlyComponentList: IEnumerable<IComponent> {
+    protected readonly Dictionary<Type, List<IComponent>> dict = [];
     protected readonly List<IComponent> list = [];
 
     public int count => list.Count;
-
-    public enum Compare {
-        And,
-        Or
-    }
-
-    public IEnumerable<IComponent> this[Type type1, Compare compare, Type type2] {
-        get {
-            foreach(var component in list)
-                if (component.GetType() == type1 && component.GetType() == type2)
-                    yield return component;
-        }
-    }
-
-    public IComponent this[Type type] {
-        get {
-            foreach(var component in list)
-                if (component.GetType() == type)
-                    return component;
-            throw new IndexOutOfRangeException($"{nameof(type)}:{type}");
-        }
-    }
-
     public IComponent this[int index] => list[index];
 
-    public IComponent this[string name]{
-        get {
-            foreach(var component in list)
-                if (component.name == name)
-                    return component;
-            throw new IndexOutOfRangeException($"{nameof(name)}:{name}");
-        }
+    public T get<T>() where T: IComponent {
+        if (dict.TryGetValue(typeof(T), out var this_list))
+            return (T)this_list[0];
+        throw new IndexOutOfRangeException(typeof(T).Name);
     }
 
     public ReadOnlyComponentList with_name(in string name) {
@@ -50,19 +25,39 @@ public class ReadOnlyComponentList: IReadOnlyCollection<IComponent> {
         return result;
     }
 
-    public IEnumerator<IComponent> GetEnumerator() => list.GetEnumerator();
+    public ReadOnlyComponentList of_type<T>() where T: IComponent {
+        if (dict.TryGetValue(typeof(T), out var this_list))
+            return new ComponentList(this_list);
+
+        return new ComponentList();
+    }
+
+
+    IEnumerator<IComponent> IEnumerable<IComponent>.GetEnumerator() => list.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
-    int IReadOnlyCollection<IComponent>.Count => list.Count;
 }
 
-public class ComponentList: ReadOnlyComponentList, ICollection<IComponent> {
-    public void add(in IComponent entity) => list.Add(entity);
+public class ComponentList: ReadOnlyComponentList {
+    internal ComponentList() {}
 
-    void ICollection<IComponent>.Add(IComponent component) => list.Add(component);
-    void ICollection<IComponent>.Clear() => list.Clear();
-    bool ICollection<IComponent>.Contains(IComponent component) => list.Contains(component);
-    void ICollection<IComponent>.CopyTo(IComponent[] array, int arrayIndex) => list.CopyTo(array, arrayIndex);
-    bool ICollection<IComponent>.Remove(IComponent component) => list.Remove(component);
-    bool ICollection<IComponent>.IsReadOnly => false;
-    int ICollection<IComponent>.Count => list.Count;
+    internal ComponentList(List<IComponent> components) {
+        foreach (var c in components)
+            add(c);
+    }
+
+    public void add(in IComponent component) {
+        list.Add(component);
+
+        var type = component.GetType();
+
+        if (dict.TryGetValue(type, out var this_list)) {
+            this_list.Add(component);
+        } else {
+            this_list = new List<IComponent>();
+            this_list.Add(component);
+            dict.Add(type, this_list);
+        }
+
+        list.Add(component);
+    }
 }

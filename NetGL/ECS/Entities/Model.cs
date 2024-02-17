@@ -32,10 +32,10 @@ public class Model {
 
         va.upload();
 
-        var result = new Model(shape_generator.ToString() ?? "Shape");
-        result.add_vertex_array(va);
+        var model = new Model(shape_generator.ToString() ?? "Shape");
+        model.add_vertex_array(va);
 
-        return result;
+        return model;
     }
 
     public static Model from_file(string filename) {

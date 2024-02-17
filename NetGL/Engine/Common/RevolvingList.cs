@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace NetGL.Engine;
+namespace NetGL;
 
 public class RevolvingList<T> where T: unmanaged, IDivisionOperators<T, float, T>, INumber<T>{
     private readonly int max_size;

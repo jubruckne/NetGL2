@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Configurations>Debug;Release</Configurations>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <OutputPath>./bin/$(Configuration)/</OutputPath>
+        <PreferredUILang>en-US</PreferredUILang>
+        <Platforms>ARM64</Platforms>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <Optimize>false</Optimize>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AssimpNetLatest" Version="5.0.0-beta1" />
+        <PackageReference Include="OpenTK" Version="4.8.2" />
+        <PackageReference Include="StbImageSharp" Version="2.27.13" />
+        <Reference Include="BulletSharp">
+            <HintPath>..\..\BulletSharpPInvoke\BulletSharp\bin\Debug\net8.0\BulletSharp.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="MagicPhysX\runtimes\osx-arm64\native\libmagicphysx.dylib">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+    
+
+</Project>

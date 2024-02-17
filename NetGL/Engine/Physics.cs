@@ -96,14 +96,15 @@ public static class PhysicsExt {
         return entity.get<Component<RigidBody>>();
     }
 
-    public static Component<RigidBody> add_rigid_body(this Entity entity, string? name = null, float mass = 1f) {
+    public static Component<RigidBody> add_rigid_body(this Entity entity, string? name = null, float radius = 0.5f, float mass = 1f) {
         var body = new RigidBody(
             new RigidBodyConstructionInfo(
                 mass,
                 new DefaultMotionState(),
-                new SphereShape(0.25f)
+                new SphereShape(radius)
             )
         );
+        body.Friction = 0.25f;
         return add_rigid_body(entity, name ?? body.GetType().Name, body);
     }
 }

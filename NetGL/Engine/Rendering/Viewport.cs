@@ -47,7 +47,6 @@ public class Viewport {
         this.width = width;
         this.height = height;
         resized = true;
-
     }
 
     public void clear() {
@@ -73,7 +72,6 @@ public class Viewport {
     }
 
     public bool is_current => current_viewport == this;
-
 
     public override string ToString() {
         return $"{name}(x:{x}, y:{y}, w:{width}, h:{height}, color:{_clear_color}";

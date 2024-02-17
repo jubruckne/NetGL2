@@ -81,8 +81,6 @@ public struct Color {
             obj.hash<T, byte>(40, 135, -4233)
             );
 
-        Console.WriteLine(color);
-
         return color;
     }
 

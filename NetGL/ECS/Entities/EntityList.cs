@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace NetGL.ECS;
 
-public class ReadOnlyEntityList: IReadOnlyCollection<Entity> {
+public class ReadOnlyEntityList: IReadOnlyList<Entity> {
     protected readonly List<Entity> list = [];
 
     public int count => list.Count;
@@ -55,10 +55,12 @@ public class ReadOnlyEntityList: IReadOnlyCollection<Entity> {
     public IEnumerator<Entity> GetEnumerator() => list.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
     int IReadOnlyCollection<Entity>.Count => list.Count;
+    public Entity this[int index] => list[index];
 }
 
 public class EntityList: ReadOnlyEntityList, ICollection<Entity> {
     public void add(Entity entity) => list.Add(entity);
+    public void clear() => list.Clear();
 
     void ICollection<Entity>.Add(Entity entity) => list.Add(entity);
     void ICollection<Entity>.Clear() => list.Clear();

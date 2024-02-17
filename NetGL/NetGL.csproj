@@ -11,7 +11,7 @@
         <PreferredUILang>en-US</PreferredUILang>
         <Platforms>ARM64</Platforms>
     </PropertyGroup>
-
+    
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
         <Optimize>false</Optimize>
     </PropertyGroup>
@@ -24,6 +24,9 @@
       <PackageReference Include="AssimpNetLatest" Version="5.0.0-beta1" />
       <PackageReference Include="OpenTK" Version="4.8.2" />
       <PackageReference Include="StbImageSharp" Version="2.27.13" />
+      <Reference Include="BulletSharp">
+          <HintPath>..\..\BulletSharpPInvoke\BulletSharp\bin\Debug\net8.0\BulletSharp.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
     <ItemGroup>
@@ -42,8 +45,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="BulletSharp">
-        <HintPath>..\..\BulletSharpPInvoke\BulletSharp\bin\Debug\net8.0\BulletSharp.dll</HintPath>
-      </Reference>
+      <ProjectReference Include="..\NetGL.Libraries\NetGL.Libraries.csproj" />
     </ItemGroup>
+    
 </Project>

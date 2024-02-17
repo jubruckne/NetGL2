@@ -17,8 +17,9 @@ public static class SpherePrefab {
             model = last.Value.model;
             shader = last.Value.shader;
         } else {
+            Console.WriteLine("creating uv sphere");
             Sphere sphere = new(radius);
-            model = Model.from_shape(sphere.generate_uv_sphere());
+            model = Model.from_shape(sphere.generate_uv_sphere(32, 24));
             shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], material);
             //shader = new Shader("auto", "vert.glsl", "frag.glsl");
             last = (sphere, model, shader);
@@ -26,7 +27,7 @@ public static class SpherePrefab {
 
         entity.add_material(material);
         entity.add_shader(shader);
-        entity.add_vertex_array_renderer(model.vertex_arrays);
+        entity.add_vertex_array_renderer(model.vertex_arrays[0]);
 
         return entity;
     }

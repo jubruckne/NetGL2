@@ -1,12 +1,33 @@
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.VisualBasic;
 
 namespace NetGL.ECS;
 
 public class Entity {
     public string name { get; }
+    public string path { get; private set; }
     public Transform transform { get; }
-    public Entity? parent { get; }
+
+    private Entity? parent_entity;
+
+    public ReadOnlyEntityList parents { get; private set; }
+
+    public Entity? parent {
+        get => parent_entity;
+        private set {
+            parent_entity = value;
+            path = name;
+            ((EntityList)parents).clear();
+
+            var p = parent;
+
+            while (p != null) {
+                ((EntityList)parents).add(p);
+                path = $"{p.name}.{path}";
+                p = p.parent;
+            }
+        }
+    }
+
     public ReadOnlyEntityList children { get; }
     private readonly ComponentList component_list;
     public ReadOnlyComponentList components => component_list;
@@ -24,6 +45,7 @@ public class Entity {
             add(this.transform);
         }
 
+        parents = new EntityList();
         this.parent = parent;
         children = new EntityList();
 
@@ -61,58 +83,33 @@ public class Entity {
     /// <summary>
     /// Gets a list of all entities with the specified entity relationship
     /// </summary>
-    public IEnumerable<Entity> get_all(EntityRelationship relationship) {
+    public IReadOnlyList<Entity> get_all(EntityRelationship relationship) {
         switch (relationship) {
             case EntityRelationship.Self:
-                yield return this;
-                yield break;
+                return [this];
 
             case EntityRelationship.Parent:
-                if (parent != null)
-                    yield return parent;
-                yield break;
+                if (parent == null)
+                    return [];
+
+                return [parent];
 
             case EntityRelationship.Children:
-                foreach(var child in children)
-                    yield return child;
-                yield break;
+                return children;
 
             case EntityRelationship.ChildrenRecursive:
-                foreach (var child in children) {
-                    yield return child;
-                    foreach (var child2 in child.children) {
-                        yield return child2;
-                        foreach (var child3 in child2.children)
-                            yield return child3;
-                    }
-                }
-                yield break;
+                return children.recursive;
 
             case EntityRelationship.HierarchyWithChildrenRecursive:
                 var root = children;
-                if (parent == null) {
-                    yield return this;
-                } else {
-                    root = parent.children;
-                }
+                if (parent == null)
+                    return [this];
 
-                foreach (var child in root) {
-                    yield return child;
-                    foreach (var child2 in child.children) {
-                        yield return child2;
-                        foreach (var child3 in child2.children)
-                            yield return child3;
-                    }
-                }
-                yield break;
+                return parent.children.recursive;
 
             case EntityRelationship.ParentsRecursive:
-                var p = parent;
-                while (p != null) {
-                    yield return p;
-                    p = p.parent;
-                }
-                yield break;
+                return parents.ToArray();
+
         }
 
         throw new NotImplementedException();
@@ -121,34 +118,30 @@ public class Entity {
     /// <summary>
     /// Gets all list of all components T of entities in the specified entity relationship
     /// </summary>
-    public IEnumerable<T> get_all<T>(EntityRelationship relationship) where T: class, IComponent {
-        if(relationship == EntityRelationship.Self) yield return get<T>();
+    public IReadOnlyList<T> get_all<T>(EntityRelationship relationship) where T: class, IComponent {
+        if (relationship == EntityRelationship.Self) return get_all<T>();
 
+        List<T> components = new();
         foreach(var entity in get_all(relationship)) {
             foreach (var component in entity.component_list) {
-                if (component is T t) yield return t;
+                if (component is T t) components.Add(t);
             }
         }
+
+        return components;
     }
 
     /// <summary>
     /// Gets all list of all components T of the current entity.
     /// </summary>
-    public IEnumerable<T> get_all<T>() where T: class, IComponent {
+    public IReadOnlyList<T> get_all<T>() where T: class, IComponent {
+        List<T> components = new();
+
         foreach (var component in component_list) {
-            if (component is T t) yield return t;
+            if (component is T t) components.Add(t);
         }
-    }
 
-    public IEnumerable<Entity> parents {
-        get {
-            Entity? p = parent;
-
-            while (p != null) {
-                yield return p;
-                p = p.parent;
-            }
-        }
+        return components;
     }
 
     public void add<T>(in T component) where T:notnull => add(component.GetType().Name, component);
@@ -211,7 +204,7 @@ public class Entity {
     }
 
     public override string ToString() {
-        var str = $"Entity {get_path()}:\n";
+        var str = $"Entity {path}:\n";
 
         foreach (var c in component_list) {
             str += $"  {c}\n";
@@ -220,19 +213,6 @@ public class Entity {
         str += "\n";
 
         return str;
-    }
-
-    public string get_path() {
-        string path = name;
-
-        Entity? p = parent;
-
-        while (p != null) {
-            path = $"{p.name}.{path}";
-            p = p.parent;
-        }
-
-        return path;
     }
 
     public World world {

@@ -15,7 +15,7 @@ public interface IComponent {
     Entity entity { get; }
     string name { get; }
 
-    string get_path() => $"{entity.get_path()}:{name}";
+    string path => $"{entity.path}:{name}";
 }
 
 public interface IComponent<T>: IComponent {

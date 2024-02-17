@@ -1,16 +1,12 @@
-using System.Numerics;
 using BulletSharp;
 using ImGuiNET;
 using NetGL;
 using NetGL.ECS;
-using NetGL.Engine;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using ContextProfileMask = OpenTK.Graphics.OpenGL.ContextProfileMask;
 using Vector2 = System.Numerics.Vector2;
-using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class Engine: GameWindow {
     public readonly bool debug;
@@ -25,6 +21,8 @@ public class Engine: GameWindow {
     private float cursor_state_last_switch = 1f;
     private double frame_time;
     private int frame_count;
+
+    private ImGuiConsole console = new("Console");
 
     public Engine(int width, int height, string title, bool debug = false):
         base(
@@ -149,6 +147,8 @@ public class Engine: GameWindow {
         ball.get<VertexArrayRenderer>().cull_face = true;
         ball.get<VertexArrayRenderer>().depth_test = true;
         ball.get<VertexArrayRenderer>().blending = false;
+        ball.add_rigid_body(radius:5f, mass:10000f);
+
 
         ball.transform.position = (0, 3, 5);
         //Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);
@@ -164,10 +164,10 @@ public class Engine: GameWindow {
         entd.transform.attitude.roll = 2.5f;
 
         foreach (var b in Enumerable.Range(1, 100)) {
-            Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.25f, material:Material.random);
+            Entity cube = world.create_sphere_uv($"Sphere{b}", radius:0.20f, material:Material.random);
             cube.transform.position.randomize(-3.5f, 3.5f).add(x:-1.5f, y:15, 5.5f);
             cube.transform.attitude.yaw_pitch_roll_degrees.randomize(-180, 180);
-            cube.add_rigid_body();
+            cube.add_rigid_body(radius:0.20f, mass:1f);
         }
 
         GL.Enable(EnableCap.ProgramPointSize);
@@ -277,6 +277,8 @@ public class Engine: GameWindow {
 
         ImGui.PopStyleVar(4);
 
+        console.Draw();
+
         ImGui.End();
         handler_imgui.Render();
 
@@ -286,7 +288,7 @@ public class Engine: GameWindow {
     private void add_entities_to_gui(Entity entity) {
         ImGui.PushStyleColor(ImGuiCol.Header, Color.random_for(entity.name).to_int());
         if (ImGui.TreeNodeEx(
-                $"{entity.name}##{entity.get_path()}",
+                $"{entity.name}##{entity.path}",
                 entity.name == "World" | entity.name == "Player"
                     ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
                     : ImGuiTreeNodeFlags.Framed, entity.name)) {
@@ -306,7 +308,7 @@ public class Engine: GameWindow {
                         ImGui.Unindent();
 
                         //ImGui2.Joystick(25);
-                        ImGui.Joystick2(t, 25);
+                        // ImGui.Joystick2(t, 25);
 
                         ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0.05f, -100, 100, "%.1f");
 
@@ -487,16 +489,18 @@ public class Engine: GameWindow {
         }
     }
 
-    protected override void OnTextInput(TextInputEventArgs e) {
+    protected override void OnTextInput(TextInputEventArgs e)
+    {
         base.OnTextInput(e);
-        if(debug && !grabbed) handler_imgui.PressChar((char)e.Unicode);
+        handler_imgui.PressChar((char)e.Unicode);
     }
 
-    protected override void OnMouseWheel(MouseWheelEventArgs e) {
+    protected override void OnMouseWheel(MouseWheelEventArgs e)
+    {
         base.OnMouseWheel(e);
-        if(debug) handler_imgui.MouseScroll(e.Offset);
-    }
 
+        handler_imgui.MouseScroll(e.Offset);
+    }
     protected override void OnUnload() {
         base.OnUnload();
     }

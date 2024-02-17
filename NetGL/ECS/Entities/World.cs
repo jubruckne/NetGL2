@@ -21,7 +21,6 @@ public class World: Entity {
         v.data.Translate(new System.Numerics.Vector3(0f, -53f, 0f));
     }
 
-
     public void for_all_components_with<C1>(Action<C1> action) where C1: class, IComponent {
         foreach(var entity in world_entities)
             if (entity.has<C1>())
@@ -53,10 +52,43 @@ public class World: Entity {
         throw new InvalidOperationException("no camera found!");
     }
 
+    struct RenderItem: IComparable<RenderItem> {
+        Viewport viewport;
+        Camera camera;
+        Transform transform;
+        Shader shader;
+        Material material;
+        Light[] lights;
+        bool depth_test;
+        bool cull_face;
+        bool blend;
+        bool wireframe;
+        bool front_facing;
+
+        public int CompareTo(RenderItem other) {
+            if (viewport == other.viewport) {
+                if (camera == other.camera) {
+                    if (shader == other.shader) {
+                        if (material == other.material) {
+                            return 0;
+                        }
+                        return 1;
+                    }
+                    return 1;
+                }
+                return 1;
+            }
+            return 1;
+        }
+    }
+
+    private List<RenderItem> render_items;
+
     public void render() {
         foreach (var entity in children.with_component<Camera>()) {
             foreach(var cam in entity.get_all<Camera>()) {
                 // Console.WriteLine($"Switching to cam {cam.name}");
+                //render_items.Sort(new Comparison<RenderItem>((item, renderItem) => ));
 
                 if (cam!.entity.parent != null) {
                     // Console.WriteLine($"Switching to viewport {cam.viewport}");
