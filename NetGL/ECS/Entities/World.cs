@@ -121,22 +121,30 @@ public class World: Entity {
             component => lights.Add((ILight)component)
         );*/
 
-        foreach (var renderable in entity.get_renderable_components())
+        foreach (var renderable in entity.components.get_all<IRenderableComponent>())
             renderable.render(projection_matrix, camera_matrix, camera_pos, model_matrix);
 
         foreach (var child in entity.children)
             render_entity(child, projection_matrix, camera_matrix, camera_pos, model_matrix);
     }
 
-    public void update(in float game_time, in float delta_time) {
-        foreach (var entity in children) {
-            update_entity_pre_physics(entity);
-        }
+    public void update(float game_time, float delta_time, bool parallel) {
+        if (parallel) {
+            Parallel.ForEach(children, entity => update_entity_pre_physics(entity));
 
-        physics.World.StepSimulation(delta_time);
+            physics.World.StepSimulation(delta_time);
 
-        foreach (var entity in children) {
-            update_entity(game_time, delta_time, entity);
+            Parallel.ForEach(children, entity => update_entity(game_time, delta_time, entity));
+        } else {
+            foreach (var entity in children) {
+                update_entity_pre_physics(entity);
+            }
+
+            physics.World.StepSimulation(delta_time);
+
+            foreach (var entity in children) {
+                update_entity(game_time, delta_time, entity);
+            }
         }
     }
 

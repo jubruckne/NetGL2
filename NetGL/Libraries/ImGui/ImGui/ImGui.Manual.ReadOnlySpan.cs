@@ -11,6 +11,14 @@ namespace ImGuiNET
 {
     public unsafe partial class ImGui
     {
+        public static void InputText(
+            string label,
+            ref string input,
+            nuint window_width,
+            ImGuiInputTextFlags flags) {
+            InputText(label, ref input, (uint)input.Length, flags);
+        }
+
         public static bool InputText(
             ReadOnlySpan<char> label,
             byte[] buf,
@@ -480,6 +488,8 @@ namespace ImGuiNET
         {
             return MenuItem(label, string.Empty, false, enabled);
         }
+
+
     }
 }
 #endif

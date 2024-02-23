@@ -15,7 +15,7 @@ public static class CastingExt {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OUT[] reinterpret_ref<IN, OUT>(this IN[] input) where IN: unmanaged where OUT: struct {
+    public static OUT[] reinterpret_ref<IN, OUT>(this IN[] input) where IN: unmanaged where OUT: unmanaged {
         return MemoryMarshal.Cast<IN, OUT>(new Span<IN>(input)).ToArray();
     }
 }

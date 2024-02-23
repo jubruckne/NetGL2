@@ -73,7 +73,7 @@ public abstract class Buffer<T>: Buffer where T: struct {
         items.CopyTo(buffer, index);
     }
 
-    public int append(params T[] items) {
+    public int append(in T[] items) {
         int position = buffer.Length;
         resize(buffer.Length + items.Length);
         insert(position, items);

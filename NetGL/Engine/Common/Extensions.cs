@@ -4,6 +4,26 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
+public static class TypeExtensions {
+    /// <summary>
+    /// Returns the type name. If this is a generic type, appends
+    /// the list of generic type arguments between angle brackets.
+    /// (Does not account for embedded / inner generic arguments.)
+    /// </summary>
+    /// <param name="type">The type.</param>
+    /// <returns>System.String.</returns>
+    public static string GetFormattedName(this Type type) {
+        if(type.IsGenericType) {
+            string genericArguments = type.GetGenericArguments()
+                .Select(x => x.Name)
+                .Aggregate((x1, x2) => $"{x1}, {x2}");
+            return $"{type.Name.Substring(0, type.Name.IndexOf("`"))}"
+                   + $"<{genericArguments}>";
+        }
+        return type.Name;
+    }
+}
+
 public static class RandomExt {
     public static T random<T>(this IReadOnlyList<T> list) {
         return list[Random.Shared.Next(list.Count)];
@@ -114,6 +134,21 @@ public static class AngleExt {
 }
 
 public static class ArrayExt {
+    public static IEnumerable<KeyValuePair<string, T>> StartingWith<T>(this Dictionary<string, T> dict, string key) {
+        if (dict.Count == 0)
+            return Enumerable.Empty<KeyValuePair<string, T>>();
+
+        if (string.IsNullOrEmpty(key))
+            return dict;
+
+        var result = new List<KeyValuePair<string, T>>();
+        foreach (var item in dict)
+            if (item.Key.StartsWith(key))
+                result.Add(item);
+
+        return result;
+    }
+
     public static string array_to_string<T>(this IEnumerable<T> array) {
         StringBuilder sb = new();
 

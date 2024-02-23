@@ -5,6 +5,9 @@ namespace NetGL;
 public static class Error {
     public class Exception: System.Exception {
         public readonly int code;
+
+        public Exception(string message): base(message) { }
+
         public Exception(int code, string message): base(message) {
             this.code = code;
         }
@@ -17,12 +20,21 @@ public static class Error {
 
     public static bool check(bool throw_exception = true) {
         var err = GL.GetError();
-        if (err != ErrorCode.NoError) {
-            Console.WriteLine(err.ToString());
-            if(throw_exception) throw 
-                new Exception((int)err, err.ToString());
-            return false;
-        }  
-        return true;
+        var msg = "";
+
+        while (err != ErrorCode.NoError) {
+            Console.WriteLine("Error: " + err);
+            msg += err + " ";
+
+            err = GL.GetError();
+        }
+
+        if (msg == "")
+            return true;
+
+        if (throw_exception)
+            throw new Exception(123, msg);
+
+        return false;
     }
 }

@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetGL", "NetGL\NetGL.csproj", "{60DC2E77-A10B-491D-A20E-88B00EEE2741}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetGL.Libraries", "NetGL.Libraries\NetGL.Libraries.csproj", "{020FC302-1EDF-4F77-9CF8-E3F43C05D054}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -14,9 +12,5 @@ Global
 		{60DC2E77-A10B-491D-A20E-88B00EEE2741}.Release|ARM64.Build.0 = Release|ARM64
 		{60DC2E77-A10B-491D-A20E-88B00EEE2741}.Debug|ARM64.ActiveCfg = Debug|ARM64
 		{60DC2E77-A10B-491D-A20E-88B00EEE2741}.Debug|ARM64.Build.0 = Debug|ARM64
-		{020FC302-1EDF-4F77-9CF8-E3F43C05D054}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{020FC302-1EDF-4F77-9CF8-E3F43C05D054}.Debug|ARM64.Build.0 = Debug|ARM64
-		{020FC302-1EDF-4F77-9CF8-E3F43C05D054}.Release|ARM64.ActiveCfg = Release|ARM64
-		{020FC302-1EDF-4F77-9CF8-E3F43C05D054}.Release|ARM64.Build.0 = Release|ARM64
 	EndGlobalSection
 EndGlobal

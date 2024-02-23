@@ -3,35 +3,26 @@ using System.Collections;
 namespace NetGL.ECS;
 
 public class ReadOnlyComponentList: IEnumerable<IComponent> {
-    protected readonly Dictionary<Type, List<IComponent>> dict = [];
     protected readonly List<IComponent> list = [];
 
     public int count => list.Count;
-    public IComponent this[int index] => list[index];
 
-    public T get<T>() where T: IComponent {
-        if (dict.TryGetValue(typeof(T), out var this_list))
-            return (T)this_list[0];
-        throw new IndexOutOfRangeException(typeof(T).Name);
+    public C get<C>() {
+        for(int i = 0; i < list.Count; ++i)
+            if (list[i] is C component) return component;
+
+        throw new IndexOutOfRangeException(nameof(C));
     }
 
-    public ReadOnlyComponentList with_name(in string name) {
-        var result = new ComponentList();
-
-        foreach(var component in list)
-            if (component.name == name)
-                result.add(component);
-
-        return result;
+    public IEnumerable<C> get_all<C>() {
+        for(int i = 0; i < list.Count; ++i)
+            if (list[i] is C component) yield return component;
     }
 
-    public ReadOnlyComponentList of_type<T>() where T: IComponent {
-        if (dict.TryGetValue(typeof(T), out var this_list))
-            return new ComponentList(this_list);
-
-        return new ComponentList();
+    public void for_each<C>(Action<C> action) {
+        for(int i = 0; i < list.Count; ++i)
+            if (list[i] is C component) action(component);
     }
-
 
     IEnumerator<IComponent> IEnumerable<IComponent>.GetEnumerator() => list.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
@@ -46,18 +37,6 @@ public class ComponentList: ReadOnlyComponentList {
     }
 
     public void add(in IComponent component) {
-        list.Add(component);
-
-        var type = component.GetType();
-
-        if (dict.TryGetValue(type, out var this_list)) {
-            this_list.Add(component);
-        } else {
-            this_list = new List<IComponent>();
-            this_list.Add(component);
-            dict.Add(type, this_list);
-        }
-
         list.Add(component);
     }
 }

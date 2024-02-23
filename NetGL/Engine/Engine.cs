@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using BulletSharp;
 using ImGuiNET;
 using NetGL;
+using NetGL.Debug;
 using NetGL.ECS;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
@@ -12,7 +14,6 @@ public class Engine: GameWindow {
     public readonly bool debug;
 
     protected readonly World world;
-    protected readonly ImGuiController handler_imgui = null!;
 
     private readonly RevolvingList<float> frame_times = new(60);
     protected float game_time;
@@ -24,7 +25,7 @@ public class Engine: GameWindow {
 
     private ImGuiConsole console = new("Console");
 
-    public Engine(int width, int height, string title, bool debug = false):
+    public Engine(int width, int height, string title, bool debug = false) :
         base(
             new() {
                 UpdateFrequency = 0,
@@ -64,7 +65,11 @@ public class Engine: GameWindow {
         GL.DepthFunc(DepthFunction.Less);
 
         world = new World();
-        if (debug) handler_imgui = new ImGuiController(ClientSize.X, ClientSize.Y, 2, 2, "/System/Library/Fonts/Supplemental/Arial Unicode.ttf");
+        if (debug) {
+            ImGuiRenderer.initialize(this, "/System/Library/Fonts/Supplemental/Arial Unicode.ttf");
+            DebugConsole.initialize();
+            DebugConsole.text_filter = "ImGui";
+        }
     }
 
     protected override void OnLoad() {
@@ -210,7 +215,7 @@ public class Engine: GameWindow {
             }
         } else cursor_state_last_switch += delta_time;
 
-        world.update(game_time, delta_time);
+        world.update(game_time, delta_time, parallel:false);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
@@ -231,12 +236,17 @@ public class Engine: GameWindow {
 
         frame_count++;
         frame++;
+        Error.check();
 
-        if (debug) handler_imgui.Update(this, (float)e.Time);
+        if (debug) ImGuiRenderer.update((float)e.Time);
+        Error.check();
+
+        Viewport.Gameplay.make_current();
 
         world.render();
-        Viewport.Gameplay.make_current();
+        Error.check();
         if(debug) render_ui();
+        Error.check();
 
         SwapBuffers();
     }
@@ -258,6 +268,8 @@ public class Engine: GameWindow {
 
         ImGui.StyleColorsClassic();
 
+        Error.check();
+
         if (frame_times.count > 5) {
             ImGui.Text("Frame Time (ms):");
             ImGui.PlotHistogram(
@@ -271,18 +283,17 @@ public class Engine: GameWindow {
                 new Vector2(240, 80));
         }
 
+        DebugConsole.draw();
+
         add_entities_to_gui(world);
 
         // ImGui.ShowIDStackToolWindow();
 
         ImGui.PopStyleVar(4);
-
-        console.Draw();
-
         ImGui.End();
-        handler_imgui.Render();
+        Error.check();
 
-        ImGuiController.CheckGLError("End of frame");
+        ImGuiRenderer.render();
     }
 
     private void add_entities_to_gui(Entity entity) {
@@ -468,10 +479,7 @@ public class Engine: GameWindow {
 
     protected override void OnResize(ResizeEventArgs e) {
         base.OnResize(e);
-        //Console.WriteLine("OnResize: {0} {1}", e.Width, e.Height);
         Viewport.Gameplay.resize(0, 0, e.Width * 2, e.Height * 2);
-
-        if (debug) handler_imgui.WindowResized(ClientSize.X, ClientSize.Y);
     }
 
     private bool grabbed {
@@ -489,18 +497,6 @@ public class Engine: GameWindow {
         }
     }
 
-    protected override void OnTextInput(TextInputEventArgs e)
-    {
-        base.OnTextInput(e);
-        handler_imgui.PressChar((char)e.Unicode);
-    }
-
-    protected override void OnMouseWheel(MouseWheelEventArgs e)
-    {
-        base.OnMouseWheel(e);
-
-        handler_imgui.MouseScroll(e.Offset);
-    }
     protected override void OnUnload() {
         base.OnUnload();
     }

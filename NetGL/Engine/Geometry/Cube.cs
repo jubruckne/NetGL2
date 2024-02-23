@@ -13,10 +13,13 @@ public class Cube: IShape<Cube> {
         this.depth = depth;
     }
 
+    public Vector3 size => new Vector3(width, height, depth);
+
     public Cube(float radius): this(radius * 2f, radius * 2f, radius * 2f) { }
     public Cube(): this(1f, 1f, 1f) { }
 
     public IShapeGenerator generate() => new CubeShapeGenerator(this);
+    public IShapeGenerator generate(Vector3 position) => new CubeShapeGenerator(this, position);
 
     public override string ToString() {
         return $"Cube[width:{width}, height:{height}, depth:{depth}]";
@@ -24,32 +27,32 @@ public class Cube: IShape<Cube> {
 }
 
 file class CubeShapeGenerator: IShapeGenerator {
-    private readonly float width;
-    private readonly float height;
-    private readonly float depth;
+    private readonly Vector3 position;
+    private readonly Size size;
 
-    public CubeShapeGenerator(in Cube cube) {
-        width = cube.width;
-        height = cube.height;
-        depth = cube.depth;
+    public CubeShapeGenerator(in Cube cube) : this(cube, Vector3.Zero) {}
+
+    public CubeShapeGenerator(in Cube cube, Vector3 position) {
+        this.size = (cube.width, cube.height, cube.depth);
+        this.position = position;
     }
 
     public override string ToString() => "Cube";
 
     public IEnumerable<Vector3> get_vertices() {
-        var half_width = width * 0.5f;
-        var half_height = height * 0.5f;
-        var half_depth = depth * 0.5f;
+        var half_width = size.width * 0.5f;
+        var half_height = size.height * 0.5f;
+        var half_depth = size.depth * 0.5f;
 
         return [
-            new Vector3(-half_width, -half_height, half_depth),    // 0
-            new Vector3(half_width, -half_height, half_depth),     // 1
-            new Vector3(half_width, half_height, half_depth),      // 2
-            new Vector3(-half_width, half_height, half_depth),     // 3
-            new Vector3(-half_width, -half_height, -half_depth),   // 4
-            new Vector3(half_width, -half_height, -half_depth),    // 5
-            new Vector3(half_width, half_height, -half_depth),     // 6
-            new Vector3(-half_width, half_height, -half_depth)     // 7
+            new Vector3(position.X - half_width, position.Y - half_height, position.Z + half_depth),    // 0
+            new Vector3(position.X + half_width, position.Y - half_height, position.Z + half_depth),     // 1
+            new Vector3(position.X + half_width, position.Y + half_height, position.Z + half_depth),      // 2
+            new Vector3(position.X - half_width, position.Y + half_height, position.Z + half_depth),     // 3
+            new Vector3(position.X - half_width, position.Y - half_height, position.Z - half_depth),   // 4
+            new Vector3(position.X + half_width, position.Y - half_height, position.Z - half_depth),    // 5
+            new Vector3(position.X + half_width, position.Y + half_height, position.Z - half_depth),     // 6
+            new Vector3(position.X - half_width, position.Y + half_height, position.Z - half_depth)     // 7
         ];
 /*
         return [
