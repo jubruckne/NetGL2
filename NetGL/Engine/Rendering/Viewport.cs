@@ -29,6 +29,7 @@ public class Viewport {
     public int right => x + width;
     public int top => y + height;
     public int bottom => y;
+    public float aspect_ratio => (float)width / height;
 
     private Color _clear_color;
 

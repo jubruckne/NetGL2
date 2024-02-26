@@ -38,7 +38,7 @@ public class Model {
         return model;
     }
 
-    public static Model from_file(string filename) {
+    public static Model from_file(string filename, float scale = 1.0f) {
         if (!File.Exists(filename))
             filename = base_path + filename;
 
@@ -49,7 +49,7 @@ public class Model {
         importer.SetConfig(new NormalSmoothingAngleConfig(66.0f));
         //importer.SetConfig(new MeshVertexLimitConfig(165000));
 
-        importer.Scale = 5f;
+        importer.Scale = scale;
         var assimp = importer.ImportFile(filename, PostProcessSteps.EmbedTextures | /* PostProcessSteps.SplitLargeMeshes | */ PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.GlobalScale);
         foreach (var tex in assimp.Textures) {
             Console.WriteLine(tex.Filename);

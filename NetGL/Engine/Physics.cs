@@ -7,8 +7,6 @@ using BulletSharp;
 using System.Collections.Generic;
 
 public class Physics {
-    private const int ArraySizeX = 5, ArraySizeY = 5, ArraySizeZ = 5;
-
     public DiscreteDynamicsWorld World { get; }
 
     private readonly CollisionDispatcher _dispatcher;
@@ -23,11 +21,6 @@ public class Physics {
 
         _broadphase = new DbvtBroadphase();
         World = new DiscreteDynamicsWorld(_dispatcher, _broadphase, null, _collisionConf);
-
-
-        // create a few dynamic rigidbodies
-        var colShape = new BoxShape(1);
-        _collisionShapes.Add(colShape);
     }
 
     public virtual void Update(float elapsedTime) {

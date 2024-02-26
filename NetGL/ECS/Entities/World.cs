@@ -9,6 +9,7 @@ namespace NetGL.ECS;
 public class World: Entity {
     private readonly EntityList world_entities;
     internal readonly Physics physics;
+    public bool parallel_update = true;
 
     public World(): base("World", null, null) {
         world_entities = new();
@@ -115,7 +116,7 @@ public class World: Entity {
     }
 
     private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Vector3 camera_pos, in Matrix4 parent_model_matrix) {
-        var model_matrix = Matrix4.LookAt(entity.transform.position, entity.transform.attitude.direction + entity.transform.position, entity.transform.attitude.up).Inverted() * parent_model_matrix;
+        var model_matrix = Matrix4.LookAt(entity.transform.position, entity.transform.rotation.direction + entity.transform.position, entity.transform.rotation.up).Inverted() * parent_model_matrix;
 
         /*entity.for_any_component_like<AmbientLight, DirectionalLight, PointLight>(
             component => lights.Add((ILight)component)
@@ -128,13 +129,16 @@ public class World: Entity {
             render_entity(child, projection_matrix, camera_matrix, camera_pos, model_matrix);
     }
 
-    public void update(float game_time, float delta_time, bool parallel) {
-        if (parallel) {
-            Parallel.ForEach(children, entity => update_entity_pre_physics(entity));
+    public void update(float game_time, float delta_time) {
+        if (parallel_update) {
+            Task physics_task = new Task(() => physics.World.StepSimulation(delta_time));
+            physics_task.Start();
 
-            physics.World.StepSimulation(delta_time);
+            Parallel.ForEach(children, e => update_entity_pre_physics(e));
 
-            Parallel.ForEach(children, entity => update_entity(game_time, delta_time, entity));
+            physics_task.Wait();
+
+            Parallel.ForEach(children, e => update_entity(game_time, delta_time, e));
         } else {
             foreach (var entity in children) {
                 update_entity_pre_physics(entity);
@@ -167,7 +171,6 @@ public class World: Entity {
         }
 
         foreach (var updateable in entity.get_updateable_components()) {
-            //Console.WriteLine("update: " + updateable);
             if(updateable.enable_update)
                 updateable.update(game_time, delta_time);
         }

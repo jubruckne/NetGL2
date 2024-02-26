@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Numerics;
 using BulletSharp;
 using ImGuiNET;
 using NetGL;
@@ -25,7 +26,7 @@ public class Engine: GameWindow {
 
     private ImGuiConsole console = new("Console");
 
-    public Engine(int width, int height, string title, bool debug = false) :
+    public Engine(string title, Size2<int> window_size, WindowState window_state = WindowState.Normal, bool debug = false) :
         base(
             new() {
                 UpdateFrequency = 0,
@@ -33,9 +34,9 @@ public class Engine: GameWindow {
                 APIVersion = new Version("4.1"),
                 AlphaBits = 8,
                 NumberOfSamples = 16,
-                ClientSize = (width, height),
+                ClientSize = window_size,
                 Title = title,
-                WindowState = WindowState.Normal,
+                WindowState = window_state,
                 Vsync = VSyncMode.On,
                 Flags = ContextFlags.ForwardCompatible
             }) {
@@ -68,12 +69,15 @@ public class Engine: GameWindow {
         if (debug) {
             ImGuiRenderer.initialize(this, "/System/Library/Fonts/Supplemental/Arial Unicode.ttf");
             DebugConsole.initialize();
-            DebugConsole.text_filter = "ImGui";
+           // DebugConsole.text_filter = "ImGui";
         }
     }
 
     protected override void OnLoad() {
         base.OnLoad();
+
+        Viewport.Gameplay.resize(0, 0, FramebufferSize.X, FramebufferSize.Y);
+
 /*
 
         phy.Update(0.1f);
@@ -91,12 +95,12 @@ public class Engine: GameWindow {
         );*/
 
         TextureCubemapBuffer cubemap = new(
-            Texture.load_from_file("right.jpg"),
-            Texture.load_from_file("left.jpg"),
-            Texture.load_from_file("top.jpg"),
-            Texture.load_from_file("bottom.jpg"),
-            Texture.load_from_file("front.jpg"),
-            Texture.load_from_file("back.jpg")
+            AssetManager.load_from_file<Texture>("right.jpg"),
+            AssetManager.load_from_file<Texture>("left.jpg"),
+            AssetManager.load_from_file<Texture>("top.jpg"),
+            AssetManager.load_from_file<Texture>("bottom.jpg"),
+            AssetManager.load_from_file<Texture>("front.jpg"),
+            AssetManager.load_from_file<Texture>("back.jpg")
         );
         cubemap.upload();
 
@@ -125,7 +129,7 @@ public class Engine: GameWindow {
 
         Entity player = world.create_entity("Player");
         player.transform.position = (1, +2, 20);
-        player.transform.attitude.direction = (0, 0, -1);
+        player.transform.rotation = Direction.Left;
         player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:8f, sensitivity:0.75f);
 /*
         var oc1 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:325, y:200), field_of_view:60f, enable_input:false);
@@ -145,7 +149,7 @@ public class Engine: GameWindow {
         oc4.transform.position = (1, 2, 20);
         oc4.transform.attitude.direction = (-1, 0, 0);
 */
-        Entity ball = world.create_sphere_cube("Ball", radius:5f, material:Material.random);
+        Entity ball = world.create_sphere_cube("Ball", radius:0.5f, material:Material.random);
 //        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
 //        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
         ball.get<VertexArrayRenderer>().wireframe = false;
@@ -161,18 +165,34 @@ public class Engine: GameWindow {
         Console.WriteLine("");
 
        // Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
-        Entity entd = world.create_model("74656", Model.from_file("DragonAttenuation.glb"));
+       var arrow = Model.from_file("ArrowPointer.obj", 0.75f);
+       Entity arrow_x = world.create_model("ArrowX", arrow);
+       arrow_x.transform.rotation = Direction.Right;
 
-        entd.transform.position = (-4, 0, 0);
-        entd.transform.attitude.yaw = -120;
-        entd.transform.attitude.pitch = -5f;
-        entd.transform.attitude.roll = 2.5f;
+       Entity arrow_y = world.create_model("ArrowY", arrow);
+       arrow_y.transform.rotation = Direction.Up;
 
-        foreach (var b in Enumerable.Range(1, 100)) {
+       Entity arrow_z = world.create_model("ArrowZ", arrow);
+       arrow_z.transform.rotation = Direction.Front;
+
+       Entity entd = world.create_model("dragon", Model.from_file("DragonAttenuation.glb", 1f)); // ""));
+
+        entd.transform.position = (-4, -4, 0);
+        entd.transform.rotation.yaw_pitch_roll = (-120, -5f, 2.5f);
+
+        var con = new Predicate<Entity>(entity => entity.transform.position.Y < -2.75f);
+        var beh = new Action<Entity>(entity => {
+            entity.transform.position.randomize(-2.5f, 2.5f).add(x: -1.5f, y: 16, 5.5f);
+            entity.get<Component<RigidBody>>().data.LinearVelocity = Vector3.Zero;
+        });
+
+        foreach (var b in Enumerable.Range(1, 35)) {
             Entity cube = world.create_sphere_uv($"Sphere{b}", radius:0.20f, material:Material.random);
-            cube.transform.position.randomize(-3.5f, 3.5f).add(x:-1.5f, y:15, 5.5f);
-            cube.transform.attitude.yaw_pitch_roll_degrees.randomize(-180, 180);
+            cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, 5.5f + Random.Shared.NextSingle() * 20f);
+            cube.transform.rotation.randomize_yaw_pitch_roll(-180, 180);
+
             cube.add_rigid_body(radius:0.20f, mass:1f);
+            cube.add_behavior(con, beh);
         }
 
         GL.Enable(EnableCap.ProgramPointSize);
@@ -215,7 +235,7 @@ public class Engine: GameWindow {
             }
         } else cursor_state_last_switch += delta_time;
 
-        world.update(game_time, delta_time, parallel:false);
+        world.update(game_time, delta_time);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
@@ -254,12 +274,17 @@ public class Engine: GameWindow {
     private void render_ui() {
         // ImGui.ShowMetricsWindow();
         // ImGui.DockSpaceOverViewport(ImGui.GetMainViewport());
+
+        Vector2 consolePos = new Vector2(ClientSize.X * 0.82f, 0);
+        Vector2 consoleSize = new Vector2(ClientSize.X * 0.18f, ClientSize.Y);
+
+        ImGui.SetNextWindowPos(consolePos);
+        ImGui.SetNextWindowSize(consoleSize);
+
         ImGui.Begin("Entities",
             CursorState == CursorState.Grabbed
                 ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
                 : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar);
-        ImGui.SetWindowSize(new Vector2(260, 680));
-        ImGui.SetWindowPos(new Vector2(755, 10));
 
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 6f);
         ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 6f);
@@ -434,10 +459,13 @@ public class Engine: GameWindow {
                         ImGui.Text($"Physics objects: {phy.data.World.NumCollisionObjects}");
 
                         var worldGravity = phy.data.World.Gravity;
-                        if (ImGui.DragFloat3($"Gravity", ref worldGravity, 0.05f, -10, 10, "%.2f")) {
-                            phy.data.World.Gravity = worldGravity;
+                        if (ImGui.DragFloat3($"Gravity", ref worldGravity, 0.1f, -10, 10, "%.2f")) {
+                            Console.WriteLine(worldGravity);
+                            phy.data.World.SetGravity(ref worldGravity);
+                            phy.data.World.ApplyGravity();
+                            phy.data.World.ClearForces();
+                            phy.data.World.SynchronizeMotionStates();
                         }
-
 
                         ImGui.Indent();
                         ImGui.TreePop();
