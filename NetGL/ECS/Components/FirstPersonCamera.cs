@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -10,8 +9,6 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
 
     public float speed = 2.5f;
     public float sensitivity = 0.5f;
-
-    public readonly Vector2 pitch_clamp = new(33, -33);
 
     internal FirstPersonCamera (
         in Entity entity,
@@ -31,7 +28,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
     }
 
     public override string ToString() {
-        return $"position: {entity.transform.position} attitude: {entity.transform.attitude}";
+        return $"position: {entity.transform.position} rotation: {entity.transform.rotation}";
     }
 
     public override void update(in float game_time, in float delta_time) {
@@ -40,39 +37,47 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
 
             if (keyboard_state != null) {
                 if (keyboard_state.IsKeyDown(Keys.W))
-                    transform.position += transform.attitude.direction * speed; //Forward
+                    transform.position += transform.rotation.forward * speed; //Forward
 
                 if (keyboard_state.IsKeyDown(Keys.S))
-                    transform.position -= transform.attitude.direction * speed; //Backwards
+                    transform.position -= transform.rotation.forward * speed; //Backwards
 
                 if (keyboard_state.IsKeyDown(Keys.A))
-                    transform.position -= Vector3.Normalize(transform.attitude.right) * speed; //Left
+                    transform.position -= Vector3.Normalize(transform.rotation.right) * speed; //Left
 
                 if (keyboard_state.IsKeyDown(Keys.D))
-                    transform.position += Vector3.Normalize(transform.attitude.right) * speed; //Right
+                    transform.position += Vector3.Normalize(transform.rotation.right) * speed; //Right
 
                 if (keyboard_state.IsKeyDown(Keys.RightShift))
-                    transform.position += transform.attitude.up * speed; //Up
+                    transform.position += transform.rotation.up * speed; //Up
 
                 if (keyboard_state.IsKeyDown(Keys.LeftShift))
-                    transform.position -= transform.attitude.up * speed; //Down
+                    transform.position -= transform.rotation.up * speed; //Down
             }
 
             if (mouse_state != null) {
-                transform.attitude.yaw += mouse_state.Delta.X * sensitivity;
-                transform.attitude.pitch -= mouse_state.Delta.Y * sensitivity;
+                Console.WriteLine($"mdx: {mouse_state.Delta.X:F6}, sens:{sensitivity:F6}");
+
+                Console.WriteLine($"{transform.rotation} + {(mouse_state.Delta.X * sensitivity):F8}");
+                Console.WriteLine($"ypr before: {transform.rotation.yaw_pitch_roll}");
+
+                transform.rotation.yaw(mouse_state.Delta.X * sensitivity);
+                Console.WriteLine($"ypr after : {transform.rotation.yaw_pitch_roll}");
+
+                transform.rotation.pitch(-mouse_state.Delta.Y * sensitivity);
             }
         }
 
+        /*
         if (transform.attitude.pitch > pitch_clamp[0])
             transform.attitude.pitch = pitch_clamp[0];
         else if (transform.attitude.pitch < pitch_clamp[1])
             transform.attitude.pitch = pitch_clamp[1];
-
-        camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.attitude.direction, transform.attitude.up);
+*/
+        camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.rotation.forward, transform.rotation.up);
 
         if (enable_input && enable_update) {
-            entity.transform.attitude = transform.attitude;
+            entity.transform.rotation = transform.rotation;
             entity.transform.position = transform.position;
         }
         /*

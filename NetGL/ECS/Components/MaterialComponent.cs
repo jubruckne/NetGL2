@@ -4,7 +4,7 @@ public class MaterialComponent: IComponent<MaterialComponent> {
     public Entity entity { get; }
     public string name { get; }
 
-    public Material material;
+    public readonly Material material;
 
     internal MaterialComponent(in Entity entity, in Material material) {
         this.entity = entity;

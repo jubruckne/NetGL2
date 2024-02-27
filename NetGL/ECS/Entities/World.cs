@@ -116,7 +116,7 @@ public class World: Entity {
     }
 
     private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Vector3 camera_pos, in Matrix4 parent_model_matrix) {
-        var model_matrix = Matrix4.LookAt(entity.transform.position, entity.transform.rotation.direction + entity.transform.position, entity.transform.rotation.up).Inverted() * parent_model_matrix;
+        var model_matrix = Matrix4.LookAt(entity.transform.position, entity.transform.rotation.forward + entity.transform.position, entity.transform.rotation.up).Inverted() * parent_model_matrix;
 
         /*entity.for_any_component_like<AmbientLight, DirectionalLight, PointLight>(
             component => lights.Add((ILight)component)

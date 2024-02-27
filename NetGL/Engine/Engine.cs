@@ -129,7 +129,7 @@ public class Engine: GameWindow {
 
         Entity player = world.create_entity("Player");
         player.transform.position = (1, +2, 20);
-        player.transform.rotation = Direction.Left;
+        player.transform.rotation = Rotation.Direction.Left;
         player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:8f, sensitivity:0.75f);
 /*
         var oc1 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:325, y:200), field_of_view:60f, enable_input:false);
@@ -167,13 +167,13 @@ public class Engine: GameWindow {
        // Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
        var arrow = Model.from_file("ArrowPointer.obj", 0.75f);
        Entity arrow_x = world.create_model("ArrowX", arrow);
-       arrow_x.transform.rotation = Direction.Right;
+       arrow_x.transform.rotation = Rotation.Direction.Right;
 
        Entity arrow_y = world.create_model("ArrowY", arrow);
-       arrow_y.transform.rotation = Direction.Up;
+       arrow_y.transform.rotation = Rotation.Direction.Up;
 
        Entity arrow_z = world.create_model("ArrowZ", arrow);
-       arrow_z.transform.rotation = Direction.Front;
+       arrow_z.transform.rotation = Rotation.Direction.Forward;
 
        Entity entd = world.create_model("dragon", Model.from_file("DragonAttenuation.glb", 1f)); // ""));
 
@@ -189,7 +189,6 @@ public class Engine: GameWindow {
         foreach (var b in Enumerable.Range(1, 35)) {
             Entity cube = world.create_sphere_uv($"Sphere{b}", radius:0.20f, material:Material.random);
             cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, 5.5f + Random.Shared.NextSingle() * 20f);
-            cube.transform.rotation.randomize_yaw_pitch_roll(-180, 180);
 
             cube.add_rigid_body(radius:0.20f, mass:1f);
             cube.add_behavior(con, beh);
@@ -348,16 +347,21 @@ public class Engine: GameWindow {
 
                         ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0.05f, -100, 100, "%.1f");
 
-                        ImGui.DragFloat3($"Attitude##{entity.name}.attitude",
-                            ref t.attitude.yaw_pitch_roll_degrees.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 1f, -180, 180, "%.0f");
+                        var rotationYawPitchRoll = t.rotation.yaw_pitch_roll;
+                        if (ImGui.DragFloat3($"Rotation##{entity.name}.rot",
+                                ref rotationYawPitchRoll
+                                    .reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 1f, -180,
+                                180, "%.0f")) {
+                            t.rotation.yaw_pitch_roll = rotationYawPitchRoll;
+                        }
 
                         ImGui.Spacing();
 
-                        var attitudeDirection = t.attitude.direction;
+                        var attitudeDirection = t.rotation.forward;
                         ImGui.DragFloat3($"Direction→##{entity.name}.direction", ref attitudeDirection.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
                             ImGuiSliderFlags.NoInput);
 
-                        var attitudeUp = t.attitude.up;
+                        var attitudeUp = t.rotation.up;
                         ImGui.DragFloat3($"Up→##{entity.name}.up", ref attitudeUp.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
                             ImGuiSliderFlags.NoInput);
 

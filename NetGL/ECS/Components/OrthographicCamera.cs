@@ -32,7 +32,7 @@ public class OrthographicCamera: Camera, IComponent<FirstPersonCamera>, IUpdatab
     }
 
     public override string ToString() {
-        return $"position: {entity.transform.position} attitude: {entity.transform.attitude}";
+        return $"position: {entity.transform.position} rotation: {entity.transform.rotation}";
     }
 
     public override void update(in float game_time, in float delta_time) {
@@ -42,38 +42,40 @@ public class OrthographicCamera: Camera, IComponent<FirstPersonCamera>, IUpdatab
 
             if (keyboard_state != null) {
                 if (keyboard_state.IsKeyDown(Keys.W))
-                    transform.position += transform.attitude.direction * speed; //Forward
+                    transform.position += transform.rotation.forward * speed; //Forward
 
                 if (keyboard_state.IsKeyDown(Keys.S))
-                    transform.position -= transform.attitude.direction * speed; //Backwards
+                    transform.position -= transform.rotation.forward * speed; //Backwards
 
                 if (keyboard_state.IsKeyDown(Keys.A))
-                    transform.position -= Vector3.Normalize(transform.attitude.right) * speed; //Left
+                    transform.position -= Vector3.Normalize(transform.rotation.right) * speed; //Left
 
                 if (keyboard_state.IsKeyDown(Keys.D))
-                    transform.position += Vector3.Normalize(transform.attitude.right) * speed; //Right
+                    transform.position += Vector3.Normalize(transform.rotation.right) * speed; //Right
 
                 if (keyboard_state.IsKeyDown(Keys.RightShift))
-                    transform.position += transform.attitude.up * speed; //Up
+                    transform.position += transform.rotation.up * speed; //Up
 
                 if (keyboard_state.IsKeyDown(Keys.LeftShift))
-                    transform.position -= transform.attitude.up * speed; //Down
+                    transform.position -= transform.rotation.up * speed; //Down
             }
 
             if (mouse_state != null) {
-                transform.attitude.yaw += mouse_state.Delta.X * sensitivity;
-                transform.attitude.pitch -= mouse_state.Delta.Y * sensitivity;
+                transform.rotation.yaw(mouse_state.Delta.X * sensitivity);
+                transform.rotation.pitch(-mouse_state.Delta.Y * sensitivity);
             }
         }
 
+        /*
         if (transform.attitude.pitch > pitch_clamp[0])
             transform.attitude.pitch = pitch_clamp[0];
         else if (transform.attitude.pitch < pitch_clamp[1])
             transform.attitude.pitch = pitch_clamp[1];
+*/
 
         entity.transform.copy_from(transform);
 
-        camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.attitude.direction, transform.attitude.up);
+        camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.rotation.forward, transform.rotation.up);
     }
 }
 

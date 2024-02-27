@@ -19,7 +19,7 @@ public class RenderSettings: IComponent<RenderSettings> {
     }
 
     public Shader shader => entity.get<ShaderComponent>().shader;
-    public Matrix4 model_matrix => Matrix4.LookAt(entity.transform.position, entity.transform.attitude.direction + entity.transform.position, entity.transform.attitude.up).Inverted();
+    public Matrix4 model_matrix => Matrix4.LookAt(entity.transform.position, entity.transform.rotation.forward + entity.transform.position, entity.transform.rotation.up).Inverted();
     public Material material => entity.get<MaterialComponent>().material;
     public Light[] lights => entity.get_all<Light>(Entity.EntityRelationship.ParentsRecursive).ToArray();
 

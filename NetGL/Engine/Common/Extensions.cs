@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTK.Mathematics;
 
@@ -126,11 +127,21 @@ public static class VectorExt {
 }
 
 public static class AngleExt {
-    public static float degree_to_radians(this float degrees) =>
-        MathHelper.DegreesToRadians(degrees);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float wrap_degrees(float angle) {
+        angle %= 360;
+        if (angle > 180) angle -= 360;
+        if (angle < -180) angle += 360;
+        return angle;
+    }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float degree_to_radians(this float degrees) =>
+        MathHelper.DegreesToRadians(wrap_degrees(degrees));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float radians_to_degrees(this float radians) =>
-        MathHelper.RadiansToDegrees(radians);
+        wrap_degrees(MathHelper.RadiansToDegrees(radians));
 }
 
 public static class ArrayExt {
