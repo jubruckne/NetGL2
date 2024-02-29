@@ -52,6 +52,29 @@ public class Material {
         return HashCode.Combine(ambient_color, diffuse_color, specular_color, shininess);
     }
 
+    public static Material Red => new("Red",
+        ambient_color: (1f, 0f, 0f),
+        specular_color: (0.1f, 0.1f, 0.5f),
+        diffuse_color: (0.1f, 0.1f, 0.5f),
+        shininess: 1f
+    );
+
+    public static Material Green => new("Green",
+        ambient_color: (0f, 1f, 0f),
+        specular_color: (0.1f, 0.1f, 0.5f),
+        diffuse_color: (0.1f, 0.1f, 0.5f),
+        shininess: 1f
+    );
+
+    public static Material Blue => new("Blue",
+        ambient_color: (0f, 0f, 1f),
+        specular_color: (0.1f, 0.1f, 0.5f),
+        diffuse_color: (0.1f, 0.1f, 0.5f),
+        shininess: 1f
+    );
+
+
+
     public static Material SolidBlue => new("SolidBlue",
         ambient_color: (0f, 0f, 1f),
         specular_color: (0.07568f, 0.61424f, 0.07568f),

@@ -14,7 +14,7 @@ public class Transform : IComponent<Transform> {
         this.entity = entity;
         this.name = name ?? GetType().Name;
         this.position = position ?? new Vector3(0, 0, 0);
-        this.rotation = rotation ?? Rotation.from_yaw_pitch_roll(yaw:-90, pitch:0, roll:0);
+        this.rotation = rotation ?? Rotation.Direction.Forward;
         this.scale = scale;
     }
 

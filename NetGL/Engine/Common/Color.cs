@@ -7,6 +7,10 @@ public struct Color {
     public static Color Black => new(0, 0, 0, 1);
     public static Color White => new(1, 1, 1, 1);
 
+    public static Color Red => new(1f, 0f, 0f, 1f);
+    public static Color Green => new(0f, 1f, 0f, 1f);
+    public static Color Blue => new(0f, 0f, 1f, 1f);
+
     public static Color PastelRed => new(1f, 0.4117647f, 0.4117647f, 1); // #FF6961
     public static Color PastelGreen => new(0.5960784f, 0.9843137f, 0.5960784f, 1); // #98FB98
     public static Color PastelBlue => new(0.6784314f, 0.8470588f, 0.9019608f, 1); // #AEC6CF

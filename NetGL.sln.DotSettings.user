@@ -28,7 +28,7 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestTemplateMapping/=MSTest/@EntryIndexedValue">d6790ab7-33c2-4425-b2c9-51480cd1a852</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=00fc1701_002D18da_002D4436_002D9d9f_002D7157367f64fc/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="TestRotation" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
-    &lt;TestId&gt;F95A1C94-A6BF-436B-9761-C8037E25EECF::net8.0::MSTest::NetGL.Tests.ECS.Components.RotationTest&lt;/TestId&gt;
+    &lt;TestId&gt;net8.0::MSTest::F95A1C94-A6BF-436B-9761-C8037E25EECF::NetGL.Tests.ECS.Components.RotationTest.TestRotation&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Housekeeping/UnitTestingMru/UnitTestRunner/LoggingInternal/@EntryValue">TRACE</s:String>

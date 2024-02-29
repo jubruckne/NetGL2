@@ -53,6 +53,12 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
 
                 if (keyboard_state.IsKeyDown(Keys.LeftShift))
                     transform.position -= transform.rotation.up * speed; //Down
+
+                if (keyboard_state.IsKeyDown(Keys.E))
+                    transform.rotation.roll(1);
+
+                if (keyboard_state.IsKeyDown(Keys.Q))
+                    transform.rotation.roll(-1);
             }
 
             if (mouse_state != null) {
@@ -61,7 +67,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
                 Console.WriteLine($"{transform.rotation} + {(mouse_state.Delta.X * sensitivity):F8}");
                 Console.WriteLine($"ypr before: {transform.rotation.yaw_pitch_roll}");
 
-                transform.rotation.yaw(mouse_state.Delta.X * sensitivity);
+                transform.rotation.yaw(-mouse_state.Delta.X * sensitivity);
                 Console.WriteLine($"ypr after : {transform.rotation.yaw_pitch_roll}");
 
                 transform.rotation.pitch(-mouse_state.Delta.Y * sensitivity);

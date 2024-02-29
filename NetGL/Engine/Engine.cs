@@ -166,13 +166,17 @@ public class Engine: GameWindow {
 
        // Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
        var arrow = Model.from_file("ArrowPointer.obj", 0.75f);
-       Entity arrow_x = world.create_model("ArrowX", arrow);
+
+       Entity arrow_x = world.create_model("ArrowX", arrow, material:Material.Red);
+       arrow_x.transform.position = new OpenTK.Mathematics.Vector3(1, 0, 0);
        arrow_x.transform.rotation = Rotation.Direction.Right;
 
-       Entity arrow_y = world.create_model("ArrowY", arrow);
+       Entity arrow_y = world.create_model("ArrowY", arrow, material:Material.Green);
+       arrow_y.transform.position = new OpenTK.Mathematics.Vector3(0, 1, 0);
        arrow_y.transform.rotation = Rotation.Direction.Up;
 
-       Entity arrow_z = world.create_model("ArrowZ", arrow);
+       Entity arrow_z = world.create_model("ArrowZ", arrow, material:Material.Blue);
+       arrow_z.transform.position = new OpenTK.Mathematics.Vector3(0, 0, 1);
        arrow_z.transform.rotation = Rotation.Direction.Forward;
 
        Entity entd = world.create_model("dragon", Model.from_file("DragonAttenuation.glb", 1f)); // ""));
