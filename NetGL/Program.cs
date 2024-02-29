@@ -1,5 +1,3 @@
-﻿using OpenTK.Windowing.Common;
-
-Console.WriteLine("Hello, World!");
-Engine engine = new("NetGL", window_size:(1320, 200), window_state:WindowState.Maximized, debug:true);
+﻿Console.WriteLine("Hello, World!");
+Engine engine = new(1024, 700, "NetGL", debug:true);
 engine.Run();

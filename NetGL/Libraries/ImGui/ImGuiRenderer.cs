@@ -24,6 +24,9 @@ public static class ImGuiRenderer {
     private static int _shaderFontTextureLocation = -1;
     private static int _shaderProjectionMatrixLocation = -1;
 
+    /// <summary>
+    /// Constructs a new ImGuiController.
+    /// </summary>
     public static void initialize(NativeWindow window, string font = "") {
         ImGuiRenderer.window = window;
 
@@ -49,7 +52,8 @@ public static class ImGuiRenderer {
         // io.Fonts.AddFontDefault();
 
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
-        //io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.DpiEnableScaleFonts;
+        // Enable Docking
+        // io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.DpiEnableScaleFonts;
         io.ConfigMacOSXBehaviors = true;
 
         window.MouseWheel += on_mouse_wheel;
@@ -79,8 +83,8 @@ public static class ImGuiRenderer {
     private static void CreateDeviceResources() {
         Console.WriteLine($"ImguiController.CreateDeviceResources()");
 
-        _vertexBufferSize = 65535;
-        _indexBufferSize = 16382;
+        _vertexBufferSize = 10240;
+        _indexBufferSize = 2048;
 
         int prevVAO = GL.GetInteger(GetPName.VertexArrayBinding);
         int prevArrayBuffer = GL.GetInteger(GetPName.ArrayBufferBinding);
@@ -148,6 +152,9 @@ outputColor = color * texture(in_fontTexture, texCoord);
         Error.check();
     }
 
+    /// <summary>
+    /// Recreates the device texture used to render text.
+    /// </summary>
     private static void RecreateFontDeviceTexture() {
         Console.WriteLine($"ImguiController.RecreateFontDeviceTexture()");
 
@@ -183,6 +190,9 @@ outputColor = color * texture(in_fontTexture, texCoord);
         io.Fonts.ClearTexData();
     }
 
+    /// <summary>
+    /// Renders the ImGui draw list data.
+    /// </summary>
     public static void render() {
         if (_frameBegun) {
             _frameBegun = false;
@@ -242,7 +252,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         }
 
         //Console.WriteLine($"SetPerFrameImGuiData(w:{_windowWidth}, h:{_windowHeight}, scale: {_scaleFactor})");
-        // Console.WriteLine("DisplaySize = " + io.DisplaySize);
+        Console.WriteLine("DisplaySize = " + io.DisplaySize);
         //Console.WriteLine("DisplayFramebufferScale = " + io.DisplayFramebufferScale);
 
         io.DeltaTime = deltaSeconds;
@@ -368,7 +378,6 @@ outputColor = color * texture(in_fontTexture, texCoord);
         GL.Disable(EnableCap.CullFace);
         GL.Disable(EnableCap.DepthTest);
 
-
         // Render command lists
         for (int n = 0; n < draw_data.CmdListsCount; n++) {
             ImDrawListPtr cmd_list = draw_data.CmdLists[n];
@@ -387,8 +396,11 @@ outputColor = color * texture(in_fontTexture, texCoord);
                 // We do _windowHeight - (int)clip.W instead of (int)clip.Y because gl has
                 // flipped Y when it comes to these coordinates
                 var clip = pcmd.ClipRect;
+                Error.check();
+                Console.WriteLine("ImGui: clip = " + clip.ToString());
 
                 GL.Scissor((int)clip.X, (int)(window.FramebufferSize.Y) - (int)clip.W, (int)(clip.Z - clip.X), (int)(clip.W - clip.Y));
+                Error.check();
 
                 if ((io.BackendFlags & ImGuiBackendFlags.RendererHasVtxOffset) != 0) {
                     GL.DrawElementsBaseVertex(PrimitiveType.Triangles, (int)pcmd.ElemCount, DrawElementsType.UnsignedShort, (IntPtr)(pcmd.IdxOffset * sizeof(ushort)), unchecked((int)pcmd.VtxOffset));
@@ -421,6 +433,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         GL.PolygonMode(MaterialFace.FrontAndBack, (PolygonMode)prevPolygonMode[0]);
 
         Error.check();
+
     }
 
     /// <summary>

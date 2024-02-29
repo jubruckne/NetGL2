@@ -103,7 +103,7 @@ public static class FirstPersonCameraExt {
         this Entity entity,
         Viewport viewport,
         float field_of_view = 60f,
-        float? aspect_ratio = null,
+        float aspect_ratio = 4 / 3f,
         float near = 0.01f,
         float far = 1000f,
         KeyboardState? keyboard_state = null,
@@ -113,7 +113,7 @@ public static class FirstPersonCameraExt {
         float speed = 2.5f,
         float sensitivity = 0.5f
     ) {
-        var cam = new FirstPersonCamera(entity, viewport, field_of_view, aspect_ratio ?? viewport.aspect_ratio, near, far, keyboard_state, mouse_state);
+        var cam = new FirstPersonCamera(entity, viewport, field_of_view, aspect_ratio, near, far, keyboard_state, mouse_state);
         if (enable_input != null) cam.enable_input = (bool)enable_input;
         if (enable_update != null) cam.enable_update = (bool)enable_update;
         cam.speed = speed;

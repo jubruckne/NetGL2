@@ -13,15 +13,13 @@ public static class DebugConsole {
     private static readonly List<string> history = new();
     private static DebugListener? listener;
     private static readonly Dictionary<string, Action<string[]>> commands = new();
-    private static bool m_TimeStamps = true;
-    private static bool m_ColoredOutput = true;
+    private static bool m_TimeStamps;
+    private static bool m_ColoredOutput;
     private static bool m_ScrollToBottom;
-    private static bool m_AutoScroll = true;
+    private static bool m_AutoScroll;
     private static bool m_WasPrevFrameTabCompletion;
 
     public static string text_filter = string.Empty;
-    public static bool show_toolbar = false;
-    public static bool show_input = false;
 
     private static string m_Buffer = "";
     private static readonly uint m_Buffer_size = 256;
@@ -29,12 +27,13 @@ public static class DebugConsole {
     private static int m_HistoryIndex;
     private static readonly Dictionary<string, Action<string[]>> cmdAutocomplete = new();
     private static readonly Dictionary<string, string> varAutocomplete = new();
+    private static bool m_FilterBar;
     private static bool m_resetModal;
     private static float m_WindowAlpha = 1;
     private static readonly ColorPalette consoleColorPalette = new();
     private static readonly string m_ConsoleName = "Console";
     private static bool m_consoleOpen;
-    private const int max_messages = 1024;
+    private const int max_messages = 4096;
 
     public static void initialize(bool listen_to_console = true) {
         default_settings();
@@ -45,7 +44,15 @@ public static class DebugConsole {
     }
 
     private static void default_settings() {
-        m_WindowAlpha = 0.75f;
+        // Settings
+        m_AutoScroll = true;
+        m_ScrollToBottom = false;
+        m_ColoredOutput = true;
+        m_FilterBar = true;
+        m_TimeStamps = false;
+
+        // Style
+        m_WindowAlpha = 0.85f;
         consoleColorPalette[Severity.Command] = new(1.0f, 1.0f, 1.0f, 1.0f);
         consoleColorPalette[Severity.Log] = new(1.0f, 1.0f, 1.0f, 0.5f);
         consoleColorPalette[Severity.Warning] = new(1.0f, 0.87f, 0.37f, 1.0f);
@@ -115,39 +122,37 @@ public static class DebugConsole {
 
     public static void draw() {
         ImGui.PushStyleVar(ImGuiStyleVar.Alpha, m_WindowAlpha);
-
-        // Calculate position and size for docking to the bottom
-        Vector2 viewportSize = ImGui.GetIO().DisplaySize / ImGui.GetIO().DisplayFramebufferScale;
-        float consoleHeight = 200;
-        Vector2 consolePos = new Vector2(0, viewportSize.Y - consoleHeight);
-        Vector2 consoleSize = new Vector2(viewportSize.X * 0.82f, consoleHeight);
-
-        ImGui.SetNextWindowPos(consolePos);
-        ImGui.SetNextWindowSize(consoleSize);
-
-        if (!ImGui.Begin(m_ConsoleName, ref m_consoleOpen, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove)) {
+        if (!ImGui.Begin(m_ConsoleName, ref m_consoleOpen, ImGuiWindowFlags.MenuBar)) {
             ImGui.PopStyleVar(1);
             ImGui.End();
             return;
         }
 
-        ImGui.PopStyleVar();
+        ImGui.PopStyleVar(1);
 
-        if(show_toolbar)
-            tool_bar();
+        menu_bar();
+
+        if (m_FilterBar)
+            filter_bar();
 
         log_window();
 
-        if(show_input)
-            input_bar();
+        ImGui.Separator();
+
+        input_bar();
 
         ImGui.End();
     }
 
-    private static void log_window() {
-        float footerHeightToReserve = show_toolbar ? ImGui.GetStyle().ItemSpacing.Y : 0;
+    private static void filter_bar() {
+        ImGui.InputText("Filter", ref text_filter, (nuint)(ImGui.GetWindowWidth() * 0.25f), ImGuiInputTextFlags.None);
+        ImGui.Separator();
+    }
 
-        if (ImGui.BeginChild("ScrollRegion##", new Vector2(0, show_input ? -ImGui.GetFrameHeightWithSpacing() : 0 -footerHeightToReserve))) {
+    private static void log_window() {
+        float footerHeightToReserve = ImGui.GetStyle().ItemSpacing.Y + ImGui.GetFrameHeightWithSpacing();
+        if (ImGui.BeginChild("ScrollRegion##", new Vector2(0, -footerHeightToReserve))) {
+
             // Display colored command output.
             float timestamp_width = ImGui.CalcTextSize("00:00:00:0000").X;
             int count = 0;
@@ -220,8 +225,8 @@ public static class DebugConsole {
         bool reclaimFocus = false;
 
         // Input widget. (Width an always fixed width)
-        ImGui.PushItemWidth(ImGui.GetColumnWidth());
-        if (ImGui.InputText("##Input", ref m_Buffer, m_Buffer_size, inputTextFlags, input_callback)) {
+        ImGui.PushItemWidth(-ImGui.GetStyle().ItemSpacing.X * 7);
+        if (ImGui.InputText("Input", ref m_Buffer, m_Buffer_size, inputTextFlags, input_callback)) {
             // Validate.
             if (!string.IsNullOrWhiteSpace(m_Buffer)) {
                 string[] args = m_Buffer.Split(" ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
@@ -268,101 +273,83 @@ public static class DebugConsole {
         }
     }
 
-    private static void tool_bar() {
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(10, 4)); // Add some spacing between toolbar items
+    private static void menu_bar() {
+        if (ImGui.BeginMenuBar()) {
+            // Settings menu.
+            if (ImGui.BeginMenu("Settings", true)) {
+                // Colored output
+                ImGui.Checkbox("Colored Output", ref m_ColoredOutput);
+                ImGui.SameLine();
+                help_marker("Enable colored command output");
 
-        // Begin toolbar area
-        ImGui.BeginGroup();
+                // Auto Scroll
+                ImGui.Checkbox("Auto Scroll", ref m_AutoScroll);
+                ImGui.SameLine();
+                help_marker("Automatically scroll to bottom of console log");
 
-        // Settings button
-        if (ImGui.Button("Settings")) {
-            ImGui.OpenPopup("SettingsPopup");
-        }
+                // Filter bar
+                ImGui.Checkbox("Filter Bar", ref m_FilterBar);
+                ImGui.SameLine();
+                help_marker("Enable console filter bar");
 
-        ImGui.SameLine();
+                // Time stamp
+                ImGui.Checkbox("Time Stamps", ref m_TimeStamps);
+                ImGui.SameLine();
+                help_marker("Display command execution timestamps");
 
-        if (ImGui.Button("Appearance")) {
-            ImGui.OpenPopup("AppearancePopup");
-        }
-
-        // View settings.
-        if (ImGui.BeginPopup("AppearancePopup")) {
-            // Logging Colors
-            ImGuiColorEditFlags flags =
-                ImGuiColorEditFlags.Float | ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.NoInputs | ImGuiColorEditFlags.AlphaBar;
-
-            ImGui.ColorEdit4("Command##", ref consoleColorPalette[Severity.Command], flags);
-            ImGui.SameLine();
-            ImGui.ColorEdit4("Log##", ref consoleColorPalette[Severity.Log], flags);
-            ImGui.SameLine();
-            ImGui.ColorEdit4("Warning##", ref consoleColorPalette[Severity.Warning], flags);
-            ImGui.SameLine();
-            ImGui.ColorEdit4("Error##", ref consoleColorPalette[Severity.Error], flags);
-            ImGui.SameLine();
-            ImGui.ColorEdit4("Info##", ref consoleColorPalette[Severity.Info], flags);
-            ImGui.SameLine();
-            ImGui.ColorEdit4("Time Stamp##", ref consoleColorPalette[Severity.Timestamp], flags);
-
-            ImGui.Separator();
-
-            ImGui.Text("Transparency");
-            ImGui.SameLine();
-
-            ImGui.SliderFloat("##Transparency", ref m_WindowAlpha, 0.1f, 1.0f);
-
-            ImGui.EndPopup();
-        }
-
-        if (ImGui.BeginPopup("SettingsPopup")) {
-            // Colored output
-            ImGui.Checkbox("Colored Output", ref m_ColoredOutput);
-            ImGui.SameLine();
-            help_marker("Enable colored command output");
-
-            // Auto Scroll
-            ImGui.Checkbox("Auto Scroll", ref m_AutoScroll);
-            ImGui.SameLine();
-            help_marker("Automatically scroll to bottom of console log");
-
-            // Time stamp
-            ImGui.Checkbox("Time Stamps", ref m_TimeStamps);
-            ImGui.SameLine();
-            help_marker("Display command execution timestamps");
-
-            // Reset to default settings
-            if (ImGui.Button("Reset settings", new(ImGui.GetColumnWidth(0), 0))) {
-                ImGui.OpenPopup("Reset Settings?");
-            }
-
-            // Confirmation
-            if (ImGui.BeginPopupModal("Reset Settings?", ref m_resetModal, ImGuiWindowFlags.AlwaysAutoResize)) {
-                ImGui.Text("All settings will be reset to default.\nThis operation cannot be undone!\n\n");
-                ImGui.Separator();
-
-                if (ImGui.Button("Reset", new(120, 0))) {
-                    default_settings();
-                    ImGui.CloseCurrentPopup();
+                // Reset to default settings
+                if (ImGui.Button("Reset settings", new(ImGui.GetColumnWidth(0), 0))) {
+                    ImGui.OpenPopup("Reset Settings?");
                 }
 
-                ImGui.SetItemDefaultFocus();
-                ImGui.SameLine();
-                if (ImGui.Button("Cancel", new Vector2(120, 0)))
-                    ImGui.CloseCurrentPopup();
+                // Confirmation
+                if (ImGui.BeginPopupModal("Reset Settings?", ref m_resetModal, ImGuiWindowFlags.AlwaysAutoResize)) {
+                    ImGui.Text("All settings will be reset to default.\nThis operation cannot be undone!\n\n");
+                    ImGui.Separator();
 
-                ImGui.EndPopup();
+                    if (ImGui.Button("Reset", new(120, 0))) {
+                        default_settings();
+                        ImGui.CloseCurrentPopup();
+                    }
+
+                    ImGui.SetItemDefaultFocus();
+                    ImGui.SameLine();
+                    if (ImGui.Button("Cancel", new Vector2(120, 0)))
+                        ImGui.CloseCurrentPopup();
+
+                    ImGui.EndPopup();
+                }
+
+                ImGui.EndMenu();
             }
 
-            ImGui.EndPopup();
+            // View settings.
+            if (ImGui.BeginMenu("Appearance", true)) {
+                // Logging Colors
+                ImGuiColorEditFlags flags =
+                        ImGuiColorEditFlags.Float | ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.NoInputs | ImGuiColorEditFlags.AlphaBar;
+
+                ImGui.TextUnformatted("Color Palette");
+                ImGui.Indent();
+                ImGui.ColorEdit4("Command##", ref consoleColorPalette[Severity.Command], flags);
+                ImGui.ColorEdit4("Log##", ref consoleColorPalette[Severity.Log], flags);
+                ImGui.ColorEdit4("Warning##", ref consoleColorPalette[Severity.Warning], flags);
+                ImGui.ColorEdit4("Error##", ref consoleColorPalette[Severity.Error], flags);
+                ImGui.ColorEdit4("Info##", ref consoleColorPalette[Severity.Info], flags);
+                ImGui.ColorEdit4("Time Stamp##", ref consoleColorPalette[Severity.Timestamp], flags);
+                ImGui.Unindent();
+
+                ImGui.Separator();
+
+                // Window transparency.
+                ImGui.TextUnformatted("Background");
+                ImGui.SliderFloat("Transparency##", ref m_WindowAlpha, 0.1f, 1.0f);
+
+                ImGui.EndMenu();
+            }
+
+            ImGui.EndMenuBar();
         }
-
-        ImGui.SameLine();
-
-        ImGui.InputText("Filter", ref text_filter, (nuint)(ImGui.GetWindowWidth() * 0.25f), ImGuiInputTextFlags.None);
-
-        ImGui.EndGroup(); // End toolbar area
-
-        // Reset style to default
-        ImGui.PopStyleVar();
     }
 
     private static unsafe int input_callback(ImGuiInputTextCallbackData* data) {
@@ -470,13 +457,13 @@ public static class DebugConsole {
         public Message(Severity severity, string source, string message) {
             this.severity = severity;
             this.message = $"[{source}]: {message}";
-            this.timestamp = DateTime.Now.ToLongTimeString();
+            this.timestamp = DateTime.Now.ToShortTimeString();
         }
 
         public Message(Severity severity, string message) {
             this.severity = severity;
             this.message = message;
-            this.timestamp = DateTime.Now.ToLongTimeString();
+            this.timestamp = DateTime.Now.ToShortTimeString();
         }
     }
 

@@ -9,17 +9,12 @@ using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-public class Shader: IAssetType<Shader> {
-    static string IAssetType<Shader>.path => "Shaders";
-
-    static Shader IAssetType<Shader>.load_from_file(string path) {
-        throw new NotImplementedException();
-    }
+public class Shader {
+    public static string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../Assets/Shaders/";
 
     public readonly string name;
     private readonly int handle;
     private readonly Dictionary<string, int> uniform_locations;
-    private string _path;
     public IReadOnlyList<string> uniforms => uniform_locations.Keys.ToList();
 
     private static Shader? current_shader = null;
@@ -99,16 +94,33 @@ public class Shader: IAssetType<Shader> {
         Console.WriteLine();
     }
 
-    private void compile_from_file(string vertex_program, string fragment_program, string geometry_program="") {
-        if (File.Exists(AssetManager.asset_path<Shader>(vertex_program)))
-            vertex_program = AssetManager.asset_path<Shader>(vertex_program);
+    protected void compile_from_file(string vertex_program, string fragment_program, string geometry_program="") {
+        Console.WriteLine("Compiling " + vertex_program + "...\n");
 
-        if (File.Exists(AssetManager.asset_path<Shader>(fragment_program)))
-            vertex_program = AssetManager.asset_path<Shader>(fragment_program);
+        if(File.Exists(vertex_program))
+            vertex_program = File.ReadAllText(vertex_program);
+        else if(File.Exists(base_path + vertex_program))
+            vertex_program = File.ReadAllText(base_path + vertex_program);
+        else
+            throw new ArgumentOutOfRangeException(vertex_program, base_path + vertex_program);
+
+        Console.WriteLine("Compiling " + fragment_program + "...\n");
+        if(File.Exists(fragment_program))
+            fragment_program = File.ReadAllText(fragment_program);
+        else if(File.Exists(base_path + fragment_program))
+            fragment_program = File.ReadAllText(base_path + fragment_program);
+        else
+            throw new ArgumentOutOfRangeException(fragment_program);
 
         if(geometry_program != "") {
-            if (File.Exists(AssetManager.asset_path<Shader>(geometry_program)))
-                geometry_program = AssetManager.asset_path<Shader>(geometry_program);
+            Console.WriteLine("Compiling " + geometry_program + "...\n");
+
+            if(File.Exists(geometry_program))
+                geometry_program = File.ReadAllText(geometry_program);
+            else if(File.Exists(base_path + geometry_program))
+                geometry_program = File.ReadAllText(base_path + geometry_program);
+            else
+                throw new ArgumentOutOfRangeException(geometry_program);
         }
 
         compile_from_text(vertex_program, fragment_program, geometry_program);
@@ -143,6 +155,12 @@ public class Shader: IAssetType<Shader> {
         throw new Exception($"Error occurred whilst linking Program({program})");
     }
 
+    // The shader sources provided with this project use hardcoded layout(location)-s. If you want to do it dynamically,
+    // you can omit the layout(location=X) lines in the vertex shader, and use this in VertexAttribPointer instead of the hardcoded values.
+    private int GetAttribLocation(string attribName) {
+        return GL.GetAttribLocation(handle, attribName);
+    }
+
     public void set_projection_matrix(in Matrix4 matrix) => set_uniform("projection", matrix);
     public void set_camera_matrix(in Matrix4 matrix) => set_uniform("camera", matrix);
     public void set_model_matrix(in Matrix4 matrix) => set_uniform("model", matrix);
@@ -161,6 +179,7 @@ public class Shader: IAssetType<Shader> {
     public void set_camera_position(in Vector3 pos) {
         set_uniform("cam_position", pos);
     }
+
 
     public void set_light(IEnumerable<Light> lights) {
         int num_directional_lights = 0;
@@ -188,57 +207,118 @@ public class Shader: IAssetType<Shader> {
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool has_uniform(string name) => uniform_locations.ContainsKey(name);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void set_uniform(string name, int data) {
-        GL.ProgramUniform1(handle, uniform_locations.GetValueOrDefault(name, -1), data);
+    /// <summary>
+    /// Set a uniform int on this shader.
+    /// </summary>
+    /// <param name="name">The name of the uniform</param>
+    /// <param name="data">The data to set</param>
+    protected void set_uniform(string name, int data) {
+        GL.UseProgram(handle);
+        GL.Uniform1(uniform_locations[name], data);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void set_uniform(string name, float data) {
-        GL.ProgramUniform1(handle, uniform_locations.GetValueOrDefault(name, -1), data);
+    /// <summary>
+    /// Set a uniform float on this shader.
+    /// </summary>
+    /// <param name="name">The name of the uniform</param>
+    /// <param name="data">The data to set</param>
+    protected void set_uniform(string name, float data) {
+        if (has_uniform(name)) {
+            GL.UseProgram(handle);
+            GL.Uniform1(uniform_locations[name], data);
+        }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool has_uniform(in string name) => uniform_locations.ContainsKey(name);
+
+    /// <summary>
+    /// Set a uniform double on this shader.
+    /// </summary>
+    /// <param name="name">The name of the uniform</param>
+    /// <param name="data">The data to set</param>
     protected void set_uniform(string name, double data) {
-        GL.ProgramUniform1(handle, uniform_locations.GetValueOrDefault(name, -1), data);
+        GL.UseProgram(handle);
+        GL.Uniform1(uniform_locations[name], data);
+    }
+
+    /// <summary>
+    /// Set a uniform Matrix4 on this shader
+    /// </summary>
+    /// <param name="name">The name of the uniform</param>
+    /// <param name="data">The data to set</param>
+    /// <remarks>
+    ///   <para>
+    ///   The matrix is transposed before being sent to the shader.
+    ///   </para>
+    /// </remarks>
+    protected void set_uniform(string name, Matrix4 data) {
+        if (has_uniform(name)) {
+            GL.UseProgram(handle);
+            GL.UniformMatrix4(uniform_locations[name], transpose: true, matrix: ref data);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void set_uniform(string name, Matrix4 data) {
-        GL.ProgramUniformMatrix4(handle, uniform_locations.GetValueOrDefault(name, -1), transpose: true, matrix: ref data);
+    protected bool has_uniform(string name) => uniform_locations.ContainsKey(name);
+
+    /// <summary>
+    /// Set a uniform Vector3 on this shader.
+    /// </summary>
+    /// <param name="name">The name of the uniform</param>
+    /// <param name="data">The data to set</param>
+    protected void set_uniform(string name, OpenTK.Mathematics.Vector3 data) {
+        GL.UseProgram(handle);
+        if (has_uniform(name)) {
+            GL.Uniform3(uniform_locations[name], data);
+        }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void set_uniform(string name, OpenTK.Mathematics.Vector3 data) {
-        GL.ProgramUniform3(handle, uniform_locations.GetValueOrDefault(name, -1), data);
+    /// <summary>
+    /// Set a uniform Vector3 on this shader.
+    /// </summary>
+    /// <param name="name">The name of the uniform</param>
+    /// <param name="data">The data to set</param>
+    protected void set_uniform(string name, Color4 data) {
+        if (has_uniform(name)) {
+            GL.UseProgram(handle);
+            GL.Uniform4(uniform_locations[name], data);
+            Error.check();
+        }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void set_uniform(string name, Color4 data) {
-        GL.ProgramUniform4(handle, uniform_locations.GetValueOrDefault(name, -1), data);
+    protected void set_uniform(string name, Color data) {
+        if (has_uniform(name)) {
+            GL.UseProgram(handle);
+            GL.Uniform4(uniform_locations[name], data.reinterpret_ref<Color, OpenTK.Mathematics.Vector4>());
+        } else {
+            Console.WriteLine($"{this.name} doesn't have uniform {name}!");
+        }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void set_uniform(string name, Color data) {
-        GL.ProgramUniform4(handle, uniform_locations.GetValueOrDefault(name, -1), data.reinterpret_ref<Color, OpenTK.Mathematics.Vector4>());
+    /// <summary>
+    /// Set a uniform Vector2 on this shader.
+    /// </summary>
+    /// <param name="name">The name of the uniform</param>
+    /// <param name="data">The data to set</param>
+    protected void set_uniform(string name, Vector2 data) {
+        GL.UseProgram(handle);
+        GL.Uniform2(uniform_locations[name], data);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void set_uniform(string name, Vector2 data) {
-        GL.ProgramUniform2(handle, uniform_locations.GetValueOrDefault(name, -1), data);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void set_uniform(string name, Vector4 data) {
-        GL.ProgramUniform4(handle, uniform_locations.GetValueOrDefault(name, -1), data);
+    /// <summary>
+    /// Set a uniform Vector4 on this shader.
+    /// </summary>
+    /// <param name="name">The name of the uniform</param>
+    /// <param name="data">The data to set</param>
+    protected void set_uniform(string name, Vector4 data) {
+        GL.UseProgram(handle);
+        GL.Uniform4(uniform_locations[name], data);
     }
     
-    public override string ToString() => name;
+    public override string ToString() {
+        return $"{name}";
+    }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool bind() {
         if (Shader.current_shader != this) {
             Shader.current_shader = this;

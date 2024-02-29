@@ -23,7 +23,7 @@ public class DebugListener: TextWriter {
     public override void WriteLine(string? message) {
         if (message != null) {
             if (log_source) {
-                if(DebugConsole.text_filter != "" && !message.Contains(DebugConsole.text_filter, StringComparison.CurrentCultureIgnoreCase))
+                if(DebugConsole.text_filter != "" && !message.Contains(DebugConsole.text_filter, StringComparison.OrdinalIgnoreCase))
                     return;
 
                 if (message.StartsWith('\n')) {
