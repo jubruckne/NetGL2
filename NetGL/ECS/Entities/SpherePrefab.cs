@@ -45,8 +45,8 @@ public static class SpherePrefab {
             shader = last.Value.shader;
         } else {
             Sphere sphere = new Sphere(radius);
-            model = Model.from_shape(sphere.generate_cube_sphere(64));
-            shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], material);
+            model = Model.from_shape(sphere.generate_cube_sphere(segments));
+            shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], material, is_sky_box:name == "Environment");
             last = (sphere, model, shader);
         }
 

@@ -252,7 +252,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         }
 
         //Console.WriteLine($"SetPerFrameImGuiData(w:{_windowWidth}, h:{_windowHeight}, scale: {_scaleFactor})");
-        Console.WriteLine("DisplaySize = " + io.DisplaySize);
+        //Console.WriteLine("DisplaySize = " + io.DisplaySize);
         //Console.WriteLine("DisplayFramebufferScale = " + io.DisplayFramebufferScale);
 
         io.DeltaTime = deltaSeconds;
@@ -396,11 +396,8 @@ outputColor = color * texture(in_fontTexture, texCoord);
                 // We do _windowHeight - (int)clip.W instead of (int)clip.Y because gl has
                 // flipped Y when it comes to these coordinates
                 var clip = pcmd.ClipRect;
-                Error.check();
-                Console.WriteLine("ImGui: clip = " + clip.ToString());
 
                 GL.Scissor((int)clip.X, (int)(window.FramebufferSize.Y) - (int)clip.W, (int)(clip.Z - clip.X), (int)(clip.W - clip.Y));
-                Error.check();
 
                 if ((io.BackendFlags & ImGuiBackendFlags.RendererHasVtxOffset) != 0) {
                     GL.DrawElementsBaseVertex(PrimitiveType.Triangles, (int)pcmd.ElemCount, DrawElementsType.UnsignedShort, (IntPtr)(pcmd.IdxOffset * sizeof(ushort)), unchecked((int)pcmd.VtxOffset));
@@ -433,7 +430,6 @@ outputColor = color * texture(in_fontTexture, texCoord);
         GL.PolygonMode(MaterialFace.FrontAndBack, (PolygonMode)prevPolygonMode[0]);
 
         Error.check();
-
     }
 
     /// <summary>

@@ -28,7 +28,7 @@ public class Cube: IShape<Cube> {
 
 file class CubeShapeGenerator: IShapeGenerator {
     private readonly Vector3 position;
-    private readonly Size size;
+    private readonly Size3<float> size;
 
     public CubeShapeGenerator(in Cube cube) : this(cube, Vector3.Zero) {}
 

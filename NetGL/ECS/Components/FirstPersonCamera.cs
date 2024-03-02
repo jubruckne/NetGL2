@@ -27,50 +27,39 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         camera_matrix = Matrix4.Identity;
     }
 
-    public override string ToString() {
-        return $"position: {entity.transform.position} rotation: {entity.transform.rotation}";
-    }
-
     public override void update(in float game_time, in float delta_time) {
         if (enable_input) {
             var speed = this.speed * delta_time;
 
             if (keyboard_state != null) {
-                if (keyboard_state.IsKeyDown(Keys.W))
-                    transform.position += transform.rotation.forward * speed; //Forward
+                if (keyboard_state.IsKeyDown(Keys.W))           // forward
+                    transform.move(z: speed);
 
-                if (keyboard_state.IsKeyDown(Keys.S))
-                    transform.position -= transform.rotation.forward * speed; //Backwards
+                if (keyboard_state.IsKeyDown(Keys.S))           // backwards
+                    transform.move(z: -speed);
 
-                if (keyboard_state.IsKeyDown(Keys.A))
-                    transform.position -= Vector3.Normalize(transform.rotation.right) * speed; //Left
+                if (keyboard_state.IsKeyDown(Keys.A))           // left
+                    transform.move(x: -speed);
 
-                if (keyboard_state.IsKeyDown(Keys.D))
-                    transform.position += Vector3.Normalize(transform.rotation.right) * speed; //Right
+                if (keyboard_state.IsKeyDown(Keys.D))           // right
+                    transform.move(x: speed);
 
-                if (keyboard_state.IsKeyDown(Keys.RightShift))
-                    transform.position += transform.rotation.up * speed; //Up
+                if (keyboard_state.IsKeyDown(Keys.RightShift))  // up
+                    transform.move(y: speed);
 
-                if (keyboard_state.IsKeyDown(Keys.LeftShift))
-                    transform.position -= transform.rotation.up * speed; //Down
+                if (keyboard_state.IsKeyDown(Keys.LeftShift))   // down
+                    transform.move(y: -speed);
 
                 if (keyboard_state.IsKeyDown(Keys.E))
-                    transform.rotation.roll(1);
+                    transform.roll(1);
 
                 if (keyboard_state.IsKeyDown(Keys.Q))
-                    transform.rotation.roll(-1);
+                    transform.roll(-1);
             }
 
             if (mouse_state != null) {
-                Console.WriteLine($"mdx: {mouse_state.Delta.X:F6}, sens:{sensitivity:F6}");
-
-                Console.WriteLine($"{transform.rotation} + {(mouse_state.Delta.X * sensitivity):F8}");
-                Console.WriteLine($"ypr before: {transform.rotation.yaw_pitch_roll}");
-
-                transform.rotation.yaw(-mouse_state.Delta.X * sensitivity);
-                Console.WriteLine($"ypr after : {transform.rotation.yaw_pitch_roll}");
-
-                transform.rotation.pitch(-mouse_state.Delta.Y * sensitivity);
+                transform.yaw(mouse_state.Delta.X * sensitivity);
+                transform.pitch(-mouse_state.Delta.Y * sensitivity);
             }
         }
 
@@ -80,7 +69,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         else if (transform.attitude.pitch < pitch_clamp[1])
             transform.attitude.pitch = pitch_clamp[1];
 */
-        camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.rotation.forward, transform.rotation.up);
+        camera_matrix = transform.calculate_look_at_matrix();
 
         if (enable_input && enable_update) {
             entity.transform.rotation = transform.rotation;
@@ -95,6 +84,10 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         Console.WriteLine("Extracted:");
         Console.WriteLine(camera_matrix.ExtractTranslation());
         */
+    }
+
+    public override string ToString() {
+        return $"position: {entity.transform.position} rotation: {entity.transform.rotation}";
     }
 }
 

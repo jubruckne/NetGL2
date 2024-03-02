@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using BulletSharp;
 using ImGuiNET;
 using NetGL;
@@ -23,8 +24,6 @@ public class Engine: GameWindow {
     private float cursor_state_last_switch = 1f;
     private double frame_time;
     private int frame_count;
-
-    private ImGuiConsole console = new("Console");
 
     public Engine(string title, Size2<int> window_size, WindowState window_state = WindowState.Normal, bool debug = false) :
         base(
@@ -129,7 +128,8 @@ public class Engine: GameWindow {
 
         Entity player = world.create_entity("Player");
         player.transform.position = (1, +2, 20);
-        player.transform.rotation = Rotation.Direction.Left;
+        player.transform.rotation = Rotation.Forward;
+
         player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:8f, sensitivity:0.75f);
 /*
         var oc1 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:325, y:200), field_of_view:60f, enable_input:false);
@@ -149,17 +149,25 @@ public class Engine: GameWindow {
         oc4.transform.position = (1, 2, 20);
         oc4.transform.attitude.direction = (-1, 0, 0);
 */
-        Entity ball = world.create_sphere_cube("Ball", radius:0.5f, material:Material.random);
+
+        var planet_mat = new Material("planet", Color.Black, Color.White, Color.White, 2.5f);
+        Texture2DBuffer planets_texture = new Texture2DBuffer(AssetManager.load_from_file<Texture>("8k_jupiter.jpg"));
+        planets_texture.upload();
+
+        planet_mat.ambient_texture = planets_texture;
+
+        Entity ball = world.create_sphere_cube("Ball", radius: 10f, segments:100, material: planet_mat);
+        ball.transform.position = (-5, 15, -15);
 //        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
 //        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
         ball.get<VertexArrayRenderer>().wireframe = false;
         ball.get<VertexArrayRenderer>().cull_face = true;
         ball.get<VertexArrayRenderer>().depth_test = true;
         ball.get<VertexArrayRenderer>().blending = false;
-        ball.add_rigid_body(radius:5f, mass:10000f);
+        //ball.add_rigid_body(radius:5f, mass:10000f);
 
 
-        ball.transform.position = (0, 3, 5);
+        //ball.transform.position = (0, 3, 5);
         //Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);
 
         Console.WriteLine("");
@@ -169,15 +177,20 @@ public class Engine: GameWindow {
 
        Entity arrow_x = world.create_model("ArrowX", arrow, material:Material.Red);
        arrow_x.transform.position = new OpenTK.Mathematics.Vector3(1, 0, 0);
-       arrow_x.transform.rotation = Rotation.Direction.Right;
+       arrow_x.transform.rotation = Rotation.Right;
 
        Entity arrow_y = world.create_model("ArrowY", arrow, material:Material.Green);
-       arrow_y.transform.position = new OpenTK.Mathematics.Vector3(0, 1, 0);
-       arrow_y.transform.rotation = Rotation.Direction.Up;
+       arrow_y.transform.position = new OpenTK.Mathematics.Vector3(2, 0, 0);
+       arrow_y.transform.rotation = Rotation.Up;
 
        Entity arrow_z = world.create_model("ArrowZ", arrow, material:Material.Blue);
-       arrow_z.transform.position = new OpenTK.Mathematics.Vector3(0, 0, 1);
-       arrow_z.transform.rotation = Rotation.Direction.Forward;
+       arrow_z.transform.position = new OpenTK.Mathematics.Vector3(3, 0, 0);
+       arrow_z.transform.rotation = Rotation.Forward;
+
+       Console.WriteLine($"x: {arrow_x.transform}, fw:{arrow_x.transform.rotation.forward}, rt:{arrow_x.transform.rotation.right}, up:{arrow_x.transform.rotation.up}");
+       Console.WriteLine($"y: {arrow_y.transform}, fw:{arrow_y.transform.rotation.forward}, rt:{arrow_y.transform.rotation.right}, up:{arrow_y.transform.rotation.up}");
+       Console.WriteLine($"z: {arrow_z.transform}, fw:{arrow_z.transform.rotation.forward}, rt:{arrow_z.transform.rotation.right}, up:{arrow_z.transform.rotation.up}");
+
 
        Entity entd = world.create_model("dragon", Model.from_file("DragonAttenuation.glb", 1f)); // ""));
 
@@ -238,7 +251,7 @@ public class Engine: GameWindow {
             }
         } else cursor_state_last_switch += delta_time;
 
-        world.update(game_time, delta_time);
+        world.update(game_time, delta_time, false);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
@@ -352,9 +365,9 @@ public class Engine: GameWindow {
                         ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0.05f, -100, 100, "%.1f");
 
                         var rotationYawPitchRoll = t.rotation.yaw_pitch_roll;
-                        if (ImGui.DragFloat3($"Rotation##{entity.name}.rot",
-                                ref rotationYawPitchRoll
-                                    .reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 1f, -180,
+                            new System.Numerics.Vector3(t.rotation.yaw, t.rotation.yaw, t.rotation.roll);
+                        if(ImGui.DragFloat3($"Rotation##{entity.name}.rot",
+                                ref rotationYawPitchRoll.reinterpret_ref<OpenTK.Mathematics.Vector3, Vector3>(), 1f, -180,
                                 180, "%.0f")) {
                             t.rotation.yaw_pitch_roll = rotationYawPitchRoll;
                         }

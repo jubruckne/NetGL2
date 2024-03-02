@@ -10,7 +10,7 @@ public class AutoShader: Shader {
             File.Delete(file);
     }
 
-    public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array, in Material material) {
+    public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array, in Material material, bool is_sky_box = false) {
         Console.WriteLine();
         Console.WriteLine();
         Console.WriteLine($"Creating shader {name} for {vertex_array}");
@@ -57,10 +57,10 @@ public class AutoShader: Shader {
         }
 
         vertex_code.AppendLine("  vertex.frag_position = vec3(vec4(position, 1.0) * model);");
-        if(material.ambient_texture == null)
-            vertex_code.AppendLine("  gl_Position = vec4(vertex.world_position, 1) * camera * projection;");
-        else
+        if(is_sky_box && material.ambient_texture != null)
             vertex_code.AppendLine("  gl_Position = vec4(position, 1) * mat4(mat3(camera)) * projection; gl_Position = gl_Position.xyww;\n");
+        else
+            vertex_code.AppendLine("  gl_Position = vec4(vertex.world_position, 1) * camera * projection;");
 
         vertex_code.AppendLine("}");
 
@@ -128,7 +128,11 @@ public class AutoShader: Shader {
             fragment_code.AppendLine("  //------- Ambient lighting -------");
 
             if(material.ambient_texture != null)
-                fragment_code.AppendLine("  vec3 ambient_color = texture(material.ambient_texture, vertex.texcoord).rgb;");
+                if(material.ambient_texture is Texture2DBuffer)
+                    fragment_code.AppendLine("  vec3 ambient_color = texture(material.ambient_texture, vertex.texcoord.xy).rgb;");
+                else
+                    fragment_code.AppendLine("  vec3 ambient_color = texture(material.ambient_texture, vertex.texcoord).rgb;");
+
             else
                 fragment_code.AppendLine("  vec3 ambient_color = material.ambient_color;");
 

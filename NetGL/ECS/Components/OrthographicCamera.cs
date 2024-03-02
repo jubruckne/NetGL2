@@ -61,8 +61,8 @@ public class OrthographicCamera: Camera, IComponent<FirstPersonCamera>, IUpdatab
             }
 
             if (mouse_state != null) {
-                transform.rotation.yaw(mouse_state.Delta.X * sensitivity);
-                transform.rotation.pitch(-mouse_state.Delta.Y * sensitivity);
+                transform.yaw(mouse_state.Delta.X * sensitivity);
+                transform.pitch(-mouse_state.Delta.Y * sensitivity);
             }
         }
 
@@ -75,7 +75,12 @@ public class OrthographicCamera: Camera, IComponent<FirstPersonCamera>, IUpdatab
 
         entity.transform.copy_from(transform);
 
-        camera_matrix = Matrix4.LookAt(transform.position, transform.position + transform.rotation.forward, transform.rotation.up);
+        camera_matrix = transform.calculate_look_at_matrix();
+
+        if (enable_input && enable_update) {
+            entity.transform.rotation = transform.rotation;
+            entity.transform.position = transform.position;
+        }
     }
 }
 

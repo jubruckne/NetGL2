@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace NetGL.Debug;
 
@@ -11,10 +12,10 @@ public class DebugListener: TextWriter {
 
     public bool log_source = true;
 
-    private readonly TextWriter console;
+    private readonly TextWriter std_console;
 
     public DebugListener() {
-        console = Console.Out;
+        std_console = Console.Out;
         Console.SetOut(this);
     }
 
@@ -27,20 +28,60 @@ public class DebugListener: TextWriter {
                     return;
 
                 if (message.StartsWith('\n')) {
-                    console.WriteLine();
+                    std_console.WriteLine();
                     message = message.TrimStart();
                 }
 
                 var method = new StackTrace().GetFrame(3).GetMethod();
                 var source = $"{method.DeclaringType.Name}.{method.Name}";
-                console.WriteLine($"[{source}]: {message}");
+                write_line_colored($"[{source}] {message}");
                 DebugConsole.log(source, message);
             } else {
-                console.WriteLine(message);
+                write_line_colored(message);
                 DebugConsole.log(message);
             }
         }
     }
 
-    public override Encoding Encoding => console.Encoding;
+    private void write_line_colored(string message) {
+        var pattern = @"\[(?:color:)?(\w+)\]";
+        var matches = Regex.Matches(message, pattern, RegexOptions.IgnoreCase);
+
+        int lastPos = 0;
+        var defaultColor = Console.ForegroundColor;
+
+        foreach (Match match in matches) {
+            // Write the text before the color tag
+            std_console.Write(message.Substring(lastPos, match.Index - lastPos));
+
+            if (Enum.TryParse<ConsoleColor>(match.Groups[1].Value, true, out var color)) {
+                Console.ForegroundColor = color;
+            } else {
+                Console.ForegroundColor = defaultColor;
+            }
+
+            lastPos = match.Index + match.Length;
+
+            // Find the next tag or end of the string
+            var nextTag = message.IndexOf("[", lastPos, StringComparison.OrdinalIgnoreCase);
+            var textEnd = nextTag >= 0 ? nextTag : message.Length;
+
+
+            // Write the text in the specified color
+            std_console.Write(message.Substring(lastPos, textEnd - lastPos));
+
+            // Update lastPos
+            lastPos = textEnd;
+        }
+
+        // Reset the color and write any remaining message
+        Console.ForegroundColor = defaultColor;
+        if (lastPos < message.Length) {
+            std_console.WriteLine(message.Substring(lastPos));
+        } else {
+            std_console.WriteLine();
+        }
+    }
+
+    public override Encoding Encoding => std_console.Encoding;
 }

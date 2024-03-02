@@ -13,6 +13,7 @@ public abstract class TextureBuffer: Buffer {
         get {
             return target switch {
                 TextureTarget.TextureCubeMap => "samplerCube",
+                TextureTarget.Texture2D => "sampler2D",
                 _ => throw new ArgumentOutOfRangeException()
             };
         }

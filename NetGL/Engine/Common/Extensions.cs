@@ -37,6 +37,16 @@ public static class RandomExt {
 }
 
 public static class VectorExt {
+    public static void round(this ref Vector3 vector) {
+        if (vector.X > 0 && vector.X < 1e-6f) vector.X = 0;
+        if (vector.Y > 0 && vector.Y < 1e-6f) vector.Y = 0;
+        if (vector.Z > 0 && vector.Z < 1e-6f) vector.Z = 0;
+
+        if (vector.X < 0 && vector.X > -1e-6f) vector.X = -0;
+        if (vector.Y < 0 && vector.Y > -1e-6f) vector.Y = -0;
+        if (vector.Z < 0 && vector.Z > -1e-6f) vector.Z = -0;
+    }
+
     public static ref Vector3 randomize(this ref Vector3 vector, float min, float max) {
         vector.X = Random.Shared.NextSingle() * (max - min) + min;
         vector.Y = Random.Shared.NextSingle() * (max - min) + min;
