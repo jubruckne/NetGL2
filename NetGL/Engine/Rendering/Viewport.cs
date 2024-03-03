@@ -11,6 +11,7 @@ public class Viewport {
     public int y;
     public int width;
     public int height;
+    public float aspect_ratio => (float)width / height;
 
     private bool resized = false;
 

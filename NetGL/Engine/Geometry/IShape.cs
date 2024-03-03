@@ -2,8 +2,11 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public interface IShape <T> {
+public interface IShape {
     IShapeGenerator generate();
+}
+
+public interface IShape<out T>: IShape {
 }
 
 public interface IShapeGenerator {

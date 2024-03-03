@@ -24,9 +24,6 @@ public static class ImGuiRenderer {
     private static int _shaderFontTextureLocation = -1;
     private static int _shaderProjectionMatrixLocation = -1;
 
-    /// <summary>
-    /// Constructs a new ImGuiController.
-    /// </summary>
     public static void initialize(NativeWindow window, string font = "") {
         ImGuiRenderer.window = window;
 
@@ -83,8 +80,8 @@ public static class ImGuiRenderer {
     private static void CreateDeviceResources() {
         Console.WriteLine($"ImguiController.CreateDeviceResources()");
 
-        _vertexBufferSize = 10240;
-        _indexBufferSize = 2048;
+        _vertexBufferSize = 65535;
+        _indexBufferSize = 16382;
 
         int prevVAO = GL.GetInteger(GetPName.VertexArrayBinding);
         int prevArrayBuffer = GL.GetInteger(GetPName.ArrayBufferBinding);
@@ -152,9 +149,6 @@ outputColor = color * texture(in_fontTexture, texCoord);
         Error.check();
     }
 
-    /// <summary>
-    /// Recreates the device texture used to render text.
-    /// </summary>
     private static void RecreateFontDeviceTexture() {
         Console.WriteLine($"ImguiController.RecreateFontDeviceTexture()");
 
@@ -190,9 +184,6 @@ outputColor = color * texture(in_fontTexture, texCoord);
         io.Fonts.ClearTexData();
     }
 
-    /// <summary>
-    /// Renders the ImGui draw list data.
-    /// </summary>
     public static void render() {
         if (_frameBegun) {
             _frameBegun = false;
@@ -202,9 +193,6 @@ outputColor = color * texture(in_fontTexture, texCoord);
         }
     }
 
-    /// <summary>
-    /// Updates ImGui input and IO configuration state.
-    /// </summary>
     public static void update(float delta_seconds) {
         if (_frameBegun)
             ImGui.Render();
@@ -216,10 +204,6 @@ outputColor = color * texture(in_fontTexture, texCoord);
         ImGui.NewFrame();
     }
 
-    /// <summary>
-    /// Sets per-frame data based on the associated window.
-    /// This is called by Update(float).
-    /// </summary>
     private static void SetPerFrameImGuiData(float deltaSeconds) {
         var io = ImGui.GetIO();
 
@@ -432,9 +416,6 @@ outputColor = color * texture(in_fontTexture, texCoord);
         Error.check();
     }
 
-    /// <summary>
-    /// Frees all graphics resources used by the renderer.
-    /// </summary>
     public static void Dispose() {
         GL.DeleteVertexArray(_vertexArray);
         GL.DeleteBuffer(_vertexBuffer);

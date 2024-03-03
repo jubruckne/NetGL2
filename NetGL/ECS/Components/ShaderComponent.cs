@@ -1,21 +1,16 @@
 namespace NetGL.ECS;
 
-public class ShaderComponent: IComponent<ShaderComponent>, IUpdatableComponent {
+public class ShaderComponent: IComponent<ShaderComponent> {
     public Entity entity { get; }
     public string name { get; }
     public bool enable_update { get; set; } = true;
 
-    public Shader shader;
+    public readonly Shader shader;
 
     internal ShaderComponent(in Entity entity, in Shader shader) {
         this.entity = entity;
         this.shader = shader;
         name = GetType().Name;
-    }
-
-    public void update(in float game_time, in float delta_time) {
-        shader.bind();
-        shader.set_game_time(game_time);
     }
 
     public override string ToString() {

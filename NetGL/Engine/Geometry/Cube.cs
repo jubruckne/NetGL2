@@ -54,46 +54,6 @@ file class CubeShapeGenerator: IShapeGenerator {
             new Vector3(position.X + half_width, position.Y + half_height, position.Z - half_depth),     // 6
             new Vector3(position.X - half_width, position.Y + half_height, position.Z - half_depth)     // 7
         ];
-/*
-        return [
-            new Vector3(-1.0f, 1.0f, -1.0f),
-            new Vector3(-1.0f, -1.0f, -1.0f),
-            new Vector3(1.0f, -1.0f, -1.0f),
-            new Vector3(1.0f, -1.0f, -1.0f),
-            new Vector3(1.0f, 1.0f, -1.0f),
-            new Vector3(-1.0f, 1.0f, -1.0f),
-            new Vector3(-1.0f, -1.0f, 1.0f),
-            new Vector3(-1.0f, -1.0f, -1.0f),
-            new Vector3(-1.0f, 1.0f, -1.0f),
-            new Vector3(-1.0f, 1.0f, -1.0f),
-            new Vector3(-1.0f, 1.0f, 1.0f),
-            new Vector3(-1.0f, -1.0f, 1.0f),
-            new Vector3(1.0f, -1.0f, -1.0f),
-            new Vector3(1.0f, -1.0f, 1.0f),
-            new Vector3(1.0f, 1.0f, 1.0f),
-            new Vector3(1.0f, 1.0f, 1.0f),
-            new Vector3(1.0f, 1.0f, -1.0f),
-            new Vector3(1.0f, -1.0f, -1.0f),
-            new Vector3(-1.0f, -1.0f, 1.0f),
-            new Vector3(-1.0f, 1.0f, 1.0f),
-            new Vector3(1.0f, 1.0f, 1.0f),
-            new Vector3(1.0f, 1.0f, 1.0f),
-            new Vector3(1.0f, -1.0f, 1.0f),
-            new Vector3(-1.0f, -1.0f, 1.0f),
-            new Vector3(-1.0f, 1.0f, -1.0f),
-            new Vector3(1.0f, 1.0f, -1.0f),
-            new Vector3(1.0f, 1.0f, 1.0f),
-            new Vector3(1.0f, 1.0f, 1.0f),
-            new Vector3(-1.0f, 1.0f, 1.0f),
-            new Vector3(-1.0f, 1.0f, -1.0f),
-            new Vector3(-1.0f, -1.0f, -1.0f),
-            new Vector3(-1.0f, -1.0f, 1.0f),
-            new Vector3(1.0f, -1.0f, -1.0f),
-            new Vector3(1.0f, -1.0f, -1.0f),
-            new Vector3(-1.0f, -1.0f, 1.0f),
-            new Vector3(1.0f, -1.0f, 1.0f)
-        ];
-        */
     }
 
     public IEnumerable<Vector3i> get_indices() {

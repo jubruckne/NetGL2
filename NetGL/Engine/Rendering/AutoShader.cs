@@ -6,7 +6,7 @@ public class AutoShader: Shader {
     private AutoShader(in string name) : base(name) { }
 
     static AutoShader() {
-        foreach (var file in Directory.GetFiles($"{base_path}generated/"))
+        foreach (var file in AssetManager.get_files<Shader>("generated"))
             File.Delete(file);
     }
 
@@ -163,7 +163,10 @@ public class AutoShader: Shader {
     }
 
     private static void save_to_file(string name, string vertex_code, string fragment_code) {
-        File.WriteAllText($"{base_path}generated/{name}.vert.glsl", vertex_code);
-        File.WriteAllText($"{base_path}generated/{name}.frag.glsl", fragment_code);
+        string vertex_file = AssetManager.asset_path<Shader>($"generated/{name}.vert.glsl");
+        string fragment_file  = AssetManager.asset_path<Shader>($"generated/{name}.frag.glsl");
+
+        File.WriteAllText(vertex_file, vertex_code);
+        File.WriteAllText(fragment_file, fragment_code);
     }
 }

@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices.JavaScript;
-
 namespace NetGL.ECS;
 
 public static class SpherePrefab {

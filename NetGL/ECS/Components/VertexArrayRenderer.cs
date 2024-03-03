@@ -53,9 +53,8 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
 
         if(cull_face)
             GL.Enable(EnableCap.CullFace);
-        else {
+        else
             GL.Disable(EnableCap.CullFace);
-        }
 
         if (blending) {
             GL.Enable(EnableCap.Blend);
