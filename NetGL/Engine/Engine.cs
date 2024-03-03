@@ -172,17 +172,9 @@ public class Engine: GameWindow {
 
         Console.WriteLine("");
 
-        Entity real_arrow_y = world.create_arrow("ArrowY", from: (0, 0, 0), to: (0f, 10, 0f), material:Material.Green);
-
         Entity real_arrow_x = world.create_arrow("ArrowX", from: (0, 0, 0), to: (10, 0, 0), material:Material.Red);
+        Entity real_arrow_y = world.create_arrow("ArrowY", from: (0, 0, 0), to: (0f, 10, 0f), material:Material.Green);
         Entity real_arrow_z = world.create_arrow("ArrowZ", from: (0, 0, 0), to: (0f, 0f, 10f), material:Material.Blue);
-
-        real_arrow_y.get<VertexArrayRenderer>().cull_face = false;
-        real_arrow_y.get<VertexArrayRenderer>().depth_test = false;
-        real_arrow_y.get<VertexArrayRenderer>().wireframe = true;
-        real_arrow_y.get<VertexArrayRenderer>().blending = false;
-        real_arrow_y.get<VertexArrayRenderer>().front_facing = false;
-
 
        // Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
        /*var arrow = Model.from_file("ArrowPointer.obj", 0.75f);

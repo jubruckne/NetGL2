@@ -56,24 +56,22 @@ public class Material {
         ambient_color: (1f, 0f, 0f),
         specular_color: (0.1f, 0.1f, 0.5f),
         diffuse_color: (0.1f, 0.1f, 0.5f),
-        shininess: 1f
+        shininess: 100f
     );
 
     public static Material Green => new("Green",
         ambient_color: (0f, 1f, 0f),
         specular_color: (0.1f, 0.1f, 0.5f),
         diffuse_color: (0.1f, 0.1f, 0.5f),
-        shininess: 1f
+        shininess: 100f
     );
 
     public static Material Blue => new("Blue",
         ambient_color: (0f, 0f, 1f),
         specular_color: (0.1f, 0.1f, 0.5f),
         diffuse_color: (0.1f, 0.1f, 0.5f),
-        shininess: 1f
+        shininess: 100f
     );
-
-
 
     public static Material SolidBlue => new("SolidBlue",
         ambient_color: (0f, 0f, 1f),
