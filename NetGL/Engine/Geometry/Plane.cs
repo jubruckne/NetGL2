@@ -12,12 +12,14 @@ public readonly struct Plane {
     public Plane(Vector3 normal) {
         local_z = normal.Normalized();
 
-        // Find a vector that is not parallel to the normal
-        Vector3 not_parallel = local_z.X != 0 ? new Vector3(local_z.Y, -local_z.X, 0) : new Vector3(0, local_z.Z, -local_z.Y);
-        local_x = Vector3.Cross(local_z, not_parallel).Normalized();
-        local_y = Vector3.Cross(local_z, local_x).Normalized();
+        if (normal == Vector3.UnitY) {
+            local_x = Vector3.UnitZ;
+            local_y = Vector3.UnitX;
+        } else {
+            throw new ArgumentOutOfRangeException(nameof(normal));
+        }
     }
 
     public Vector3 this[float x, float y] => x * local_x + y * local_y;
-    public Vector3 this[float x, float y, float z] => x * local_x + y * local_y + z * local_z;
+    public Vector3 this[float x, float y, float z] => x * local_x + y * local_y - z * local_z;
 }

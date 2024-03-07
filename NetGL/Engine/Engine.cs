@@ -196,7 +196,7 @@ public class Engine: GameWindow {
 
 */
 
-       Entity terrain1 = world.create_terrain("Terrain1", width: 100, height: 100);
+       Entity terrain1 = world.create_terrain("Terrain1", width:25, height:25, resolution:20);
        terrain1.transform.position = (0, 0, 0);
 
 

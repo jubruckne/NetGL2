@@ -1,10 +1,10 @@
 namespace NetGL.ECS;
 
 public static class TerrainPrefab {
-    public static Entity create_terrain(this World world, string name, Entity? parent = null, Transform? transform = null, int width = 100, int height = 100, int offset_x = 0, int offset_y = 0) {
+    public static Entity create_terrain(this World world, string name, Entity? parent = null, Transform? transform = null, int width = 32, int height = 32, int resolution = 1, int offset_x = 0, int offset_y = 0) {
         var entity = world.create_entity(name, parent, transform);
 
-        var terrain = new Terrain(Plane.XZ, width, height, offset_x, offset_y);
+        var terrain = new Terrain(Plane.XZ, width, height, resolution, offset_x, offset_y);
 
         var model = Model.from_shape(terrain.generate());
         var material = Material.Copper;
