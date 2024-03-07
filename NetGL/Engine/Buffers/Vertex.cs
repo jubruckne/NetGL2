@@ -10,4 +10,10 @@ public struct Vertex {
     public Vertex(Vector3 position) {
         this.position = position;
     }
+
+    public Vertex(float x, float y, float z) {
+        position.X = x;
+        position.Y = y;
+        position.Z = z;
+    }
 }

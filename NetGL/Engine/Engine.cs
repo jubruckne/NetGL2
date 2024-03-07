@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using BulletSharp;
 using ImGuiNET;
 using NetGL;
@@ -15,7 +13,7 @@ using Vector2 = System.Numerics.Vector2;
 public class Engine: GameWindow {
     public readonly bool debug;
 
-    protected readonly World world;
+    public readonly World world;
 
     private readonly RevolvingList<float> frame_times = new(60);
     protected float game_time;
@@ -76,6 +74,7 @@ public class Engine: GameWindow {
         base.OnLoad();
 
         Viewport.Gameplay.resize(0, 0, FramebufferSize.X, FramebufferSize.Y);
+
 
 /*
 
@@ -156,7 +155,8 @@ public class Engine: GameWindow {
 
         planet_mat.ambient_texture = planets_texture;
 
-        Entity ball = world.create_sphere_cube("Ball", radius: 10f, segments:100, material: planet_mat);
+/*
+        Entity ball = world.create_sphere_cube("Ball2", radius: 10f, segments:100, material: Material.Emerald);
         ball.transform.position = (-5, 15, -15);
 //        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
 //        ((ball.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
@@ -165,8 +165,7 @@ public class Engine: GameWindow {
         ball.get<VertexArrayRenderer>().depth_test = true;
         ball.get<VertexArrayRenderer>().blending = false;
         //ball.add_rigid_body(radius:5f, mass:10000f);
-
-
+*/
         //ball.transform.position = (0, 3, 5);
         //Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);
 
@@ -196,6 +195,12 @@ public class Engine: GameWindow {
        Console.WriteLine($"z: {arrow_z.transform}, fw:{arrow_z.transform.rotation.forward}, rt:{arrow_z.transform.rotation.right}, up:{arrow_z.transform.rotation.up}");
 
 */
+
+       Entity terrain1 = world.create_terrain("Terrain1", width: 100, height: 100);
+       terrain1.transform.position = (0, 0, 0);
+
+
+
        Entity entd = world.create_model("dragon", Model.from_file("DragonAttenuation.glb", 1f)); // ""));
 
         entd.transform.position = (-4, -4, 0);
@@ -216,6 +221,9 @@ public class Engine: GameWindow {
         }
 
         GL.Enable(EnableCap.ProgramPointSize);
+
+        AssetManager.load_all_files<Script>();
+        AssetManager.for_each<Script>(script => script.run(this));
 
         Error.check();
 

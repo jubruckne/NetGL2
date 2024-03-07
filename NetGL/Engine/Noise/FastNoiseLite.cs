@@ -1,5 +1,3 @@
-namespace  NetGL;
-
 // MIT License
 //
 // Copyright(c) 2023 Jordan Peck (jordan.me2@gmail.com)
@@ -46,7 +44,7 @@ namespace  NetGL;
 //       ....',;:codxkO000OOxdoc:;,''',,,;;;;,''.......',,;:clodkO00000Okxolc::;,,''..',;:ldxOKXNWWWNNK0OkkkkkkkkkkkxxddooooodxxkOOOOO000
 //       ....',;;clodxkkOOOkkdolc:;,,,,,,,,'..........,;:clodxkO0KKXKK0Okxdolcc::;;,,,;;:codkO0XXNNNNXKK0OOOOOkkkkxxdoollloodxkO0KKKXXXXX
 //
-// VERSION: 1.1.0
+// VERSION: 1.1.1
 // https://github.com/Auburn/FastNoiseLite
 
 using System;

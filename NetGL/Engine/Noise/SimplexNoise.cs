@@ -36,12 +36,12 @@ public static class Noise
     /// <param name="height">The number of points to generate in the 2nd dimension</param>
     /// <param name="scale">The scale of the noise. The greater the scale, the denser the noise gets</param>
     /// <returns>An array containing 2D Simplex noise</returns>
-    public static float[,] Calc2D(int width, int height, float scale)
+    public static float[,] Calc2D(int width, int height, float scale, int offset_x = 0, int offset_y = 0)
     {
         var values = new float[width, height];
         for (var i = 0; i < width; i++)
             for (var j = 0; j < height; j++)
-                values[i, j] = Generate(i * scale, j * scale) * 128 + 128;
+                values[i, j] = Generate(i * scale + offset_x, j * scale + offset_y) * 128 + 128;
         return values;
     }
 

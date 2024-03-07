@@ -1,5 +1,6 @@
 namespace NetGL.ECS;
 
+[EntityComponent]
 public class Behavior: IComponent<Behavior>, IUpdatableComponent {
     public Entity entity { get; }
     public string name { get; }

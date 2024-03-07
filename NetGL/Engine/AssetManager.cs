@@ -2,7 +2,7 @@ namespace NetGL;
 
 public interface IAssetType<out T> {
     static abstract string path { get; }
-    static abstract T load_from_file(string path);
+    static abstract T load_from_file(string filename);
 }
 
 public abstract class Asset {
@@ -21,12 +21,7 @@ public class Asset<T>: Asset {
     }
 
     public static implicit operator T(Asset<T> asset) => asset.data;
-
-    // public static string resolve(string file)  {
-    //     return $"{AppDomain.CurrentDomain.BaseDirectory}{T.path}";
-    // }
 }
-
 
 public static class AssetManager {
     private static readonly string asset_root;
@@ -75,9 +70,26 @@ public static class AssetManager {
         return ref ((Asset<T>)asset).data;
     }
 
-    public static ref readonly T load_from_file<T>(string name) where T: IAssetType<T> {
-        var data = T.load_from_file($"{asset_root}/{T.path}/{name}");
-        add(name, data);
-        return ref get<T>(name);
+    public static void for_each<T>(Action<T> action) where T: IAssetType<T> {
+        foreach (var asset in library.Values) {
+            if (asset is Asset<T> at) action(at.data);
+        }
+    }
+
+    public static void load_all_files<T>() where T: IAssetType<T> {
+        foreach (var file in get_files<T>()) {
+            load_from_file<T>(file);
+        }
+    }
+
+    public static ref readonly T load_from_file<T>(string filename) where T: IAssetType<T> {
+        Console.WriteLine($"Loading {filename}...");
+
+        if(!Path.Exists(filename))
+            filename = $"{asset_root}/{T.path}/{filename}";
+
+        var data = T.load_from_file(filename);
+        add(filename, data);
+        return ref get<T>(filename);
     }
 }

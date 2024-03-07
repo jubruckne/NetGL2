@@ -10,6 +10,8 @@
         <OutputPath>./bin/$(Configuration)/</OutputPath>
         <PreferredUILang>en-US</PreferredUILang>
         <Platforms>ARM64</Platforms>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>./generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
     
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -22,6 +24,8 @@
 
     <ItemGroup>
       <PackageReference Include="AssimpNetLatest" Version="5.0.0-beta1" />
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.9.2" />
+      <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="4.9.2" />
       <PackageReference Include="OpenTK" Version="4.8.2" />
       <PackageReference Include="StbImageSharp" Version="2.27.13" />
       <Reference Include="BulletSharp">
@@ -42,10 +46,26 @@
       <None Update="runtimes\osx-arm64\native\libbulletc.dylib">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Remove="generated\**" />
+      <None Remove="Assets\Scripts\**" />
     </ItemGroup>
 
     <ItemGroup>
       <Folder Include="Libraries\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\SourceGenerators\SourceGenerators\SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="generated\**" />
+      <Compile Remove="Assets\Scripts\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="generated\**" />
+      <EmbeddedResource Remove="Assets\Scripts\**" />
     </ItemGroup>
     
 </Project>

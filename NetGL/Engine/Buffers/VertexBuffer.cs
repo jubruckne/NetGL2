@@ -34,6 +34,7 @@ public class VertexBuffer<T>: ArrayBuffer<T>, IVertexBuffer where T: struct {
     public VertexBuffer(IEnumerable<T> vertices, params VertexAttribute[] attributes) : this(vertices.ToArray(),
         attributes) {}
 
+
     public override string ToString() {
         return $"{attributes.array_to_string()}";
     }

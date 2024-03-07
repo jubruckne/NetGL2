@@ -10,6 +10,16 @@ public interface IIndexBuffer : IBuffer {
     int get_max_vertex_count();
 }
 
+public static class IndexBuffer {
+    public static IIndexBuffer create(IEnumerable<Vector3i> items, int vertex_count = ushort.MaxValue) {
+        return vertex_count switch {
+            < byte.MaxValue => IndexBuffer<byte>.make(items),
+            < ushort.MaxValue => IndexBuffer<ushort>.make(items),
+            _ => IndexBuffer<int>.make(items)
+        };
+    }
+}
+
 public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
     where T: unmanaged, IBinaryInteger<T> {
 
@@ -61,9 +71,7 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
     }
 
     public static IndexBuffer<T> make(in Vector3i[] items) {
-        T test = T.Zero;
-
-        if (test is byte) {
+        if (T.Zero is byte) {
             byte[] target_items = new byte[items.Length * 3];
 
             for (int index = 0; index < items.Length; index++) {
@@ -79,7 +87,7 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
             return make(target_items);
         }
 
-        if (test is ushort) {
+        if (T.Zero is ushort) {
             ushort[] target_items = new ushort[items.Length * 3];
 
             for (int index = 0; index < items.Length; index++) {
@@ -93,6 +101,10 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
             }
 
             return make(target_items);
+        }
+
+        if (T.Zero is int) {
+            return new IndexBuffer<T>(items.reinterpret_ref<Vector3i, T>());
         }
 
         throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
@@ -117,4 +129,16 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
             (buffer[index], buffer[index + 2]) = (buffer[index + 2], buffer[index]);
         }
     }
+
+    public void append_triangle(T bottom_left, T bottom_right, T top) {
+        append([bottom_left, bottom_right, top]);
+    }
+
+    public void append_quad(T bottom_left, T bottom_right, T top_right, T top_left) {
+        append([
+            bottom_left, bottom_right, top_left,
+            top_left, bottom_right, top_right
+        ]);
+    }
+
 }

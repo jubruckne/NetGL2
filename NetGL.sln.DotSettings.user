@@ -1,5 +1,7 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=_002FUsers_002Fjulia_002FRiderProjects_002FBulletSharpPInvoke_002FBulletSharp_002Fbin_002FDebug_002Fnet8_002E0_002FBulletSharp_002Edll/@EntryIndexedValue">True</s:Boolean>
+	
+	<s:String x:Key="/Default/CodeInspection/Highlighting/SweaWarningsMode/@EntryValue">ShowAndRun</s:String>
 	<s:String x:Key="/Default/CodeInspection/PencilsConfiguration/ActualSeverity/@EntryValue">INFO</s:String>
 	<s:String x:Key="/Default/CustomTools/CustomToolsData/@EntryValue"></s:String>
 	<s:Boolean x:Key="/Default/Dpa/EnableInspections/=AspControllerActionDuration/@EntryIndexedValue">False</s:Boolean>
@@ -28,7 +30,7 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestTemplateMapping/=MSTest/@EntryIndexedValue">d6790ab7-33c2-4425-b2c9-51480cd1a852</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=00fc1701_002D18da_002D4436_002D9d9f_002D7157367f64fc/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="TestRotation" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
-    &lt;TestId&gt;MSTest::F95A1C94-A6BF-436B-9761-C8037E25EECF::net8.0::NetGL.Tests.ECS.Components.RotationTest.TestRotation&lt;/TestId&gt;
+    &lt;TestId&gt;net8.0::MSTest::F95A1C94-A6BF-436B-9761-C8037E25EECF::NetGL.Tests.ECS.Components.RotationTest.TestRotation&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Housekeeping/UnitTestingMru/UnitTestRunner/LoggingInternal/@EntryValue">TRACE</s:String>

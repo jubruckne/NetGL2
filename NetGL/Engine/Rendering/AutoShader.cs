@@ -145,7 +145,7 @@ public class AutoShader: Shader {
             if(material.ambient_texture != null)
                 fragment_code.AppendLine("  frag_color = texture(material.ambient_texture, vertex.texcoord);\n");
             else
-                fragment_code.AppendLine("  frag_color = vec4(material.ambient, 1);");
+                fragment_code.AppendLine("  frag_color = vec4(material.ambient_color, 1);");
         }
 
         fragment_code.AppendLine("}");

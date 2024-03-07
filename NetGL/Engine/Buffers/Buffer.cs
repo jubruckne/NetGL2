@@ -73,12 +73,31 @@ public abstract class Buffer<T>: Buffer where T: struct {
         items.CopyTo(buffer, index);
     }
 
+    public void insert(int index, in T item) {
+        if (index < 0)
+            throw new ArgumentOutOfRangeException(nameof(index));
+
+        if (index + 1 > buffer.Length)
+            throw new ArgumentOutOfRangeException(nameof(index));
+
+        buffer[index] = item;
+    }
+
+
     public int append(in T[] items) {
-        int position = buffer.Length;
+        var position = buffer.Length;
         resize(buffer.Length + items.Length);
         insert(position, items);
         return position;
     }
+
+    public int append(in T item) {
+        int position = buffer.Length;
+        resize(buffer.Length + 1);
+        insert(position, item);
+        return position;
+    }
+
     
     public override int count { 
         get => buffer.Length;

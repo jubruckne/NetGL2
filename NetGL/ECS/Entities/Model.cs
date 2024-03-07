@@ -24,7 +24,7 @@ public class Model {
 
     public static Model from_shape(IShapeGenerator shape_generator) {
         VertexBuffer<Struct<Vector3, Vector3>> vb = new(shape_generator.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
-        var ib = IndexBuffer<ushort>.make(shape_generator.get_indices());
+        var ib = IndexBuffer.create(shape_generator.get_indices(), vb.count);
         vb.upload();
         ib.upload();
 
