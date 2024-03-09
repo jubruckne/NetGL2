@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -8,14 +9,14 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
     public string name { get; }
     public bool enable_updates { get; set; }
 
-    public IReadOnlyList<VertexArray> vertex_arrays { get; }
+    public IList<VertexArray> vertex_arrays { get; }
     public bool cull_face = true;
     public bool depth_test = true;
     public bool wireframe = false;
     public bool blending = false;
     public bool front_facing = true;
 
-    internal VertexArrayRenderer(in Entity entity, IReadOnlyList<VertexArray> vertex_arrays) {
+    internal VertexArrayRenderer(in Entity entity, IList<VertexArray> vertex_arrays) {
         this.entity = entity;
         this.name = GetType().Name;
         this.vertex_arrays = vertex_arrays;
@@ -85,7 +86,7 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
 }
 
 public static class VertexArrayRendererExt {
-    public static VertexArrayRenderer add_vertex_array_renderer(this Entity entity, IReadOnlyList<VertexArray> vertex_arrays) {
+    public static VertexArrayRenderer add_vertex_array_renderer(this Entity entity, IList<VertexArray> vertex_arrays) {
         var renderer = new VertexArrayRenderer(entity, vertex_arrays);
         entity.add(renderer);
         return renderer;
@@ -97,4 +98,9 @@ public static class VertexArrayRendererExt {
         return renderer;
     }
 
+    public static VertexArrayRenderer add_vertex_array_renderer(this Entity entity) {
+        var renderer = new VertexArrayRenderer(entity, []);
+        entity.add(renderer);
+        return renderer;
+    }
 }

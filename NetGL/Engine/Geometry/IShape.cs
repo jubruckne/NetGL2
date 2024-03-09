@@ -6,7 +6,10 @@ public interface IShape {
     IShapeGenerator generate();
 }
 
-public interface IShape<out T>: IShape {
+public interface IShape<out T>: IShape { }
+
+public interface IShape<out T, in TShapeOptions> : IShape {
+    IShapeGenerator generate(TShapeOptions options);
 }
 
 public interface IShapeGenerator {

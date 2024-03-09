@@ -43,9 +43,7 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
         => buffer = items;
 
     public static IndexBuffer<T> make(in byte[] items) {
-        T test = T.Zero;
-
-        if (test is byte)
+        if (T.Zero is byte)
             return new IndexBuffer<T>(items.reinterpret_ref<byte, T>());
 
         throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
@@ -140,5 +138,4 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
             top_left, bottom_right, top_right
         ]);
     }
-
 }

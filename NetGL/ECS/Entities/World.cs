@@ -35,11 +35,15 @@ public class World: Entity {
         throw new IndexOutOfRangeException(nameof(name));
     }
 
-    public Entity create_entity(string name, Entity? parent = null, Transform? tranform = null) {
-        var e = new Entity(name, parent ?? this, tranform);
+    public Entity create_entity(string name, Entity? parent = null, Transform? transform = null) {
+        var e = new Entity(name, parent ?? this, transform);
         world_entities.add(e);
 
         return e;
+    }
+
+    internal void add_entity<T>(T e) where T: Entity {
+        world_entities.add(e);
     }
 
     private Entity get_camera_entity() {
@@ -128,14 +132,15 @@ public class World: Entity {
             render_entity(child, projection_matrix, camera_matrix, camera_pos, model_matrix);
     }
 
-    public void update(float game_time, float delta_time, bool parallel) {
-        if (parallel) {
+    public void update(float game_time, float delta_time) {
+        /*if (parallel) {
             Parallel.ForEach(children, entity => update_entity_pre_physics(entity));
 
             physics.World.StepSimulation(delta_time);
 
             Parallel.ForEach(children, entity => update_entity(game_time, delta_time, entity));
         } else {
+        */
             foreach (var entity in children) {
                 update_entity_pre_physics(entity);
             }
@@ -145,7 +150,7 @@ public class World: Entity {
             foreach (var entity in children) {
                 update_entity(game_time, delta_time, entity);
             }
-        }
+      //  }
     }
 
     private void update_entity_pre_physics(in Entity entity) {

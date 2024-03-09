@@ -8,6 +8,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using Plane = NetGL.Plane;
 using Vector2 = System.Numerics.Vector2;
 
 public class Engine: GameWindow {
@@ -196,11 +197,11 @@ public class Engine: GameWindow {
 
 */
 
-       Entity terrain1 = world.create_terrain("Terrain1", width:25, height:25, resolution:20);
-       terrain1.transform.position = (0, 0, 0);
+       Entity terrain1 = world.create_terrain(Plane.XZ);
+       terrain1.transform.position = (-10, 0, 0);
 
 
-
+/*
        Entity entd = world.create_model("dragon", Model.from_file("DragonAttenuation.glb", 1f)); // ""));
 
         entd.transform.position = (-4, -4, 0);
@@ -219,7 +220,7 @@ public class Engine: GameWindow {
             cube.add_rigid_body(radius:0.20f, mass:1f);
             cube.add_behavior(con, beh);
         }
-
+*/
         GL.Enable(EnableCap.ProgramPointSize);
 
         AssetManager.load_all_files<Script>();
@@ -263,7 +264,7 @@ public class Engine: GameWindow {
             }
         } else cursor_state_last_switch += delta_time;
 
-        world.update(game_time, delta_time, false);
+        world.update(game_time, delta_time);
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {

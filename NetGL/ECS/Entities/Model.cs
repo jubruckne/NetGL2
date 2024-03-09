@@ -8,7 +8,7 @@ public class Model {
     public static string base_path = $"{AppDomain.CurrentDomain.BaseDirectory}../../Assets/Models/";
 
     public readonly string name;
-    public readonly IReadOnlyList<VertexArray> vertex_arrays;
+    public readonly IList<VertexArray> vertex_arrays;
     public readonly IReadOnlyList<Material> materials;
     public readonly IReadOnlyList<Texture> textures;
 

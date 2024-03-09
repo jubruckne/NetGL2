@@ -63,13 +63,13 @@ public class VertexArray {
     protected void upload_attribute_pointers() {
         foreach (var attribute in vertex_attributes) {
             attribute.buffer.bind();
-
+/*
             Console.WriteLine("Vertex attributes: ");
             Console.WriteLine($"  stride = {attribute.buffer.item_size}");
 
             Console.WriteLine(attribute.buffer.item_type);
-            Console.WriteLine(
-                $"VertexAttribPointer({attribute.location}, {attribute.count}, {attribute.pointer_type}, {attribute.normalized}, {attribute.buffer.item_size}, {attribute.offset})");
+            Console.WriteLine($"VertexAttribPointer({attribute.location}, {attribute.count}, {attribute.pointer_type}, {attribute.normalized}, {attribute.buffer.item_size}, {attribute.offset})");
+           */
             GL.VertexAttribPointer(attribute.location, attribute.count, attribute.pointer_type, attribute.normalized, attribute.buffer.item_size, attribute.offset);
             GL.EnableVertexAttribArray(attribute.location);
         }

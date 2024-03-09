@@ -34,7 +34,7 @@ public partial class Entity {
     private readonly List<IUpdatableComponent> updateable_components;
     private readonly List<IRenderableComponent> renderable_components;
 
-    internal Entity(string name, Entity? parent, Transform? transform) {
+    internal Entity(string name, Entity? parent = null, Transform? transform = null) {
         this.name = name;
         component_list = [];
         updateable_components = [];
