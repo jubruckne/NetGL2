@@ -51,10 +51,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Libraries\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\SourceGenerators\SourceGenerators\SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 

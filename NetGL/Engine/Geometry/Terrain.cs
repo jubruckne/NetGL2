@@ -58,14 +58,24 @@ public class Terrain : Entity {
     public readonly VertexArrayRenderer renderer;
     public readonly ShaderComponent shader;
 
-    public const int max_resolution = 1024;
-    public readonly int chunk_size = 128;
+    public const int max_resolution = 64;
+    public readonly int chunk_size = 256;
 
     private readonly Dictionary<Vector2i, TerrainChunk> chunks;
     private readonly Camera camera;
 
+    internal readonly Noise noise;
+
     internal Terrain(Plane plane, Entity? parent = null) : base("Terrain", parent) {
         this.plane = plane;
+
+        camera = get<Camera>(EntityRelationship.HierarchyWithChildrenRecursive);
+
+        noise = new();
+        noise.add_simplex_layer(0.001f, 35f);
+        noise.add_simplex_layer(0.002f, 35f);
+        noise.add_simplex_layer(0.01f, 2.5f);
+        noise.add_value_layer(2.5f, 0.035f);
 
         chunks = new Dictionary<Vector2i, TerrainChunk>();
 
@@ -73,14 +83,25 @@ public class Terrain : Entity {
         renderer = this.add_vertex_array_renderer();
         generate_chunk((0, 0), max_resolution);
         shader = this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunks[(0, 0)].vertex_array, material));
-        renderer.wireframe = false;
+        renderer.wireframe = true;
         this.add_behavior(_ => update());
+    }
 
-        camera = get<Camera>(EntityRelationship.HierarchyWithChildrenRecursive);
+    public float get_height_at_world_position(Vector3 world_position) {
+        var (tp, _) = plane.world_to_point_on_plane(world_position);
+
+        return noise.sample(tp);
     }
 
     private void update() {
         var (position, height) = plane.world_to_point_on_plane(camera.transform.position);
+
+        var h = get_height_at_world_position(camera.transform.position) + 8f;
+        if (camera.transform.position.Y < h) {
+            camera.transform.position.Y = float.Lerp(camera.transform.position.Y, h, 0.09f);
+        } else if (camera.transform.position.Y > h) {
+            camera.transform.position.Y = float.Lerp(h, camera.transform.position.Y, 0.12f);
+        }
 
         int x = (int)(Math.Round(position.X / chunk_size) * chunk_size);
         int y = (int)(Math.Round(position.Y / chunk_size) * chunk_size);
@@ -104,6 +125,20 @@ public class Terrain : Entity {
         chunks.Add(center, chunk);
         renderer.vertex_arrays.Add(chunk.vertex_array);
 
+        Console.WriteLine($"fw = {camera.transform.rotation.forward}");
+        var forward_chunk = camera.transform.position + camera.transform.rotation.forward * chunk_size;
+        var (fw_position, height) = plane.world_to_point_on_plane(forward_chunk);
+        Console.WriteLine($"fw_pos = {fw_position}");
+
+
+        int x = (int)(Math.Round(fw_position.X / chunk_size) * chunk_size);
+        int y = (int)(Math.Round(fw_position.Y / chunk_size) * chunk_size);
+
+        Console.WriteLine($"generating chunk {(x, y)}, resolution = {resolution}...");
+        chunk = new TerrainChunk(this, (x,y), (chunk_size, chunk_size), (int)(resolution * 0.5f));
+        chunks.Add((x, y), chunk);
+        renderer.vertex_arrays.Add(chunk.vertex_array);
+        /*
         if (resolution > 128) {
             (int x, int y)[] directions = [
                 (-1, 0), (-1, 1), (0, 1),
@@ -118,6 +153,7 @@ public class Terrain : Entity {
                     generate_chunk(k_half, (int)(resolution * 0.5));
             }
         }
+        */
     }
 }
 
@@ -135,7 +171,7 @@ public sealed class TerrainShapeGenerator: IShapeGenerator {
     private readonly float offset_x;
     private readonly float offset_y;
 
-   internal TerrainShapeGenerator(TerrainChunk chunk, Options options = new()) {
+    internal TerrainShapeGenerator(TerrainChunk chunk, Options options = new()) {
         this.chunk = chunk;
         this.options = options;
 
@@ -146,24 +182,29 @@ public sealed class TerrainShapeGenerator: IShapeGenerator {
 
         offset_x = chunk.center.X - width * 0.5f;
         offset_y = chunk.center.Y - height * 0.5f;
-   }
+    }
 
     public IEnumerable<Vector3> get_vertices() {
-        var n1 = new FastNoiseLite(seed: 9876);
+        /*var n1 = new FastNoiseLite(seed: 9876);
         n1.SetFractalType(FastNoiseLite.FractalType.FBm);
         n1.SetFractalOctaves(6);
         n1.SetFrequency(0.01f);
         n1.SetFractalLacunarity(2f);
         n1.SetFractalGain(0.35f);
-        n1.SetFractalWeightedStrength(3.5f);
+        n1.SetFractalWeightedStrength(3.5f);*/
+
+        var n = chunk.terrain.noise.sample(
+            chunk.resolution + 1, chunk.resolution + 1,
+            offset_x, offset_y,
+            (float)width / chunk.resolution, (float)height / chunk.resolution
+        );
 
         for (int x = 0; x < chunk.resolution + 1; x++) {
             for (int y = 0; y < chunk.resolution + 1; y++) {
-                var nx = (float)x * width / chunk.resolution + offset_x;
-                var ny = (float)y * height / chunk.resolution + offset_y;
-                var h = n1.GetNoise(nx , ny) * 9.9f;
-
-                yield return plane.to_world(nx, ny, h);
+                yield return plane.to_world(
+                    (float)x * width / chunk.resolution + offset_x,
+                    (float)y * height / chunk.resolution + offset_y, n[x, y]
+                );
             }
         }
     }
