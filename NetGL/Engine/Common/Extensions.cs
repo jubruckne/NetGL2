@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTK.Mathematics;
@@ -37,6 +38,24 @@ public static class RandomExt {
 }
 
 public static class VectorExt {
+    public static List<Vector2i> adjecency(this in Vector2i center, int distance = 1, int scale = 1) {
+        List<Vector2i> pointsExactlyNStepsAway = [];
+
+        // Top and bottom horizontal lines
+        for (int dx = -distance; dx <= distance; dx++) {
+            pointsExactlyNStepsAway.Add(new Vector2i(center.X + dx * scale, center.Y + distance * scale)); // Top
+            pointsExactlyNStepsAway.Add(new Vector2i(center.X + dx * scale, center.Y - distance * scale)); // Bottom
+        }
+
+        // Left and right vertical lines, excluding corners which are already added
+        for (int dy = -distance + 1; dy <= distance - 1; dy++) {
+            pointsExactlyNStepsAway.Add(new Vector2i(center.X + distance * scale, center.Y + dy * scale)); // Right
+            pointsExactlyNStepsAway.Add(new Vector2i(center.X - distance * scale, center.Y + dy * scale)); // Left
+        }
+
+        return pointsExactlyNStepsAway;
+    }
+
     public static void round(this ref Vector3 vector) {
         if (vector.X > 0 && vector.X < 1e-6f) vector.X = 0;
         if (vector.Y > 0 && vector.Y < 1e-6f) vector.Y = 0;
@@ -155,6 +174,46 @@ public static class AngleExt {
 }
 
 public static class ArrayExt {
+    public static bool peek<T>(this IList<T> list, [MaybeNullWhen(false)] out T item) {
+        lock (list) {
+            if (list.Count != 0) {
+                item = list[0];
+                return true;
+            }
+        }
+
+        item = default;
+        return false;
+    }
+
+    public static bool pop<T>(this IList<T> list, Predicate<T> condition, [MaybeNullWhen(false)] out T item) {
+        lock (list) {
+            for (int index = 0; index < list.Count; index++) {
+                if (condition(list[index])) {
+                    item = list[index];
+                    list.RemoveAt(index);
+                    return true;
+                }
+            }
+        }
+
+        item = default;
+        return false;
+    }
+
+    public static bool pop<T>(this IList<T> list, [MaybeNullWhen(false)] out T item) {
+        lock (list) {
+            if (list.Count != 0) {
+                item = list[0];
+                list.RemoveAt(0);
+                return true;
+            }
+        }
+
+        item = default;
+        return false;
+    }
+
     public static IEnumerable<KeyValuePair<string, T>> StartingWith<T>(this Dictionary<string, T> dict, string key) {
         if (dict.Count == 0)
             return Enumerable.Empty<KeyValuePair<string, T>>();

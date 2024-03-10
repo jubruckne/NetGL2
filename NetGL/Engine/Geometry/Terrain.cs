@@ -4,41 +4,63 @@ using OpenTK.Mathematics;
 namespace NetGL;
 
 internal class TerrainChunk: IShape<TerrainChunk> {
+    public readonly struct Key {
+        public readonly Vector2i center;
+        public readonly int resolution;
+
+        public Key(Vector2i center, int resolution) {
+            this.center = center;
+            this.resolution = resolution;
+        }
+
+        public static implicit operator Key((int x, int y, int resolution) key) {
+            return new((key.x, key.y), key.resolution);
+        }
+
+        public override string ToString() => $"({center.X},{center.Y}:{resolution})";
+    }
+
     public readonly Terrain terrain;
     public readonly Vector2i center;
-    public readonly Vector2i size;
-    public int resolution;
-    public VertexArrayIndexed vertex_array;
+    public readonly int size;
+    public readonly int resolution;
+    public VertexArrayIndexed? vertex_array;
+    public readonly Key key;
 
     private static readonly Dictionary<int, IIndexBuffer> index_buffer_per_resolution = new ();
 
-    public TerrainChunk(Terrain terrain, in Vector2i center, in Vector2i size, int resolution) {
+    public TerrainChunk(Terrain terrain, in Vector2i center, int size, int resolution) {
+        this.key = new Key(center, resolution);
         this.terrain = terrain;
         this.center = center;
         this.size = size;
         this.resolution = resolution;
-
-        vertex_array = create();
     }
 
-    private VertexArrayIndexed create() {
+    public void upload() {
+        if (vertex_array == null) throw new Exception("Vertex array not created!");
+
+        foreach(var b in vertex_array.vertex_buffers)
+            if (b.status != Buffer.Status.Uploaded)
+                b.upload();
+
+        if(vertex_array.index_buffer.status != Buffer.Status.Uploaded)
+            vertex_array.index_buffer.upload();
+
+        vertex_array.upload();
+    }
+
+    public void create() {
         var gen = generate();
         VertexBuffer<Struct<Vector3, Vector3>> vb = new(gen.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
-        vb.upload();
 
         if (!index_buffer_per_resolution.TryGetValue(resolution, out var ib)) {
             ib = IndexBuffer.create(gen.get_indices(), vb.count);
-            ib.upload();
             index_buffer_per_resolution.Add(resolution, ib);
         }
 
-        var va = new VertexArrayIndexed(ib, vb);
-        va.upload();
-
-        return va;
+        vertex_array = new VertexArrayIndexed(ib, vb);
     }
-
-    public void update() => vertex_array = create();
 
     public IShapeGenerator generate(TerrainShapeGenerator.Options options) => new TerrainShapeGenerator(this, options);
     public IShapeGenerator generate() => new TerrainShapeGenerator(this);
@@ -58,10 +80,10 @@ public class Terrain : Entity {
     public readonly VertexArrayRenderer renderer;
     public readonly ShaderComponent shader;
 
-    public const int max_resolution = 64;
-    public readonly int chunk_size = 256;
+    public const int max_resolution = 32;
+    public readonly int chunk_size = 100;
 
-    private readonly Dictionary<Vector2i, TerrainChunk> chunks;
+    private readonly Dictionary<TerrainChunk.Key, TerrainChunk> chunks;
     private readonly Camera camera;
 
     internal readonly Noise noise;
@@ -77,12 +99,13 @@ public class Terrain : Entity {
         noise.add_simplex_layer(0.01f, 2.5f);
         noise.add_value_layer(2.5f, 0.035f);
 
-        chunks = new Dictionary<Vector2i, TerrainChunk>();
+        chunks = new Dictionary<TerrainChunk.Key, TerrainChunk>();
 
         material = this.add_material(Material.random).material;
         renderer = this.add_vertex_array_renderer();
-        generate_chunk((0, 0), max_resolution);
-        shader = this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunks[(0, 0)].vertex_array, material));
+        request_chunk((0, 0, max_resolution));
+        shader = this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunks[(0, 0, max_resolution)].vertex_array,
+            material));
         renderer.wireframe = true;
         this.add_behavior(_ => update());
     }
@@ -107,8 +130,8 @@ public class Terrain : Entity {
         int y = (int)(Math.Round(position.Y / chunk_size) * chunk_size);
         //Console.WriteLine($"Terrain: chunk {position}, reverse: {plane.to_world(position, height)}, cam at: {camera.transform.position}");
 
-        if (!chunks.ContainsKey((x, y)))
-            generate_chunk((x, y), max_resolution);
+        request_chunk((x, y, max_resolution));
+        /*
         else {
             if (chunks[(x, y)].resolution != max_resolution) {
                 renderer.vertex_arrays.Remove(chunks[(x, y)].vertex_array);
@@ -117,47 +140,41 @@ public class Terrain : Entity {
                 renderer.vertex_arrays.Add(chunks[(x, y)].vertex_array);
             }
         }
+        */
     }
 
-    private void generate_chunk(in Vector2i center, int resolution = max_resolution) {
-        Console.WriteLine($"generating chunk {center}, resolution = {resolution}...");
-        var chunk = new TerrainChunk(this, center, (chunk_size, chunk_size), resolution);
-        chunks.Add(center, chunk);
-        renderer.vertex_arrays.Add(chunk.vertex_array);
+    private void request_chunk(in TerrainChunk.Key key) {
+        if (!chunks.ContainsKey(key)) {
+            Console.WriteLine($"generating chunk {key.center}, resolution = {key.resolution}...");
+            var chunk = new TerrainChunk(this, key.center, chunk_size, key.resolution);
+            chunk.create();
+            chunk.upload();
+            chunks.Add(key, chunk);
+            renderer.vertex_arrays.Add(chunk.vertex_array!);
+        }
 
-        Console.WriteLine($"fw = {camera.transform.rotation.forward}");
-        var forward_chunk = camera.transform.position + camera.transform.rotation.forward * chunk_size;
-        var (fw_position, height) = plane.world_to_point_on_plane(forward_chunk);
-        Console.WriteLine($"fw_pos = {fw_position}");
+        for (int distance = 1; distance < 3; distance++) {
+            foreach (var c in key.center.adjecency(distance, chunk_size)) {
+                if (chunks.ContainsKey((c.X, c.Y, key.resolution))) continue;
 
+                var a_chunk = new TerrainChunk(this, (c.X, c.Y), chunk_size, key.resolution);
+                chunks.Add(a_chunk.key, a_chunk);
 
-        int x = (int)(Math.Round(fw_position.X / chunk_size) * chunk_size);
-        int y = (int)(Math.Round(fw_position.Y / chunk_size) * chunk_size);
-
-        Console.WriteLine($"generating chunk {(x, y)}, resolution = {resolution}...");
-        chunk = new TerrainChunk(this, (x,y), (chunk_size, chunk_size), (int)(resolution * 0.5f));
-        chunks.Add((x, y), chunk);
-        renderer.vertex_arrays.Add(chunk.vertex_array);
-        /*
-        if (resolution > 128) {
-            (int x, int y)[] directions = [
-                (-1, 0), (-1, 1), (0, 1),
-                (1, 1),                 (1, 0),
-                (1, -1), (0, -1), (-1, -1)
-            ];
-
-            foreach (var d in directions) {
-                Vector2i k_half = (center.X + d.x * chunk_size, center.Y + d.y * chunk_size);
-
-                if (!chunks.ContainsKey(k_half))
-                    generate_chunk(k_half, (int)(resolution * 0.5));
+                BackgroundTaskScheduler.schedule(
+                    a_chunk.key.ToString(),
+                    a_chunk.create,
+                    () => {
+                        a_chunk.upload();
+                        renderer.vertex_arrays.Add(a_chunk.vertex_array!);
+                    },
+                    priority: distance
+                );
             }
         }
-        */
     }
 }
 
-public sealed class TerrainShapeGenerator: IShapeGenerator {
+public sealed class TerrainShapeGenerator : IShapeGenerator {
     public struct Options;
 
     private readonly TerrainChunk chunk;
@@ -165,8 +182,8 @@ public sealed class TerrainShapeGenerator: IShapeGenerator {
 
     private readonly Plane plane;
 
-    private readonly int width;
-    private readonly int height;
+    private readonly int size;
+    private readonly int pixel_count;
 
     private readonly float offset_x;
     private readonly float offset_y;
@@ -176,12 +193,11 @@ public sealed class TerrainShapeGenerator: IShapeGenerator {
         this.options = options;
 
         plane = chunk.terrain.plane;
+        size = chunk.size;
+        pixel_count = chunk.size * chunk.resolution;
 
-        width = chunk.size.X;
-        height = chunk.size.Y;
-
-        offset_x = chunk.center.X - width * 0.5f;
-        offset_y = chunk.center.Y - height * 0.5f;
+        offset_x = chunk.center.X - size * 0.5f;
+        offset_y = chunk.center.Y - size * 0.5f;
     }
 
     public IEnumerable<Vector3> get_vertices() {
@@ -194,16 +210,16 @@ public sealed class TerrainShapeGenerator: IShapeGenerator {
         n1.SetFractalWeightedStrength(3.5f);*/
 
         var n = chunk.terrain.noise.sample(
-            chunk.resolution + 1, chunk.resolution + 1,
+            pixel_count + 1, pixel_count + 1,
             offset_x, offset_y,
-            (float)width / chunk.resolution, (float)height / chunk.resolution
+            (float)size / chunk.resolution, (float)size / chunk.resolution
         );
 
         for (int x = 0; x < chunk.resolution + 1; x++) {
             for (int y = 0; y < chunk.resolution + 1; y++) {
                 yield return plane.to_world(
-                    (float)x * width / chunk.resolution + offset_x,
-                    (float)y * height / chunk.resolution + offset_y, n[x, y]
+                    (float)x * size / chunk.resolution + offset_x,
+                    (float)y * size / chunk.resolution + offset_y, n[x, y]
                 );
             }
         }

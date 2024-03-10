@@ -264,6 +264,7 @@ public class Engine: GameWindow {
             }
         } else cursor_state_last_switch += delta_time;
 
+        BackgroundTaskScheduler.process_completed_tasks();
         world.update(game_time, delta_time);
     }
 
@@ -285,10 +286,8 @@ public class Engine: GameWindow {
 
         frame_count++;
         frame++;
-        Error.check();
 
         if (debug) ImGuiRenderer.update((float)e.Time);
-        Error.check();
 
         Viewport.Gameplay.make_current();
 
@@ -296,6 +295,8 @@ public class Engine: GameWindow {
         Error.check();
         if(debug) render_ui();
         Error.check();
+
+        BackgroundTaskScheduler.process_scheduled_tasks();
 
         SwapBuffers();
     }

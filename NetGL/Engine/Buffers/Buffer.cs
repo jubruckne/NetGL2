@@ -11,9 +11,17 @@ public interface IBuffer {
     void upload();
     void bind();
     void unbind();
+    Buffer.Status status { get; }
 }
 
 public abstract class Buffer: IBuffer {
+    public enum Status {
+        Empty,
+        Filled,
+        Uploaded,
+        Modified
+    }
+
     public abstract int count { get; }
     public abstract int item_size { get; }
     public abstract Type item_type { get; }
@@ -22,6 +30,11 @@ public abstract class Buffer: IBuffer {
     public abstract void upload();
     public abstract void bind();
     public abstract void unbind();
+
+    public Status status {
+        get;
+        protected set;
+    }
 }
 
 public abstract class Buffer<T>: Buffer where T: struct {
@@ -132,5 +145,7 @@ public abstract class Buffer<T>: Buffer where T: struct {
         GL.BindBuffer(target, handle);
         GL.BufferData(target, buffer.Length * item_size, buffer, BufferUsageHint.StaticDraw);
         GL.BindBuffer(target, 0);
+
+        status = Status.Uploaded;
     }
 }
