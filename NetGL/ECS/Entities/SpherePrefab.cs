@@ -17,7 +17,7 @@ public static class SpherePrefab {
         } else {
             Console.WriteLine("creating uv sphere");
             Sphere sphere = new(radius);
-            model = Model.from_shape(sphere.generate_uv_sphere(32, 24));
+            model = Model.from_shape(sphere.generate());
             shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], material);
             //shader = new Shader("auto", "vert.glsl", "frag.glsl");
             last = (sphere, model, shader);
@@ -43,7 +43,7 @@ public static class SpherePrefab {
             shader = last.Value.shader;
         } else {
             Sphere sphere = new Sphere(radius);
-            model = Model.from_shape(sphere.generate_cube_sphere(segments));
+            model = Model.from_shape(sphere.generate(new CubeSphereGenerator.CubeSphere(16)));
             shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], material, is_sky_box:name == "Environment");
             last = (sphere, model, shader);
         }

@@ -2,49 +2,113 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public class Sphere: IShape<Sphere> {
+public class Sphere: IShape<UVSphereGenerator.UVSphere>, IShape<IcoSphereGenerator.IcoSphere>, IShape<CubeSphereGenerator.CubeSphere> {
     public readonly float radius;
 
     public Sphere() : this(0.5f) {}
     public Sphere(float radius) => this.radius = radius;
 
-    public IShapeGenerator generate() => generate_uv_sphere();
-
-    public IShapeGenerator generate_uv_sphere(int meridians = 32, int parallels = 24)
-        => new UVSphereGenerator(radius, meridians, parallels);
-
-    public IShapeGenerator generate_cube_sphere(int subdivisions = 10)
-        => new CubeSphereGenerator(radius, subdivisions);
+    public IShapeGenerator generate() => new UVSphereGenerator(this);
+    public IShapeGenerator generate(IcoSphereGenerator.IcoSphere options) => new IcoSphereGenerator(this, options);
+    public IShapeGenerator generate(UVSphereGenerator.UVSphere options) => new UVSphereGenerator(this, options);
+    public IShapeGenerator generate(CubeSphereGenerator.CubeSphere options) => new CubeSphereGenerator(this, options);
 
     public override string ToString() {
         return $"Sphere[radius:{radius}]";
     }
 }
 
-file class UVSphereGenerator: IShapeGenerator {
-    private readonly float radius;
-    private readonly int meridians;
-    private readonly int parallels;
+public class IcoSphereGenerator: IShapeGenerator {
+    public record struct IcoSphere(int tesselation = 2);
 
-    public UVSphereGenerator(in float radius, int meridians, int parallels) {
-        this.radius = radius;
-        this.meridians = meridians;
-        this.parallels = parallels;
+    private Sphere sphere;
+    private IcoSphere options;
+
+    public IcoSphereGenerator(in Sphere sphere, in IcoSphere options = new()) {
+        this.sphere = sphere;
+        this.options = options;
+    }
+
+    public IEnumerable<Vector3> get_vertices() {
+        var t = (float)((1.0 + Math.Sqrt(5.0)) / 2.0);
+        var vert = new[] {
+            new Vector3(-1, t, 0),
+            new Vector3(1, t, 0),
+            new Vector3(-1, -t, 0),
+            new Vector3(1, -t, 0),
+
+            new Vector3(0, -1, t),
+            new Vector3(0, 1, t),
+            new Vector3(0, -1, -t),
+            new Vector3(0, 1, -t),
+
+            new Vector3(t, 0, -1),
+            new Vector3(t, 0, 1),
+            new Vector3(-t, 0, -1),
+            new Vector3(-t, 0, 1)
+        };
+
+        // normalize vector to unit length
+        for (var i = 0; i < vert.Length; i++)
+            yield return vert[i].Normalized();
+    }
+
+    public IEnumerable<Vector3i> get_indices() {
+        // 5 faces around point 0
+
+        yield return (0, 5, 11);
+        yield return (0, 1, 5);
+        yield return (0, 7, 1);
+        yield return (0, 10, 7);
+        yield return (0, 11, 10);
+
+        // 5 adjacent faces
+        yield return (1, 9, 5);
+        yield return (5, 4, 11);
+        yield return (11, 2, 10);
+        yield return (10, 6, 7);
+        yield return (7, 8, 1);
+
+        // 5 faces around point 3
+        yield return (3, 4, 9);
+        yield return (3, 2, 4);
+        yield return (3, 6, 2);
+        yield return (3, 8, 6);
+        yield return (3, 9, 8);
+
+        // 5 adjacent faces
+        yield return (4, 5, 9);
+        yield return (2, 11, 4);
+        yield return (6, 10, 2);
+        yield return (8, 7, 6);
+        yield return (9, 1, 8);
+    }
+}
+
+public class UVSphereGenerator: IShapeGenerator {
+    public record struct UVSphere(int meridians = 32, int parallels = 24);
+
+    private readonly Sphere sphere;
+    private readonly UVSphere options;
+
+    public UVSphereGenerator(Sphere sphere, UVSphere options = new()) {
+        this.sphere = sphere;
+        this.options = options;
     }
 
     public override string ToString() => "Sphere";
 
     public IEnumerable<Vector3> get_vertices() {
         float x, y, z, xy;
-        float sectorStep = (float)(2f * Math.PI / meridians);
-        float stackStep = (float)(Math.PI / parallels);
+        float sectorStep = (float)(2f * Math.PI / options.meridians);
+        float stackStep = (float)(Math.PI / options.parallels);
 
-        for (int i = 0; i <= parallels; ++i) {
+        for (int i = 0; i <= options.parallels; ++i) {
             float stackAngle = (float)(Math.PI / 2f - i * stackStep);
-            xy = radius * (float)Math.Cos(stackAngle);
-            z = radius * (float)Math.Sin(stackAngle);
+            xy = sphere.radius * (float)Math.Cos(stackAngle);
+            z = sphere.radius * (float)Math.Sin(stackAngle);
 
-            for (int j = 0; j <= meridians; ++j) {
+            for (int j = 0; j <= options.meridians; ++j) {
                 float sectorAngle = j * sectorStep;
 
                 x = xy * (float)Math.Cos(sectorAngle);
@@ -62,10 +126,10 @@ file class UVSphereGenerator: IShapeGenerator {
         }
 
         // Duplicate vertices along one seam
-        for (int i = 1; i <= parallels - 1; i++) {
+        for (int i = 1; i <= options.parallels - 1; i++) {
             float stackAngle = (float)Math.PI / 2 - i * stackStep;
-            xy = radius * (float)Math.Cos(stackAngle);
-            z = radius * (float)Math.Sin(stackAngle);
+            xy = sphere.radius * (float)Math.Cos(stackAngle);
+            z = sphere.radius * (float)Math.Sin(stackAngle);
 
             yield return new Vector3(xy, 0, z); // Add an extra vertex at the seam
         }
@@ -74,18 +138,18 @@ file class UVSphereGenerator: IShapeGenerator {
 
     public IEnumerable<Vector3i> get_indices() {
         // Calculate the total vertices per row, considering the extra vertex at the seam for each row
-        int verticesPerRow = meridians + 1;
+        int verticesPerRow = options.meridians + 1;
 
-        for (int i = 1; i <= parallels; ++i) {
-            for (int j = 1; j <= meridians; ++j) {
-                int a = i * (meridians + 1) + j;
-                int b = i * (meridians + 1) + j - 1;
-                int c = (i - 1) * (meridians + 1) + j - 1;
-                int d = (i - 1) * (meridians + 1) + j;
+        for (int i = 1; i <= options.parallels; ++i) {
+            for (int j = 1; j <= options.meridians; ++j) {
+                int a = i * (options.meridians + 1) + j;
+                int b = i * (options.meridians + 1) + j - 1;
+                int c = (i - 1) * (options.meridians + 1) + j - 1;
+                int d = (i - 1) * (options.meridians + 1) + j;
 
                 // Adjust for extra seam vertices
                 // Check if we're at the last meridian and adjust indices to wrap correctly
-                if (j == meridians) {
+                if (j == options.meridians) {
                     a = i * verticesPerRow; // Wrap to the first vertex of the current row
                     d = (i - 1) * verticesPerRow; // Wrap to the first vertex of the previous row
                 }
@@ -97,13 +161,15 @@ file class UVSphereGenerator: IShapeGenerator {
     }
 }
 
-file class CubeSphereGenerator : IShapeGenerator {
-    private readonly float radius;
-    private readonly int subdivisions;
+public class CubeSphereGenerator: IShapeGenerator {
+    public record struct CubeSphere(int subdivisions = 10);
 
-    public CubeSphereGenerator(float radius, int subdivisions) {
-        this.radius = radius;
-        this.subdivisions = subdivisions;
+    private readonly Sphere sphere;
+    private readonly CubeSphere options;
+
+    internal CubeSphereGenerator(in Sphere sphere, in CubeSphere options = new()) {
+        this.sphere = sphere;
+        this.options = options;
     }
 
     public override string ToString() => "Cube";
@@ -132,24 +198,24 @@ file class CubeSphereGenerator : IShapeGenerator {
         Vector3 up = Vector3.Cross(normal, right);
 
         // Generate vertices
-        for (int y = 0; y <= subdivisions; y++) {
-            for (int x = 0; x <= subdivisions; x++) {
-                Vector3 point = normal + right * ((x / (float)subdivisions) - 0.5f) * 2f +
-                                up * ((y / (float)subdivisions) - 0.5f) * 2f;
-                Vector3 pointOnSphere = point.Normalized() * radius;
+        for (int y = 0; y <= options.subdivisions; y++) {
+            for (int x = 0; x <= options.subdivisions; x++) {
+                Vector3 point = normal + right * ((x / (float)options.subdivisions) - 0.5f) * 2f +
+                                up * ((y / (float)options.subdivisions) - 0.5f) * 2f;
+                Vector3 pointOnSphere = point.Normalized() * sphere.radius;
                 yield return pointOnSphere.Zyx;
             }
         }
     }
 
     public IEnumerable<Vector3i> get_indices() {
-        int verticesPerRow = subdivisions + 1;
+        int verticesPerRow = options.subdivisions + 1;
         int faceVertexCount = verticesPerRow * verticesPerRow;
 
         for (int face = 0; face < 6; face++) {
             int offset = face * faceVertexCount;
-            for (int y = 0; y < subdivisions; y++) {
-                for (int x = 0; x < subdivisions; x++) {
+            for (int y = 0; y < options.subdivisions; y++) {
+                for (int x = 0; x < options.subdivisions; x++) {
                     int topLeft = offset + (y * verticesPerRow) + x;
                     int topRight = topLeft + 1;
                     int bottomLeft = topLeft + verticesPerRow;

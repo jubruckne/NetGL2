@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public class Rectangle: IShape<Rectangle> {
+public class Rectangle: IShape {
     public readonly float x;
     public readonly float y;
     public readonly float width;

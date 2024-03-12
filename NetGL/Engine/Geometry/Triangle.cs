@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public class Triangle: IShape<Triangle> {
+public class Triangle: IShape {
     public float p1, p2, p3;
 
     public Triangle(float p1, float p2, float p3) {

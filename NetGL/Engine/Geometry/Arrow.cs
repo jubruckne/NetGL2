@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public class Arrow: IShape<Arrow> {
+public class Arrow: IShape<ArrowShapeGenerator.Options> {
     public readonly Vector3 from;
     public readonly Vector3 to;
 
@@ -14,27 +14,32 @@ public class Arrow: IShape<Arrow> {
         this.length = (from - to).Length;
     }
 
-    public IShapeGenerator generate(int segments) => new ArrowShapeGenerator(this, segments, MathF.Sqrt(length) * 0.03f, MathF.Sqrt(length) * 0.35f, MathF.Sqrt(length) * 0.1f);
-    public IShapeGenerator generate() => generate(12);
+    public IShapeGenerator generate() => new ArrowShapeGenerator(this);
+    public IShapeGenerator generate(ArrowShapeGenerator.Options options) => new ArrowShapeGenerator(this, options);
 
-    public override string ToString() {
-        return $"Arrow[{from} - {to}]";
-    }
+    public override string ToString() => $"Arrow[{from} - {to}]";
 }
 
-public class ArrowShapeGenerator : IShapeGenerator {
-    private readonly Arrow arrow;
-    private readonly float width;
-    private readonly float tip_length;
-    private readonly float tip_width;
-    private readonly int segments;
+public class ArrowShapeGenerator: IShapeGenerator {
+    public record struct Options(int segments, float width, float tip_length, float tip_width);
 
-    public ArrowShapeGenerator(Arrow arrow, int segments, float width, float tip_length, float tip_width) {
+    private readonly Arrow arrow;
+    private readonly Options options;
+
+    internal ArrowShapeGenerator(in Arrow arrow) {
         this.arrow = arrow;
-        this.width = width;
-        this.tip_length = tip_length;
-        this.tip_width = tip_width;
-        this.segments = Math.Max(6, segments);
+
+        options = new Options(
+            16,
+            MathF.Sqrt(arrow.length) * 0.03f,
+            MathF.Sqrt(arrow.length) * 0.35f,
+            MathF.Sqrt(arrow.length) * 0.1f
+        );
+    }
+
+    internal ArrowShapeGenerator(in Arrow arrow, in Options options) {
+        this.arrow = arrow;
+        this.options.segments = Math.Max(6, this.options.segments);
     }
 
     public IEnumerable<Vector3> get_vertices() {
@@ -53,27 +58,27 @@ public class ArrowShapeGenerator : IShapeGenerator {
         binormal.Normalize();
 
         // Shaft base circle
-        for (int i = 0; i < segments; i++) {
-            float angle = MathHelper.TwoPi * i / segments;
-            Vector3 circleVec = (orthogonal * MathF.Cos(angle) + binormal * MathF.Sin(angle)) * width;
+        for (int i = 0; i < options.segments; i++) {
+            float angle = MathHelper.TwoPi * i / options.segments;
+            Vector3 circleVec = (orthogonal * MathF.Cos(angle) + binormal * MathF.Sin(angle)) * options.width;
             Vector3 point = arrow.from + circleVec;
             vertices.Add(point); // Bottom circle of the shaft
         }
 
         // Shaft top circle
-        Vector3 shaftTopCenter = arrow.from + direction * (Vector3.Distance(arrow.from, arrow.to) - tip_length);
-        for (int i = 0; i < segments; i++) {
-            float angle = MathHelper.TwoPi * i / segments;
-            Vector3 circleVec = (orthogonal * MathF.Cos(angle) + binormal * MathF.Sin(angle)) * width;
+        Vector3 shaftTopCenter = arrow.from + direction * (Vector3.Distance(arrow.from, arrow.to) - options.tip_length);
+        for (int i = 0; i < options.segments; i++) {
+            float angle = MathHelper.TwoPi * i / options.segments;
+            Vector3 circleVec = (orthogonal * MathF.Cos(angle) + binormal * MathF.Sin(angle)) * options.width;
             Vector3 point = shaftTopCenter + circleVec;
             vertices.Add(point); // Top circle of the shaft
         }
 
         // Tip base circle
-        Vector3 tipBaseCenter = arrow.to - direction * tip_length;
-        for (int i = 0; i < segments; i++) {
-            float angle = MathHelper.TwoPi * i / segments;
-            Vector3 circleVec = (orthogonal * MathF.Cos(angle) + binormal * MathF.Sin(angle)) * tip_width;
+        Vector3 tipBaseCenter = arrow.to - direction * options.tip_length;
+        for (int i = 0; i < options.segments; i++) {
+            float angle = MathHelper.TwoPi * i / options.segments;
+            Vector3 circleVec = (orthogonal * MathF.Cos(angle) + binormal * MathF.Sin(angle)) * options.tip_width;
             Vector3 point = tipBaseCenter + circleVec;
             vertices.Add(point); // Base circle of the tip
         }
@@ -87,27 +92,27 @@ public class ArrowShapeGenerator : IShapeGenerator {
     public IEnumerable<Vector3i> get_indices() {
         List<Vector3i> indices = new List<Vector3i>();
 
-        var center_point_index = segments * 3 + 2 - 1;
+        var center_point_index = options.segments * 3 + 2 - 1;
 
         // Indices for the bottom cap
-        for (int i = 0; i < segments; i++) {
-            int next = (i + 1) % segments;
+        for (int i = 0; i < options.segments; i++) {
+            int next = (i + 1) % options.segments;
             indices.Add(new Vector3i(1 + next, 1 + i, center_point_index));
         }
 
         // Indices for the shaft
-        for (int i = 0; i < segments; i++) {
-            int next = (i + 1) % segments;
+        for (int i = 0; i < options.segments; i++) {
+            int next = (i + 1) % options.segments;
             // Connect bottom and top circle of the shaft
-            indices.Add(new Vector3i(next, i + segments, i));
-            indices.Add(new Vector3i(next + segments, i + segments, next));
+            indices.Add(new Vector3i(next, i + options.segments, i));
+            indices.Add(new Vector3i(next + options.segments, i + options.segments, next));
         }
 
         // Indices for the tip connection
-        int shaftTopStartIndex = segments; // Start of the top circle of the shaft
-        int tipBaseStartIndex = segments * 2; // Start of the base circle of the tip
-        for (int i = 0; i < segments; i++) {
-            int next = (i + 1) % segments;
+        int shaftTopStartIndex = options.segments; // Start of the top circle of the shaft
+        int tipBaseStartIndex = options.segments * 2; // Start of the base circle of the tip
+        for (int i = 0; i < options.segments; i++) {
+            int next = (i + 1) % options.segments;
             // Connect the top circle of the shaft to the base circle of the tip
             //indices.Add(new Vector3i(shaftTopStartIndex + i, tipBaseStartIndex + i, shaftTopStartIndex + next));
             //indices.Add(new Vector3i(shaftTopStartIndex + next, tipBaseStartIndex + i, tipBaseStartIndex + next));
@@ -116,9 +121,9 @@ public class ArrowShapeGenerator : IShapeGenerator {
         }
 
         // Indices for the tip
-        int tipPointIndex = segments * 3; // Index of the tip point
-        for (int i = 0; i < segments; i++) {
-            int next = (i + 1) % segments;
+        int tipPointIndex = options.segments * 3; // Index of the tip point
+        for (int i = 0; i < options.segments; i++) {
+            int next = (i + 1) % options.segments;
             // Connect the base circle of the tip to the tip point
             indices.Add(new Vector3i(tipBaseStartIndex + i, tipBaseStartIndex + next, tipPointIndex));
         }

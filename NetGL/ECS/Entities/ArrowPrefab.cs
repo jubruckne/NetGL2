@@ -15,7 +15,7 @@ public static class ArrowPrefab {
         if(from == null)
             from = Vector3.Zero;
 
-        var model = Model.from_shape(new Arrow(from.Value, to.Value).generate(16));
+        var model = Model.from_shape(new Arrow(from.Value, to.Value).generate());
 
         if(material == null) material = Material.Chrome;
 

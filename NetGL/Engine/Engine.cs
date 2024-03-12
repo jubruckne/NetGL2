@@ -265,6 +265,7 @@ public class Engine: GameWindow {
         } else cursor_state_last_switch += delta_time;
 
         BackgroundTaskScheduler.process_completed_tasks();
+
         world.update(game_time, delta_time);
     }
 
