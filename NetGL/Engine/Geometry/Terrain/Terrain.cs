@@ -8,7 +8,7 @@ public class Terrain : Entity {
     public readonly Material material;
     public readonly VertexArrayRenderer renderer;
 
-    public const int max_resolution = 10;
+    public const int max_resolution = 8;
     public readonly int chunk_size = 100;
 
     private readonly Grid<TerrainChunk, TerrainChunk.Key> chunks;
@@ -32,64 +32,70 @@ public class Terrain : Entity {
         material = this.add_material(Material.random).material;
         renderer = this.add_vertex_array_renderer();
 
-        var chunk = allocate_chunk_at_world_position(camera.transform.position);
+        var chunk = allocate_chunk_at_world_position(new Vector3(0, 0, 0), 3);
         this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, material));
-        renderer.wireframe = false;
+        renderer.wireframe = true;
         this.add_behavior(_ => update());
     }
 
-    private TerrainChunk allocate_chunk_at_world_position(in Vector3 position) {
-        var chunk = TerrainChunk.Key.from_world_position(this, position);
-        return allocate_chunk(chunk);
+    private TerrainChunk allocate_chunk_at_world_position(in Vector3 position, byte neighbors = 0) {
+        var key = TerrainChunk.Key.from_world_position(this, position);
+        var chunk = chunks.allocate(key);
+
+        for (byte n = 0; n < neighbors; n++) {
+            foreach (var neighbor_chunk in key.neighbors(n)) {
+                if(!chunks.is_allocated(neighbor_chunk))
+                    chunks.allocate(neighbor_chunk);
+            }
+        }
+
+        return chunk;
     }
 
     private TerrainChunk allocate_chunk(TerrainChunk.Key key) {
-        var current_pos = TerrainChunk.Key.to_terrain_position(this, key);
-        var chunk_pos = TerrainChunk.Key.to_terrain_position(this, key);
-        var distance = Vector2.Distance(current_pos, chunk_pos);
+        var current_key = TerrainChunk.Key.from_world_position(this, camera.transform.position);
+        var distance = (int)Math.Sqrt(Math.Pow(key.x - current_key.x, 2) + Math.Pow(key.y - current_key.y, 2));
 
-        Console.WriteLine($"Allocating chunk (key={key}, pos={chunk_pos}, dist={distance})");
+        Console.WriteLine($"Allocating chunk (key={key}, dist={distance})");
 
-        var resolution = 1;
-        var priority = 99;
-
-        if(key.x == 0 && key.y == 0)
-            (priority, resolution) = (0, max_resolution);
-        else if (distance <= chunk_size)
-            (priority, resolution) = (0, max_resolution);
-        //else if (distance <= chunk_size * 2)
-        //    resolution = max_resolution;
-        //else if (distance <= chunk_size * 4)
-        //    resolution = max_resolution / 2;
+        var (priority, resolution) = distance switch {
+            0 => (0, max_resolution),
+            1 => (1, max_resolution / 2),
+            2 => (2, max_resolution / 4),
+            _ => (3 + distance, max_resolution / 8)
+        };
 
         var chunk = new TerrainChunk(this, key);
         chunk.create(resolution, priority);
         return chunk;
     }
 
-    public float get_height_at_world_position(in Vector3 world_position) {
+    private (Vector2 position, float height) get_terrain_position(in Vector3 world_position) {
         var (tp, _) = plane.world_to_point_on_plane(world_position);
-        return noise.sample(tp);
+        return (tp, noise.sample(tp));
     }
 
     private void update() {
         return;
-        var h = get_height_at_world_position(camera.transform.position) + 8f;
-        if (camera.transform.position.Y < h) {
-            camera.transform.position.Y = float.Lerp(camera.transform.position.Y, h, 0.09f);
-        } else if (camera.transform.position.Y > h) {
-            camera.transform.position.Y = float.Lerp(h, camera.transform.position.Y, 0.12f);
+
+        var terrain_height = get_terrain_position(camera.transform.position).height + 8f;
+        if (camera.transform.position.Y < terrain_height) {
+            camera.transform.position.Y = float.Lerp(camera.transform.position.Y, terrain_height, 0.09f);
+        } else if (camera.transform.position.Y > terrain_height) {
+            camera.transform.position.Y = float.Lerp(terrain_height, camera.transform.position.Y, 0.12f);
         }
 
-        var chunk_id = TerrainChunk.Key.from_world_position(this, camera.transform.position);
+        var chunk_key = TerrainChunk.Key.from_world_position(this, camera.transform.position);
 
-        if (chunks.is_allocated(chunk_id)) {
-            Console.WriteLine($"new chunk about to be allocated: {chunk_id}");
-            if (chunks[chunk_id].resolution < max_resolution) {
-                chunks[chunk_id].update(max_resolution);
+        //Console.WriteLine($"Player position={camera.transform.position}, terrain_key={chunk_key}, terrain_pos={TerrainChunk.Key.to_world_position(this, chunk_key, terrain_height - 8f)}");
+        if (chunks.is_allocated(chunk_key)) {
+            if (chunks[chunk_key].resolution < max_resolution) {
+                Console.WriteLine($"requesting new chunk: {chunk_key}, world_pos={camera.transform.position}");
+                //chunks[chunk_key].update(max_resolution);
             }
         } else {
-            chunks.allocate(chunk_id);
+            Console.WriteLine($"requesting new chunk: {chunk_key}, world_pos={camera.transform.position}");
+            //chunks.allocate(chunk_key);
         }
     }
 }
@@ -113,8 +119,6 @@ public sealed class TerrainShapeGenerator : IShapeGenerator {
             pos.X, pos.Y,
             (float)chunk.terrain.chunk_size / pixel_count, (float)chunk.terrain.chunk_size / pixel_count
         );
-
-        Console.WriteLine($"Chunk: xy = {pos.X},{pos.Y}");
 
         for (var x = 0; x < pixel_count + 1; x++) {
             for (var y = 0; y < pixel_count + 1; y++) {

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using OpenTK.Mathematics;
 
 namespace NetGL;
@@ -5,21 +6,36 @@ namespace NetGL;
 
 internal class TerrainChunk : IShape {
     internal readonly record struct Key(short x, short y) {
+        public IEnumerable<Key> neighbors(byte distance = 1) {
+            // Top and bottom horizontal lines
+            for (var dx = -distance; dx <= distance; dx++) {
+                yield return new Key((short)(x + dx), (short)(y + distance)); // Top
+                yield return new Key((short)(x + dx), (short)(y - distance)); // Bottom
+            }
+
+            // Left and right vertical lines, excluding corners which are already added
+            for (var dy = -distance + 1; dy <= distance - 1; dy++) {
+                yield return new Key((short)(x + distance), (short)(y + dy)); // Right
+                yield return new Key((short)(x - distance), (short)(y + dy)); // Left
+            }
+        }
+
         public static Key from_world_position(in Terrain terrain, in Vector3 world_position) {
             var (position, _) = terrain.plane.world_to_point_on_plane(world_position);
-            var x = (short)Math.Floor((position.X + 0.5f) / terrain.chunk_size);
-            var y = (short)Math.Floor((position.Y - 0.5f) / terrain.chunk_size);
+            var x = (short)Math.Floor(position.X / terrain.chunk_size);
+            var y = (short)Math.Floor(position.Y / terrain.chunk_size);
             return new Key(x, y);
         }
 
         public static Vector3 to_world_position(in Terrain terrain, in Key key, float height = 0f) {
-            return terrain.plane.to_world(key.x * terrain.chunk_size, key.y * terrain.chunk_size, height);
+            var p = to_terrain_position(terrain, key);
+            return terrain.plane.to_world(p.X, p.Y, height);
         }
 
         public static Vector2 to_terrain_position(in Terrain terrain, in Key key) {
             return new Vector2(
                 (key.x - 0.5f) * terrain.chunk_size,
-                (key.y + 0.5f) * terrain.chunk_size);
+                (key.y - 0.5f) * terrain.chunk_size);
         }
     }
 
@@ -74,9 +90,12 @@ internal class TerrainChunk : IShape {
         var gen = generate();
         VertexBuffer<Struct<Vector3, Vector3>> vb = new(gen.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
 
-        if (!index_buffer_per_resolution.TryGetValue(resolution, out var ib)) {
-            ib = IndexBuffer.create(gen.get_indices(), vb.count);
-            index_buffer_per_resolution.Add(resolution, ib);
+        IIndexBuffer? ib;
+        lock (index_buffer_per_resolution) {
+            if (!index_buffer_per_resolution.TryGetValue(resolution, out ib)) {
+                ib = IndexBuffer.create(gen.get_indices(), vb.count);
+                index_buffer_per_resolution.Add(resolution, ib);
+            }
         }
 
         return new VertexArrayIndexed(ib, vb);

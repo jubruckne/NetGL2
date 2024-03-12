@@ -127,8 +127,8 @@ public class Engine: GameWindow {
             ).data.direction.set_azimuth_altitude(90, 45);
 
         Entity player = world.create_entity("Player");
-        player.transform.position = (1, +2, 20);
-        player.transform.rotation = Rotation.Forward;
+        player.transform.position = (0, +200, 0);
+        player.transform.rotation = Rotation.Down;
 
         player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:28f, sensitivity:0.75f);
 /*
