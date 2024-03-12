@@ -1,3 +1,4 @@
+using NetGL;
 using OpenTK.Mathematics;
 
 namespace NetGL;
@@ -16,6 +17,11 @@ public class Sphere: IShape<UVSphereGenerator.UVSphere>, IShape<IcoSphereGenerat
     public override string ToString() {
         return $"Sphere[radius:{radius}]";
     }
+}
+
+public static class sp {
+    public static IcoSphereGenerator.IcoSphere IcoSphere(this Sphere sphere, int tesselation = 2) =>
+        new IcoSphereGenerator.IcoSphere(tesselation);
 }
 
 public class IcoSphereGenerator: IShapeGenerator {

@@ -1,6 +1,5 @@
 using OpenTK.Mathematics;
 using Vector3 = OpenTK.Mathematics.Vector3;
-// ReSharper disable All
 
 namespace NetGL;
 

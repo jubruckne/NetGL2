@@ -16,6 +16,11 @@ public class VertexArrayIndexed: VertexArray {
         this.index_buffer = index_buffer;
     }
 
+    public override void bind() {
+        base.bind();
+        index_buffer.bind();
+    }
+
     public override void upload() {
         if (handle == 0)
             handle = GL.GenVertexArray();

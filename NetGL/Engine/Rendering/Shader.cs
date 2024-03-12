@@ -85,7 +85,7 @@ public class Shader: IAssetType<Shader> {
 
         uniform_locations.Clear();
 
-        Console.WriteLine("Uniforms: ");
+        //Console.WriteLine("Uniforms: ");
 
         // Loop over all the uniforms,
         for (var i = 0; i < numberOfUniforms; i++) {
@@ -93,10 +93,10 @@ public class Shader: IAssetType<Shader> {
             var location = GL.GetUniformLocation(handle, key);
             uniform_locations.Add(key, location);
 
-            Console.WriteLine("  " + key + " -> " + location);
+            //Console.WriteLine("  " + key + " -> " + location);
         }
 
-        Console.WriteLine();
+        //Console.WriteLine();
     }
 
     private void compile_from_file(string vertex_program, string fragment_program, string geometry_program="") {

@@ -2,20 +2,40 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-internal class TerrainChunk: IShape {
+
+internal class TerrainChunk : IShape {
+    internal readonly record struct Key(short x, short y) {
+        public static Key from_world_position(in Terrain terrain, in Vector3 world_position) {
+            var (position, _) = terrain.plane.world_to_point_on_plane(world_position);
+            var x = (short)Math.Floor((position.X + 0.5f) / terrain.chunk_size);
+            var y = (short)Math.Floor((position.Y - 0.5f) / terrain.chunk_size);
+            return new Key(x, y);
+        }
+
+        public static Vector3 to_world_position(in Terrain terrain, in Key key, float height = 0f) {
+            return terrain.plane.to_world(key.x * terrain.chunk_size, key.y * terrain.chunk_size, height);
+        }
+
+        public static Vector2 to_terrain_position(in Terrain terrain, in Key key) {
+            return new Vector2(
+                (key.x - 0.5f) * terrain.chunk_size,
+                (key.y + 0.5f) * terrain.chunk_size);
+        }
+    }
+
+    public readonly Key key;
     public readonly Terrain terrain;
 
-    public readonly int x;
-    public readonly int y;
+    public Vector2 center => Key.to_terrain_position(terrain, key);
+
     public int resolution { get; private set; }
     public bool ready { get; private set; }
     public VertexArrayIndexed? vertex_array { get; private set; }
 
     private static readonly Dictionary<int, IIndexBuffer> index_buffer_per_resolution = new ();
 
-    public TerrainChunk(Terrain terrain, int x, int y) {
-        this.x = x;
-        this.y = y;
+    public TerrainChunk(in Terrain terrain, in Key key) {
+        this.key = key;
         this.terrain = terrain;
         this.ready = false;
     }
@@ -29,6 +49,12 @@ internal class TerrainChunk: IShape {
             va.index_buffer.upload();
 
         va.upload();
+
+        if (this.vertex_array != null) {
+            terrain.renderer.vertex_arrays.Remove(this.vertex_array!);
+        }
+
+        terrain.renderer.vertex_arrays.Add(va);
 
         vertex_array = va;
         ready = true;
@@ -63,7 +89,7 @@ internal class TerrainChunk: IShape {
             upload(create());
         } else {
             BackgroundTaskScheduler.schedule<VertexArrayIndexed>(
-                id: $"TerrainChunk.create(pos={x},{y}, res={resolution})",
+                id: $"TerrainChunk.create(pos={key.x},{key.y}, res={resolution})",
                 threaded: create,
                 completed: upload,
                 priority

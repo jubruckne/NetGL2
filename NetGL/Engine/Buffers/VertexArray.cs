@@ -33,7 +33,7 @@ public class VertexArray {
         }
     }
 
-    public void bind() {
+    public virtual void bind() {
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");
 

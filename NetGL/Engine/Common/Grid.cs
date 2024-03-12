@@ -1,12 +1,14 @@
 using System.Collections;
-using System.Diagnostics.Tracing;
 
 namespace NetGL;
 
-public class Grid<T>: IEnumerable<T> where T: class {
-    public delegate T AllocationDelegate(short x, short y);
+public class Grid<TData, TIndex>: IEnumerable<TData>
+    where TData: class
+    where TIndex: IEquatable<TIndex> {
 
-    private readonly Dictionary<int, T> data;
+    public delegate TData AllocationDelegate(TIndex index);
+
+    private readonly Dictionary<TIndex, TData> data;
     private readonly AllocationDelegate on_allocate;
 
     public Grid(AllocationDelegate on_allocate) {
@@ -14,21 +16,21 @@ public class Grid<T>: IEnumerable<T> where T: class {
         this.on_allocate = on_allocate;
     }
 
-    public T allocate(short x, short y) => this[x, y];
+    public TData allocate(TIndex index) => this[index];
 
-    public bool is_allocated(short x, short y) => data.ContainsKey(y << 16 | (x & 0xFFFF));
+    public bool is_allocated(in TIndex index) => data.ContainsKey(index);
 
-    public T this[short x, short y] {
+    public TData this[TIndex index] {
         get {
-            if (data.TryGetValue(y << 16 | (x & 0xFFFF), out var value)) return value;
-            value = on_allocate(y, x);
-            data[y << 16 | (x & 0xFFFF)] = value;
+            if (data.TryGetValue(index, out var value)) return value;
+            value = on_allocate(index);
+            data[index] = value;
 
             return value;
         }
     }
 
     public void clear() => data.Clear();
-    public IEnumerator<T> GetEnumerator() => data.Values.GetEnumerator();
+    public IEnumerator<TData> GetEnumerator() => data.Values.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

@@ -198,7 +198,6 @@ public class Engine: GameWindow {
 */
 
        Entity terrain1 = world.create_terrain(Plane.XZ);
-       terrain1.transform.position = (-10, 0, 0);
 
 
 /*
