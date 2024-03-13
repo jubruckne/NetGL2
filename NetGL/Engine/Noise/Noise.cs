@@ -1,25 +1,40 @@
-using OpenTK.Mathematics;
-
 namespace NetGL;
 
 using Libraries;
+using OpenTK.Mathematics;
 
 internal abstract class Layer {
-    public float amplitude;
+    public readonly float amplitude;
+    public readonly float frequency;
 
-    internal readonly FastNoiseLite generator = new();
+    protected readonly FastNoiseLite generator = new();
+    public delegate float Generation(float x, float y);
+
+    public readonly Generation generate;
 
     protected Layer(int seed, FastNoiseLite.NoiseType type, float frequency, float amplitude) {
         generator.SetSeed(seed);
         generator.SetNoiseType(type);
         generator.SetFrequency(frequency);
         this.amplitude = amplitude;
+        this.frequency = frequency;
+
+        generate = type switch {
+            FastNoiseLite.NoiseType.Perlin => generator.SinglePerlin,
+            FastNoiseLite.NoiseType.OpenSimplex2 => generator.SingleSimplex,
+            FastNoiseLite.NoiseType.OpenSimplex2S => generator.SingleOpenSimplex2S,
+            FastNoiseLite.NoiseType.Cellular => generator.SingleCellular,
+            FastNoiseLite.NoiseType.ValueCubic => generator.SingleValueCubic,
+            FastNoiseLite.NoiseType.Value => generator.SingleValue,
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+        };
     }
 }
 
 file class PerlinLayer: Layer {
-    public PerlinLayer(int seed, float frequency, float amplitude):
-        base(seed - 355875, FastNoiseLite.NoiseType.Perlin, frequency, amplitude) {}
+    public PerlinLayer(int seed, float frequency, float amplitude) :
+        base(seed - 355875, FastNoiseLite.NoiseType.Perlin, frequency, amplitude) {
+    }
 }
 
 file class SimplexLayer: Layer {
@@ -51,7 +66,7 @@ public class Noise {
         float sample = 0;
 
         for(int l = 0; l < layers.Count - 1; l ++) {
-            sample += layers[l].generator.GetNoise(p.X, p.Y) * layers[l].amplitude;
+            sample += layers[l].generate(p.X, p.Y) * layers[l].amplitude;
         }
 
         return sample;
@@ -59,19 +74,22 @@ public class Noise {
 
     public float[,] sample(int width, int height, float offset_x, float offset_y, float stride_x, float stride_y) {
         var samples = new float[width, height];
-
         int x, y;
         float nx, ny;
 
         foreach (var l in layers) {
-            for (var i = 0; i < (width * height); i++) {
+            var frequency = l.frequency;
+            var amplitude = l.amplitude;
+            var gen = l.generate;
+
+            for (var i = 0; i < width * height; i++) {
                 x = i % width;
                 y = i / height;
 
-                nx = offset_x + x * stride_x;
-                ny = offset_y + y * stride_y;
+                nx = (offset_x + x * stride_x) * frequency;
+                ny = (offset_y + y * stride_y) * frequency;
 
-                samples[x, y] += l.generator.GetNoise(nx, ny) * l.amplitude;
+                samples[x, y] += gen(nx, ny) * amplitude;
             }
         }
 

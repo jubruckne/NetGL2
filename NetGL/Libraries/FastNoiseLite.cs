@@ -762,7 +762,7 @@ public class FastNoiseLite
     // Noise Coordinate Transforms (frequency, and possible skew or rotation)
 
     [MethodImpl(INLINE)]
-    private void TransformNoiseCoordinate(ref FNLfloat x, ref FNLfloat y)
+    public void TransformNoiseCoordinate(ref FNLfloat x, ref FNLfloat y)
     {
         x *= mFrequency;
         y *= mFrequency;
@@ -1071,7 +1071,10 @@ public class FastNoiseLite
 
 
     // Simplex/OpenSimplex2 Noise
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float SingleSimplex(FNLfloat x, FNLfloat y) => SingleSimplex(mSeed, x, y);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private float SingleSimplex(int seed, FNLfloat x, FNLfloat y)
     {
         // 2D OpenSimplex2 case uses the same algorithm as ordinary Simplex.
@@ -1237,7 +1240,10 @@ public class FastNoiseLite
 
 
     // OpenSimplex2S Noise
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float SingleOpenSimplex2S(FNLfloat x, FNLfloat y) => SingleOpenSimplex2S(mSeed, x, y);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private float SingleOpenSimplex2S(int seed, FNLfloat x, FNLfloat y)
     {
         // 2D OpenSimplex2S case is a modified 2D simplex noise.
@@ -1562,7 +1568,10 @@ public class FastNoiseLite
 
 
     // Cellular Noise
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float SingleCellular(FNLfloat x, FNLfloat y) => SingleCellular(mSeed, x, y);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private float SingleCellular(int seed, FNLfloat x, FNLfloat y)
     {
         int xr = FastRound(x);
@@ -1847,7 +1856,10 @@ public class FastNoiseLite
 
 
     // Perlin Noise
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float SinglePerlin(FNLfloat x, FNLfloat y) => SinglePerlin(mSeed, x, y);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private float SinglePerlin(int seed, FNLfloat x, FNLfloat y)
     {
         int x0 = FastFloor(x);
@@ -1909,7 +1921,10 @@ public class FastNoiseLite
 
 
     // Value Cubic Noise
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float SingleValueCubic(FNLfloat x, FNLfloat y) => SingleValueCubic(mSeed, x, y);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private float SingleValueCubic(int seed, FNLfloat x, FNLfloat y)
     {
         int x1 = FastFloor(x);
@@ -1994,7 +2009,10 @@ public class FastNoiseLite
 
 
     // Value Noise
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float SingleValue(FNLfloat x, FNLfloat y) => SingleValue(mSeed, x, y);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private float SingleValue(int seed, FNLfloat x, FNLfloat y)
     {
         int x0 = FastFloor(x);

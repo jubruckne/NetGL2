@@ -13,4 +13,9 @@ public static class ListExt {
 
         return String.Join(", ", str);
     }
+
+    public static IEnumerable<T> where<T>(this IEnumerable<T> list, Predicate<T> condition) {
+        foreach(var item in list)
+            if(condition(item)) yield return item;
+    }
 }

@@ -127,8 +127,8 @@ public class Engine: GameWindow {
             ).data.direction.set_azimuth_altitude(90, 45);
 
         Entity player = world.create_entity("Player");
-        player.transform.position = (0, +200, 0);
-        player.transform.rotation = Rotation.Down;
+        player.transform.position = (0, 8, 0);
+        player.transform.rotation = Rotation.Forward;
 
         player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:28f, sensitivity:0.75f);
 /*
@@ -205,21 +205,21 @@ public class Engine: GameWindow {
 
         entd.transform.position = (-4, -4, 0);
         entd.transform.rotation.yaw_pitch_roll = (-120, -5f, 2.5f);
-
+*/
         var con = new Predicate<Entity>(entity => entity.transform.position.Y < -2.75f);
         var beh = new Action<Entity>(entity => {
-            entity.transform.position.randomize(-2.5f, 2.5f).add(x: -1.5f, y: 16, 5.5f);
+            entity.transform.position.randomize(-2.5f, 2.5f).add(x: 0, y: 16, -15);
             entity.get<Component<RigidBody>>().data.LinearVelocity = Vector3.Zero;
         });
 
         foreach (var b in Enumerable.Range(1, 35)) {
-            Entity cube = world.create_sphere_uv($"Sphere{b}", radius:0.20f, material:Material.random);
-            cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, 5.5f + Random.Shared.NextSingle() * 20f);
+            Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.35f, material:Material.random);
+            cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, -15f + Random.Shared.NextSingle() * 5.9f);
 
-            cube.add_rigid_body(radius:0.20f, mass:1f);
+            cube.add_rigid_body(radius:1.20f, mass:1f);
             cube.add_behavior(con, beh);
         }
-*/
+
         GL.Enable(EnableCap.ProgramPointSize);
 
         AssetManager.load_all_files<Script>();
@@ -298,6 +298,9 @@ public class Engine: GameWindow {
 
         BackgroundTaskScheduler.process_scheduled_tasks();
 
+        //GC.Collect(0, GCCollectionMode.Default, false);
+
+        if(frame % 100 == 0) Garbage.log();
         SwapBuffers();
     }
 

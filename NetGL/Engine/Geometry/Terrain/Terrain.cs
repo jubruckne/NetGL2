@@ -3,13 +3,13 @@ namespace NetGL;
 using ECS;
 using OpenTK.Mathematics;
 
-public class Terrain : Entity {
+public class Terrain: Entity {
     public readonly Plane plane;
     public readonly Material material;
     public readonly VertexArrayRenderer renderer;
 
-    public const int max_resolution = 8;
-    public readonly int chunk_size = 100;
+    public const int max_resolution = 96;
+    public readonly int chunk_size = 96;
 
     private readonly Grid<TerrainChunk, TerrainChunk.Key> chunks;
     private readonly Camera camera;
@@ -32,9 +32,9 @@ public class Terrain : Entity {
         material = this.add_material(Material.random).material;
         renderer = this.add_vertex_array_renderer();
 
-        var chunk = allocate_chunk_at_world_position(new Vector3(0, 0, 0), 3);
+        var chunk = allocate_chunk_at_world_position(new Vector3(0, 0, 0), 12);
         this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, material));
-        renderer.wireframe = true;
+        renderer.wireframe = false;
         this.add_behavior(_ => update());
     }
 
@@ -62,7 +62,9 @@ public class Terrain : Entity {
             0 => (0, max_resolution),
             1 => (1, max_resolution / 2),
             2 => (2, max_resolution / 4),
-            _ => (3 + distance, max_resolution / 8)
+            3 => (3, max_resolution / 16),
+            4 => (4, max_resolution / 32),
+            _ => (6 + distance, max_resolution / 32)
         };
 
         var chunk = new TerrainChunk(this, key);
@@ -108,7 +110,8 @@ public sealed class TerrainShapeGenerator : IShapeGenerator {
     internal TerrainShapeGenerator(TerrainChunk chunk) {
         this.chunk = chunk;
         this.plane = chunk.terrain.plane;
-        this.pixel_count = chunk.terrain.chunk_size * chunk.resolution;
+        this.pixel_count = chunk.terrain.chunk_size * chunk.resolution / 16;
+        Console.WriteLine($"res={chunk.resolution}, size={pixel_count} x {pixel_count}");
     }
 
     public IEnumerable<Vector3> get_vertices() {

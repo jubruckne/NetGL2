@@ -1,3 +1,4 @@
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
@@ -12,6 +13,15 @@ public static class Error {
             this.code = code;
         }
     }
+
+    public static void already_disposed<T>(T obj) =>
+        throw new ObjectDisposedException(typeof(T).Name, "Object is already free!");
+
+    public static void index_out_of_range(string parameter, int index) =>
+        throw new IndexOutOfRangeException($"Index out of range: {parameter}:{index}!");
+
+    public static void index_out_of_range(int index) =>
+        throw new IndexOutOfRangeException($"Index out of range: {index}!");
 
     public class WrongContextException : Exception {
         public WrongContextException(string expected, string current) : base(0, $"{expected} is not current! (current: {current})") {

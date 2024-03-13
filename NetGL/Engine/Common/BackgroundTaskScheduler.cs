@@ -65,15 +65,15 @@ public static class BackgroundTaskScheduler {
         scheduled_tasks.Sort((x, y) => x.priority - y.priority);
 
         while(running_tasks.Count <= 4 && scheduled_tasks.pop(out var task)) {
-            Console.WriteLine($"Starting thread for {task}");
+            //Console.WriteLine($"task: {task} started.");
             running_tasks.Add(task);
 
             task.worker = new(task.invoke_threaded);
 
             task.worker.Priority = task.priority switch {
-                0 => ThreadPriority.Highest,
-                1 => ThreadPriority.Normal,
-                2 => ThreadPriority.BelowNormal,
+                0 => ThreadPriority.Normal,
+                1 => ThreadPriority.BelowNormal,
+                2 => ThreadPriority.Lowest,
                 _ => ThreadPriority.Lowest
             };
 
@@ -83,6 +83,8 @@ public static class BackgroundTaskScheduler {
 
     internal static void process_completed_tasks() {
         if (running_tasks.pop(t => !t.worker!.IsAlive, out var task)) {
+            //Console.WriteLine($"task: {task} completed.");
+
             completed_tasks.Add(task);
             task.invoke_completed();
             task.worker = null;
