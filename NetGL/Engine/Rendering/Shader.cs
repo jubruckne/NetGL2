@@ -249,9 +249,4 @@ public class Shader: IAssetType<Shader> {
 
         return false;
     }
-
-    public void unbind() {
-        Shader.current_shader = null;
-        GL.UseProgram(0);
-    }
 }

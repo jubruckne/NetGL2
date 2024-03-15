@@ -7,7 +7,7 @@ internal abstract class Layer {
     public readonly float amplitude;
     public readonly float frequency;
 
-    protected readonly FastNoiseLite generator = new();
+    private readonly FastNoiseLite generator = new();
     public delegate float Generation(float x, float y);
 
     public readonly Generation generate;

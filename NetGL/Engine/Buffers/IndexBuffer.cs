@@ -31,16 +31,15 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
         short => short.MaxValue,
         int => int.MaxValue,
         uint => int.MaxValue,
-        _ => throw new ArgumentOutOfRangeException(nameof(T), $"Unecpected type {typeof(T).Name}!")
+        _ => throw new ArgumentOutOfRangeException(nameof(T), $"Unexpected type {typeof(T).Name}!")
     };
 
-    internal IndexBuffer(int triangle_count)
+    internal IndexBuffer(int triangle_count = 0)
         : base(BufferTarget.ElementArrayBuffer, triangle_count * 3) {
     }
 
-    internal IndexBuffer(in T[] items)
-        : this(items.Length)
-        => buffer = items;
+    internal IndexBuffer(in T[] items) : base(BufferTarget.ElementArrayBuffer, items) {
+    }
 
     public static IndexBuffer<T> make(in byte[] items) {
         if (T.Zero is byte)
@@ -123,19 +122,8 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
     public PrimitiveType primitive_type => PrimitiveType.Triangles;
 
     public void reverse_winding() {
-        for (var index = 0; index < buffer.Length; index += 3) {
+        for (var index = 0; index < buffer.length; index += 3) {
             (buffer[index], buffer[index + 2]) = (buffer[index + 2], buffer[index]);
         }
-    }
-
-    public void append_triangle(T bottom_left, T bottom_right, T top) {
-        append([bottom_left, bottom_right, top]);
-    }
-
-    public void append_quad(T bottom_left, T bottom_right, T top_right, T top_left) {
-        append([
-            bottom_left, bottom_right, top_left,
-            top_left, bottom_right, top_right
-        ]);
     }
 }

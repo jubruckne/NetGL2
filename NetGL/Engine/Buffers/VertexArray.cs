@@ -2,7 +2,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
 
-public class VertexArray {
+public class VertexArray: IBindable {
     protected int handle;
 
     public readonly PrimitiveType primitive_type;
@@ -38,13 +38,6 @@ public class VertexArray {
             throw new NotSupportedException("no handle has been allocated yet!");
 
         GL.BindVertexArray(handle);
-    }
-
-    public void unbind() {        
-        if (handle == 0)
-            throw new NotSupportedException("no handle has been allocated yet!");
-
-        GL.BindVertexArray(0);
     }
 
     public virtual void upload() {
@@ -85,7 +78,6 @@ public class VertexArray {
         foreach (var buffer in vertex_buffers) {
             buffer.bind();
             GL.DrawArrays(primitive_type, 0, buffer.count);
-            buffer.unbind();
         }
     }
 

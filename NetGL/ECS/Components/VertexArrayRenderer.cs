@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -35,8 +34,7 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
         shader.set_camera_position(camera_pos);
 
         if (entity.try_get<MaterialComponent>(out var mat)) {
-            if (mat!.material.ambient_texture != null)
-                mat.material.ambient_texture.bind();
+            mat.material.ambient_texture?.bind();
             shader.set_material(mat!.material);
         }
 
@@ -64,17 +62,8 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
             GL.Disable(EnableCap.Blend);
         }
 
-        if (wireframe) {
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
-        } else {
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-        }
-
-        if (front_facing) {
-            GL.FrontFace(FrontFaceDirection.Ccw);
-        } else {
-            GL.FrontFace(FrontFaceDirection.Cw);
-        }
+        GL.PolygonMode(MaterialFace.FrontAndBack, wireframe ? PolygonMode.Line : PolygonMode.Fill);
+        GL.FrontFace(front_facing ? FrontFaceDirection.Ccw : FrontFaceDirection.Cw);
 
         foreach (var va in vertex_arrays) {
             va.bind();

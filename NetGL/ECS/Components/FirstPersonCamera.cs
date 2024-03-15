@@ -98,7 +98,7 @@ public static class FirstPersonCameraExt {
         float field_of_view = 60f,
         float? aspect_ratio = null,
         float near = 0.01f,
-        float far = 1000f,
+        float far = 10000f,
         KeyboardState? keyboard_state = null,
         MouseState? mouse_state = null,
         bool? enable_input = true,

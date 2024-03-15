@@ -29,11 +29,4 @@ public abstract class TextureBuffer: Buffer {
 
         GL.BindTexture(target, handle);
     }
-
-    public override void unbind() {
-        if (handle == 0)
-            throw new NotSupportedException("no handle has been allocated yet!");
-
-        GL.BindTexture(target, 0);
-    }
 }

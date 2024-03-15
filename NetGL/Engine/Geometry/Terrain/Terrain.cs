@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace NetGL;
 
 using ECS;
@@ -9,7 +11,7 @@ public class Terrain: Entity {
     public readonly VertexArrayRenderer renderer;
 
     public const int max_resolution = 96;
-    public readonly int chunk_size = 96;
+    public readonly int chunk_size = 128;
 
     private readonly Grid<TerrainChunk, TerrainChunk.Key> chunks;
     private readonly Camera camera;
@@ -32,7 +34,7 @@ public class Terrain: Entity {
         material = this.add_material(Material.random).material;
         renderer = this.add_vertex_array_renderer();
 
-        var chunk = allocate_chunk_at_world_position(new Vector3(0, 0, 0), 12);
+        var chunk = allocate_chunk_at_world_position(new Vector3(0, 0, 0), 10);
         this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, material));
         renderer.wireframe = false;
         this.add_behavior(_ => update());
@@ -102,7 +104,7 @@ public class Terrain: Entity {
     }
 }
 
-public sealed class TerrainShapeGenerator : IShapeGenerator {
+public sealed class TerrainShapeGenerator : IShapeGenerator, IShapeGenerator2 {
     private readonly TerrainChunk chunk;
     private readonly Plane plane;
     private readonly int pixel_count;
@@ -112,6 +114,70 @@ public sealed class TerrainShapeGenerator : IShapeGenerator {
         this.plane = chunk.terrain.plane;
         this.pixel_count = chunk.terrain.chunk_size * chunk.resolution / 16;
         Console.WriteLine($"res={chunk.resolution}, size={pixel_count} x {pixel_count}");
+    }
+
+    public int get_vertex_count() => (pixel_count + 1) * (pixel_count + 1);
+    public int get_index_count() => pixel_count * pixel_count * 3;
+
+    public (VertexBuffer.Position_Normal<Vector3, Vector3> vb, IndexBuffer<T> ib) create<T>() where T: unmanaged, IBinaryInteger<T> {
+        var vb = new VertexBuffer.Position_Normal<Vector3h, Vector3>(get_vertex_count());
+        var ib = new IndexBuffer<T>(get_index_count());
+
+
+
+        var positions = vb.positions;
+
+        var ffd = positions;
+        var nur = ffd.as_numbers<System.Half>().translate_to<double>();
+
+        var vvv = nur[0];
+
+
+
+
+        var v = positions.view_as<float>().translate_to<float, System.Half>();
+        v[1] = 23;
+        var s = v.translate_to<float, System.Half>();
+        var xxx = s[0];
+
+
+        var center = chunk.center;
+
+        var n = chunk.terrain.noise.sample(
+            pixel_count + 1, pixel_count + 1,
+            center.X, center.Y,
+            (float)chunk.terrain.chunk_size / pixel_count, (float)chunk.terrain.chunk_size / pixel_count
+        );
+
+        int index = 0;
+        for (var x = 0; x < pixel_count + 1; x++) {
+            for (var y = 0; y < pixel_count + 1; y++) {
+                positions[index] = plane.to_world(
+                    center.X + chunk.terrain.chunk_size * (float)x / pixel_count,
+                    center.Y + chunk.terrain.chunk_size * (float)y / pixel_count,
+                    n[x, y]
+                );
+
+                if (x > 0 && y > 0) {
+                    var bottom_left = y - 1 + (x - 1) * (pixel_count + 1);
+                    var bottom_right = y - 1 + x * (pixel_count + 1);
+                    var top_left = y + (x - 1) * (pixel_count + 1);
+                    var top_right = y + x * (pixel_count + 1);
+
+                    ib[index * 6] = bottom_left;
+                    ib[index * 6 + 1] = bottom_right;
+                    ib[index * 6 + 2] = top_left;
+
+                    ib[index * 6 + 3] = top_left;
+                    ib[index * 6 + 4] = bottom_right;
+                    ib[index * 6 + 5] = top_right;
+                }
+
+                ++index;
+            }
+        }
+
+        return (vb, ib);
     }
 
     public IEnumerable<Vector3> get_vertices() {

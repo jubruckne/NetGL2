@@ -1,5 +1,9 @@
-namespace NetGL;
+using System.Numerics;
+using Assimp;
+using BulletSharp;
+using MemoryHelper = Jitter2.UnmanagedMemory.MemoryHelper;
 
+namespace NetGL;
 /*
  MIT License
 
@@ -22,7 +26,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
  */
 
 using System;
@@ -39,16 +42,12 @@ using System.Runtime.CompilerServices;
 /// <typeparam name="T">type of array</typeparam>
 [DebuggerTypeProxy(typeof(NativeArrayDebuggerTypeProxy<>))]
 [DebuggerDisplay("NativeArray<{typeof(T).Name}>[{length}]")]
-public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmanaged {
+public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: unmanaged {
     public int rows { get; private set; }
     public int columns { get; private set; }
     public int length { get; private set; }
 
-    private IntPtr array;
-
-    /// <summary>Get pointer address of this array.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IntPtr get_pointer() => array;
+    private nint array;
 
     /// <summary>Get the specific item of specific index.</summary>
     /// <param name="i">index</param>
@@ -71,6 +70,43 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T :
         set => get_reference(row * columns + col) = value;
     }
 
+    public NativeView.Numbers<TNumber> as_number<TNumber>() where TNumber: unmanaged, INumberBase<TNumber> {
+        return new(
+            array,
+            sizeof(TNumber),
+            length,
+            sizeof(T) * length
+        );
+    }
+
+    public NativeView.Structs<TElement> as_struct<TElement>() where TElement: unmanaged {
+        return new(
+            array,
+            sizeof(TElement),
+            length,
+            sizeof(T) * length
+        );
+    }
+
+    public NativeView.Structs<TElement> as_struct<TElement>(nint offset) where TElement: unmanaged {
+        if (offset > sizeof(T)) Error.index_out_of_range(nameof(offset), offset);
+        return new(
+            array + offset,
+            sizeof(T),
+            length,
+            sizeof(T) * length
+        );
+    }
+
+    public NativeView.Structs<TElement> as_struct<TElement>(string field) where TElement: unmanaged {
+        return new(
+            array + Marshal.OffsetOf<T>(field),
+            sizeof(T),
+            length,
+            sizeof(T) * length
+        );
+    }
+
     /// <summary>Create new <see cref="NativeArray{T}"/></summary>
     /// <param name="columns">number of columns</param>
     /// <param name="rows">number of rows</param>
@@ -89,7 +125,8 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T :
         if(bytes < 0) {
             Error.index_out_of_range(nameof(T), bytes);
         }
-        this.array = Marshal.AllocHGlobal(bytes);
+        this.array = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes, 16);
+
         this.length = length;
         this.rows = length;
         this.columns = 1;
@@ -97,19 +134,46 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T :
 
     /// <summary>Create new <see cref="NativeArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>
     /// <param name="span">Elements of the <see cref="NativeArray{T}"/> are initialized by this <see cref="ReadOnlySpan{T}"/>.</param>
-    public NativeArray(ReadOnlySpan<T> span) {
-        var bytes = span.Length * sizeof(T);
-        if(bytes == 0) { return; }
-        this.array = Marshal.AllocHGlobal(bytes);
-        this.length = span.Length;
+    public NativeArray(ReadOnlySpan<T> span): this(span.Length) {
         span.CopyTo(new Span<T>((void*)array, length));
     }
 
+    public void resize(int new_length) {
+        if (new_length == length) return;
+
+        if(new_length < 0 || new_length < length) {
+            Error.index_out_of_range(nameof(length), length);
+        }
+
+        var obj_size = sizeof(T);
+        var bytes_old = length * obj_size;
+        var bytes_new = new_length * obj_size;
+
+        if(bytes_old < 0) {
+            Error.index_out_of_range(nameof(T), bytes_old);
+        }
+
+        var new_array = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes_new, 16);
+
+        System.Buffer.MemoryCopy((void*)array, (void*)new_array, bytes_new, bytes_old);
+
+        clear();
+
+        this.array = new_array;
+        this.length = new_length;
+        this.rows = length;
+        this.columns = 1;
+    }
+
     /// <summary>Finalizer of <see cref="NativeArray{T}"/></summary>
-    ~NativeArray() => Dispose(false);
+    ~NativeArray() => clear();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool is_disposed() => array == IntPtr.Zero;
+
+    /// <summary>Get pointer address of this array.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public nint get_pointer() => array;
 
     /// <summary>Get reference to head item (Returns ref to null if empty)</summary>
     /// <returns>reference to head item</returns>
@@ -150,6 +214,13 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T :
         if(is_disposed()) Error.already_disposed(this);
         // Avoid boxing by using class enumerator.
         return new EnumeratorClass(this);
+    }
+
+    public void insert(in T[] items, int at = 0) {
+        if (at < 0)
+            Error.index_out_of_range("at", at);
+
+        items.CopyTo(as_span(at));
     }
 
     /// <summary>Copy to managed memory</summary>
@@ -254,14 +325,14 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T :
     /// If already disposed, do nothing.<para/>
     /// </summary>
     public void Dispose() {
-        Dispose(true);
         GC.SuppressFinalize(this);
+        clear();
     }
 
-    private void Dispose(bool disposing) {
-        if(this.array == IntPtr.Zero) { return; }
-        Marshal.FreeHGlobal(this.array);
-        this.array = IntPtr.Zero;
+    private void clear() {
+        if(this.array == 0) return;
+        NativeMemory.AlignedFree((void*)array);
+        this.array = 0;
         this.length = 0;
     }
 

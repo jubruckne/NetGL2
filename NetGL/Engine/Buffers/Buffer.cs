@@ -3,14 +3,16 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
 
-public interface IBuffer {
+public interface IBindable {
+    void bind();
+}
+
+public interface IBuffer: IBindable {
     int count { get; }
     int item_size{ get; }
     Type item_type { get; }
     int size { get; }
     void upload();
-    void bind();
-    void unbind();
     Buffer.Status status { get; }
 }
 
@@ -29,7 +31,6 @@ public abstract class Buffer: IBuffer {
 
     public abstract void upload();
     public abstract void bind();
-    public abstract void unbind();
 
     public Status status {
         get;
@@ -37,27 +38,35 @@ public abstract class Buffer: IBuffer {
     }
 }
 
-public abstract class Buffer<T>: Buffer where T: struct {
-    protected T[] buffer;
+public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
+    protected readonly NativeArray<T> buffer;
     private readonly BufferTarget target;
     private int handle;
-    
-    protected Buffer(): this(BufferTarget.ArrayBuffer, 0) { }
+
+    ~Buffer() {
+        buffer.Dispose();
+    }
+
+    protected Buffer(BufferTarget target, in T[] items) {
+        this.target = target;
+        this.handle = 0;
+        buffer = new NativeArray<T>(items);
+    }
     
     protected Buffer(BufferTarget target, int count = 0) {
         this.target = target;
         this.handle = 0;
-        buffer = new T[count];
+        buffer = new NativeArray<T>(count);
     }
 
     public override Type item_type => typeof(T);
     
     public ref T this[int index] {
         get {
-            if (index < 0 || index >= buffer.Length)
+            if (index < 0 || index >= buffer.length)
                 throw new IndexOutOfRangeException($"Index out of range: {index}!");
 
-            return ref buffer[index];
+            return ref buffer.get_reference(index);
         }
     }
     
@@ -65,32 +74,23 @@ public abstract class Buffer<T>: Buffer where T: struct {
         if (new_size < 0)
             throw new ArgumentOutOfRangeException(nameof(new_size));
 
-        if (new_size == buffer.Length)
+        if (new_size == buffer.length)
             return;
 
-        Console.WriteLine($"Buffer.resize: {buffer.Length} -> {new_size}");
-        
-        var resized = new T[new_size];
-        Array.Copy(buffer, resized, Math.Min(buffer.Length, new_size));
+        Console.WriteLine($"Buffer.resize: {buffer.length} -> {new_size}");
 
-        buffer = resized;
+        buffer.resize(new_size);
     }
 
     public void insert(int index, in T[] items) {
-        if (index < 0)
-            throw new ArgumentOutOfRangeException(nameof(index));
-
-        if (index + items.Length > buffer.Length)
-            throw new ArgumentOutOfRangeException(nameof(index));
-
-        items.CopyTo(buffer, index);
+        buffer.insert(items, index);
     }
 
     public void insert(int index, in T item) {
         if (index < 0)
             throw new ArgumentOutOfRangeException(nameof(index));
 
-        if (index + 1 > buffer.Length)
+        if (index + 1 > buffer.length)
             throw new ArgumentOutOfRangeException(nameof(index));
 
         buffer[index] = item;
@@ -98,22 +98,21 @@ public abstract class Buffer<T>: Buffer where T: struct {
 
 
     public int append(in T[] items) {
-        var position = buffer.Length;
-        resize(buffer.Length + items.Length);
+        var position = buffer.length;
+        resize(buffer.length + items.Length);
         insert(position, items);
         return position;
     }
 
     public int append(in T item) {
-        int position = buffer.Length;
-        resize(buffer.Length + 1);
+        int position = buffer.length;
+        resize(buffer.length + 1);
         insert(position, item);
         return position;
     }
 
-    
     public override int count { 
-        get => buffer.Length;
+        get => buffer.length;
     }
 
     public override int item_size { get => Marshal.SizeOf(new T()); }
@@ -128,24 +127,20 @@ public abstract class Buffer<T>: Buffer where T: struct {
         GL.BindBuffer(target, handle);
     }
 
-    public override void unbind() {
-        // Console.WriteLine("Buffer.unbind()");
-        
-        if (handle == 0)
-            throw new NotSupportedException("no handle has been allocated yet!");
-
-        GL.BindBuffer(target, 0);
-    }
-
     public override void upload() {
         if (handle == 0) {
             handle = GL.GenBuffer();
         }
 
         GL.BindBuffer(target, handle);
-        GL.BufferData(target, buffer.Length * item_size, buffer, BufferUsageHint.StaticDraw);
+        GL.BufferData(target, buffer.length * item_size, buffer.get_pointer(), BufferUsageHint.StaticDraw);
         GL.BindBuffer(target, 0);
 
         status = Status.Uploaded;
+    }
+
+    public void Dispose() {
+        buffer.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

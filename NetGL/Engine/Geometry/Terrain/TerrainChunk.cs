@@ -1,10 +1,9 @@
-using System.Diagnostics;
+using NetGL.Debug;
 using OpenTK.Mathematics;
 
 namespace NetGL;
 
-
-internal class TerrainChunk : IShape {
+internal sealed class TerrainChunk : IShape {
     internal readonly record struct Key(short x, short y) {
         public IEnumerable<Key> neighbors(byte distance = 1) {
             // Top and bottom horizontal lines
@@ -87,16 +86,32 @@ internal class TerrainChunk : IShape {
     }
 
     private VertexArrayIndexed create() {
-        var gen = generate();
-        VertexBuffer<Struct<Vector3, Vector3>> vb = new(gen.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
+        Console.WriteLine("before create: "); Garbage.log();
 
-        IIndexBuffer? ib;
+        var gen = generate() as IShapeGenerator2;
+        Console.WriteLine("shape gen: "); Garbage.log();
+
+
+        VertexBuffer.Position_Normal<Vector3, Vector3> vb = new(); //.get_vertex_count()); //.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
+        IndexBuffer<int> ib = new();
+
+        gen.fill(vb.normals, vb.positions, ib.indices);
+
+
+        /*
         lock (index_buffer_per_resolution) {
             if (!index_buffer_per_resolution.TryGetValue(resolution, out ib)) {
                 ib = IndexBuffer.create(gen.get_indices(), vb.count);
                 index_buffer_per_resolution.Add(resolution, ib);
             }
         }
+*/
+        Console.WriteLine("vertex buffer gen: "); Garbage.log();
+
+
+
+        Console.WriteLine("index buffer gen: "); Garbage.log();
+
 
         return new VertexArrayIndexed(ib, vb);
     }

@@ -17,10 +17,10 @@ public static class Error {
     public static void already_disposed<T>(T obj) =>
         throw new ObjectDisposedException(typeof(T).Name, "Object is already free!");
 
-    public static void index_out_of_range(string parameter, int index) =>
+    public static void index_out_of_range<T>(string parameter, T index) =>
         throw new IndexOutOfRangeException($"Index out of range: {parameter}:{index}!");
 
-    public static void index_out_of_range(int index) =>
+    public static void index_out_of_range<T>(T index) =>
         throw new IndexOutOfRangeException($"Index out of range: {index}!");
 
     public class WrongContextException : Exception {

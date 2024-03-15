@@ -9,7 +9,7 @@ public abstract class VertexAttribute {
     public abstract Type type_of { get; }
     public abstract int size_of { get; }
     public string name {get; }
-    public int offset { get; internal set;  }
+    public nint offset { get; internal set;  }
     public int location { get; internal set; }
     public int count { get; }
     public VertexAttribPointerType pointer_type { get; }
@@ -48,6 +48,11 @@ public abstract class VertexAttribute {
 public class VertexAttribute<T>: VertexAttribute {
     public override Type type_of => typeof(T);
     public override int size_of => Marshal.SizeOf<T>();
+
+    public new static VertexAttribute<T> Position =>
+        new (name:"position", count: 3, pointer_type: VertexAttribPointerType.Float);
+    public new static VertexAttribute<T> Normal =>
+        new (name:"normal", count: 3, pointer_type: VertexAttribPointerType.Float);
 
     public override VertexAttribute copy() {
         var a = new VertexAttribute<T>(name, count, pointer_type, normalized) {

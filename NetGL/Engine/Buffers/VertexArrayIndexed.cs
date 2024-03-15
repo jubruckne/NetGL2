@@ -33,8 +33,6 @@ public class VertexArrayIndexed: VertexArray {
 
         GL.BindVertexArray(0);
 
-        index_buffer.unbind();
-
         //Console.WriteLine();
     }
 
