@@ -1,7 +1,6 @@
-using NetGL.Debug;
-using OpenTK.Mathematics;
-
 namespace NetGL;
+
+using OpenTK.Mathematics;
 
 internal sealed class TerrainChunk : IShape {
     internal readonly record struct Key(short x, short y) {
@@ -56,6 +55,8 @@ internal sealed class TerrainChunk : IShape {
     }
 
     private void upload(VertexArrayIndexed va) {
+        //Garbage.measure_begin();
+
         foreach(var b in va.vertex_buffers)
             if (b.status != Buffer.Status.Uploaded)
                 b.upload();
@@ -73,6 +74,8 @@ internal sealed class TerrainChunk : IShape {
 
         vertex_array = va;
         ready = true;
+
+        //Garbage.measure("VertexArrayIndexed.upload");
     }
 
     public void update(int new_resolution) {
@@ -86,32 +89,22 @@ internal sealed class TerrainChunk : IShape {
     }
 
     private VertexArrayIndexed create() {
-        Console.WriteLine("before create: "); Garbage.log();
+        // Garbage.measure_begin();
 
-        var gen = generate() as IShapeGenerator2;
-        Console.WriteLine("shape gen: "); Garbage.log();
+        var gen = generate();
+        VertexBuffer<Struct<Vector3, Vector3>> vb = new(gen.get_vertices_and_normals(), VertexAttribute.Position,
+            VertexAttribute.Normal);
 
+        IIndexBuffer? ib;
 
-        VertexBuffer.Position_Normal<Vector3, Vector3> vb = new(); //.get_vertex_count()); //.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
-        IndexBuffer<int> ib = new();
-
-        gen.fill(vb.normals, vb.positions, ib.indices);
-
-
-        /*
         lock (index_buffer_per_resolution) {
             if (!index_buffer_per_resolution.TryGetValue(resolution, out ib)) {
                 ib = IndexBuffer.create(gen.get_indices(), vb.count);
                 index_buffer_per_resolution.Add(resolution, ib);
             }
         }
-*/
-        Console.WriteLine("vertex buffer gen: "); Garbage.log();
 
-
-
-        Console.WriteLine("index buffer gen: "); Garbage.log();
-
+        // Garbage.measure("VertexArrayIndexed.create");
 
         return new VertexArrayIndexed(ib, vb);
     }

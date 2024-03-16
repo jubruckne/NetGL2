@@ -1,8 +1,14 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 using System.Text;
 using OpenTK.Mathematics;
+using Half = System.Half;
+using Vector3 = OpenTK.Mathematics.Vector3;
 
 namespace NetGL;
 
@@ -23,6 +29,10 @@ public static class TypeExtensions {
                    + $"<{genericArguments}>";
         }
         return type.Name;
+    }
+
+    public static unsafe int size_of<T>(this T integer) where T : unmanaged, INumberBase<T> {
+        return sizeof(T);
     }
 }
 
@@ -174,6 +184,129 @@ public static class AngleExt {
 }
 
 public static class ArrayExt {
+    public static bool is_float<T>(in T t) where T: unmanaged {
+        return t is float or double or OpenTK.Mathematics.Half or Half;
+    }
+
+    public static bool is_integer<T>(in T t) where T: unmanaged {
+        return t is int or uint or short or ushort or byte or long or ulong or nint or nuint;
+    }
+
+    public static unsafe bool can_reinterpret<TIn, TOut>() where TIn: unmanaged, INumberBase<TIn> where TOut: unmanaged, INumberBase<TOut> {
+        if (is_float(TIn.One) && is_float(TOut.One)) return true;
+        if (is_integer(TIn.One) && is_integer(TOut.One)) return true;
+        return sizeof(TIn) == sizeof(TOut);
+    }
+
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<int> span) where TOut: unmanaged, INumberBase<TOut> {
+        var output = new TOut[span.Length];
+
+        for (var i = 0; i < span.Length; i++)
+            output[i] = TOut.CreateChecked(span[i]);
+
+        return output;
+    }
+
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<ushort> span) where TOut: unmanaged, INumberBase<TOut> {
+        var output = new TOut[span.Length];
+
+        for (var i = 0; i < span.Length; i++)
+            output[i] = TOut.CreateChecked(span[i]);
+
+        return output;
+    }
+
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<Vector3i> span) where TOut: unmanaged, INumberBase<TOut> {
+        var output = new TOut[span.Length * 3];
+
+        for (var i = 0; i < span.Length; i++) {
+            output[i * 3] = TOut.CreateChecked(span[i].X);
+            output[i * 3 + 1] = TOut.CreateChecked(span[i].Y);
+            output[i * 3 + 2] = TOut.CreateChecked(span[i].Z);
+        }
+
+        return output;
+    }
+
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<IndexBuffer<int>.Index> span) where TOut: unmanaged, INumberBase<TOut> {
+        var output = new TOut[span.Length * 3];
+
+        for (var i = 0; i < span.Length; i++) {
+            output[i * 3] = TOut.CreateChecked(span[i].p1);
+            output[i * 3 + 1] = TOut.CreateChecked(span[i].p2);
+            output[i * 3 + 2] = TOut.CreateChecked(span[i].p3);
+        }
+
+        return output;
+    }
+
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<IndexBuffer<ushort>.Index> span) where TOut: unmanaged, INumberBase<TOut> {
+        var output = new TOut[span.Length * 3];
+
+        for (var i = 0; i < span.Length; i++) {
+            output[i * 3] = TOut.CreateChecked(span[i].p1);
+            output[i * 3 + 1] = TOut.CreateChecked(span[i].p2);
+            output[i * 3 + 2] = TOut.CreateChecked(span[i].p3);
+        }
+
+        return output;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ReadOnlySpan<TOut> cast_to<TIn, TOut>(this ReadOnlySpan<TIn> span) where TIn: unmanaged where TOut: unmanaged, INumberBase<TOut> {
+        if (can_reinterpret<int, TOut>())
+            return new ReadOnlySpan<TOut>(ref Unsafe.As<TIn, TOut>(ref MemoryMarshal.GetReference(span)));
+        Error.type_conversion_error<TIn, TOut>(span[0]); // convert_to<TOut>(span);
+        return default;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<int> span) where TOut: unmanaged, INumberBase<TOut> {
+        return can_reinterpret<int, TOut>()
+            ? new ReadOnlySpan<TOut>(ref Unsafe.As<int, TOut>(ref MemoryMarshal.GetReference(span)))
+            : convert_to<TOut>(span);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<ushort> span) where TOut: unmanaged, INumberBase<TOut> {
+        return can_reinterpret<ushort, TOut>()
+            ? new ReadOnlySpan<TOut>(ref Unsafe.As<ushort, TOut>(ref MemoryMarshal.GetReference(span)))
+            : convert_to<TOut>(span);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<Vector3i> span) where TOut: unmanaged, INumberBase<TOut> {
+        return can_reinterpret<int, TOut>()
+            ? new ReadOnlySpan<TOut>(ref Unsafe.As<Vector3i, TOut>(ref MemoryMarshal.GetReference(span)))
+            : convert_to<TOut>(span);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<IndexBuffer<int>.Index> span) where TOut: unmanaged, INumberBase<TOut> {
+        return can_reinterpret<int, TOut>()
+            ? new ReadOnlySpan<TOut>(ref Unsafe.As<IndexBuffer<int>.Index, TOut>(ref MemoryMarshal.GetReference(span)))
+            : convert_to<TOut>(span);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<IndexBuffer<ushort>.Index> span) where TOut: unmanaged, INumberBase<TOut> {
+        return can_reinterpret<ushort, TOut>()
+            ? new ReadOnlySpan<TOut>(ref Unsafe.As<IndexBuffer<ushort>.Index, TOut>(ref MemoryMarshal.GetReference(span)))
+            : convert_to<TOut>(span);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ReadOnlySpan<T> as_readonly_span<T>(this List<T> list) where T : unmanaged {
+        return CollectionsMarshal.AsSpan(list);
+    }
+
+    public static T? lookup<T>(this IEnumerable<T> list, Predicate<T> condition) where T: class{
+        foreach(var item in list)
+            if (condition(item))
+                return item;
+        return null;
+    }
+
     public static bool peek<T>(this IList<T> list, [MaybeNullWhen(false)] out T item) {
         lock (list) {
             if (list.Count != 0) {

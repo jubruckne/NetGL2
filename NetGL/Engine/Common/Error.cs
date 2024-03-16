@@ -1,4 +1,5 @@
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
@@ -14,12 +15,19 @@ public static class Error {
         }
     }
 
+    [DoesNotReturn, StackTraceHidden]
+    public static void type_conversion_error<TFrom, TTo>(TFrom value) =>
+        throw new ArgumentException($"Can not convert {typeof(TFrom).Name}:{value} to {typeof(TTo).Name}!");
+
+    [DoesNotReturn, StackTraceHidden]
     public static void already_disposed<T>(T obj) =>
         throw new ObjectDisposedException(typeof(T).Name, "Object is already free!");
 
+    [DoesNotReturn, StackTraceHidden]
     public static void index_out_of_range<T>(string parameter, T index) =>
         throw new IndexOutOfRangeException($"Index out of range: {parameter}:{index}!");
 
+    [DoesNotReturn, StackTraceHidden]
     public static void index_out_of_range<T>(T index) =>
         throw new IndexOutOfRangeException($"Index out of range: {index}!");
 

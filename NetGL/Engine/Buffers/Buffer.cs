@@ -1,7 +1,10 @@
-using System.Runtime.InteropServices;
-using OpenTK.Graphics.OpenGL4;
+using System.Runtime.CompilerServices;
+using OpenTK.Mathematics;
 
 namespace NetGL;
+
+using System.Runtime.InteropServices;
+using OpenTK.Graphics.OpenGL4;
 
 public interface IBindable {
     void bind();
@@ -52,7 +55,21 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         this.handle = 0;
         buffer = new NativeArray<T>(items);
     }
-    
+
+    /*
+    protected Buffer(BufferTarget target, in Vector3i[] items) {
+        this.target = target;
+        this.handle = 0;
+        buffer = new NativeArray<T>(Unsafe.SizeOf<Vector3i>() * items.Length);
+        buffer.copy_from(items);
+    }*/
+
+    protected Buffer(BufferTarget target, in ReadOnlySpan<T> items) {
+        this.target = target;
+        this.handle = 0;
+        buffer = new NativeArray<T>(items);
+    }
+
     protected Buffer(BufferTarget target, int count = 0) {
         this.target = target;
         this.handle = 0;
@@ -61,12 +78,18 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
 
     public override Type item_type => typeof(T);
     
-    public ref T this[int index] {
+    public T this[int index] {
         get {
             if (index < 0 || index >= buffer.length)
                 throw new IndexOutOfRangeException($"Index out of range: {index}!");
 
-            return ref buffer.get_reference(index);
+            return buffer[index];
+        }
+        set {
+            if (index < 0 || index >= buffer.length)
+                throw new IndexOutOfRangeException($"Index out of range: {index}!");
+
+            buffer[index] = value;
         }
     }
     
@@ -119,7 +142,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
     public override int size { get => item_size * count; }
 
     public override void bind() {
-        // Console.WriteLine("Buffer.bind()");
+        Console.WriteLine("Buffer.bind: " + GetType().GetFormattedName());
 
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");
@@ -132,9 +155,8 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
             handle = GL.GenBuffer();
         }
 
-        GL.BindBuffer(target, handle);
+        bind();
         GL.BufferData(target, buffer.length * item_size, buffer.get_pointer(), BufferUsageHint.StaticDraw);
-        GL.BindBuffer(target, 0);
 
         status = Status.Uploaded;
     }

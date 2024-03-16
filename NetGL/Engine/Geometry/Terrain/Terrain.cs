@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace NetGL;
 
 using ECS;
@@ -10,7 +8,7 @@ public class Terrain: Entity {
     public readonly Material material;
     public readonly VertexArrayRenderer renderer;
 
-    public const int max_resolution = 96;
+    public const int max_resolution = 128;
     public readonly int chunk_size = 128;
 
     private readonly Grid<TerrainChunk, TerrainChunk.Key> chunks;
@@ -58,7 +56,7 @@ public class Terrain: Entity {
         var current_key = TerrainChunk.Key.from_world_position(this, camera.transform.position);
         var distance = (int)Math.Sqrt(Math.Pow(key.x - current_key.x, 2) + Math.Pow(key.y - current_key.y, 2));
 
-        Console.WriteLine($"Allocating chunk (key={key}, dist={distance})");
+        //Console.WriteLine($"Allocating chunk (key={key}, dist={distance})");
 
         var (priority, resolution) = distance switch {
             0 => (0, max_resolution),
@@ -104,7 +102,7 @@ public class Terrain: Entity {
     }
 }
 
-public sealed class TerrainShapeGenerator : IShapeGenerator, IShapeGenerator2 {
+public sealed class TerrainShapeGenerator : IShapeGenerator {
     private readonly TerrainChunk chunk;
     private readonly Plane plane;
     private readonly int pixel_count;
@@ -113,74 +111,14 @@ public sealed class TerrainShapeGenerator : IShapeGenerator, IShapeGenerator2 {
         this.chunk = chunk;
         this.plane = chunk.terrain.plane;
         this.pixel_count = chunk.terrain.chunk_size * chunk.resolution / 16;
-        Console.WriteLine($"res={chunk.resolution}, size={pixel_count} x {pixel_count}");
+        //Console.WriteLine($"res={chunk.resolution}, size={pixel_count} x {pixel_count}");
     }
 
     public int get_vertex_count() => (pixel_count + 1) * (pixel_count + 1);
-    public int get_index_count() => pixel_count * pixel_count * 3;
+    public int get_index_count() => pixel_count * pixel_count * 2;
 
-    public (VertexBuffer.Position_Normal<Vector3, Vector3> vb, IndexBuffer<T> ib) create<T>() where T: unmanaged, IBinaryInteger<T> {
-        var vb = new VertexBuffer.Position_Normal<Vector3h, Vector3>(get_vertex_count());
-        var ib = new IndexBuffer<T>(get_index_count());
-
-
-
-        var positions = vb.positions;
-
-        var ffd = positions;
-        var nur = ffd.as_numbers<System.Half>().translate_to<double>();
-
-        var vvv = nur[0];
-
-
-
-
-        var v = positions.view_as<float>().translate_to<float, System.Half>();
-        v[1] = 23;
-        var s = v.translate_to<float, System.Half>();
-        var xxx = s[0];
-
-
-        var center = chunk.center;
-
-        var n = chunk.terrain.noise.sample(
-            pixel_count + 1, pixel_count + 1,
-            center.X, center.Y,
-            (float)chunk.terrain.chunk_size / pixel_count, (float)chunk.terrain.chunk_size / pixel_count
-        );
-
-        int index = 0;
-        for (var x = 0; x < pixel_count + 1; x++) {
-            for (var y = 0; y < pixel_count + 1; y++) {
-                positions[index] = plane.to_world(
-                    center.X + chunk.terrain.chunk_size * (float)x / pixel_count,
-                    center.Y + chunk.terrain.chunk_size * (float)y / pixel_count,
-                    n[x, y]
-                );
-
-                if (x > 0 && y > 0) {
-                    var bottom_left = y - 1 + (x - 1) * (pixel_count + 1);
-                    var bottom_right = y - 1 + x * (pixel_count + 1);
-                    var top_left = y + (x - 1) * (pixel_count + 1);
-                    var top_right = y + x * (pixel_count + 1);
-
-                    ib[index * 6] = bottom_left;
-                    ib[index * 6 + 1] = bottom_right;
-                    ib[index * 6 + 2] = top_left;
-
-                    ib[index * 6 + 3] = top_left;
-                    ib[index * 6 + 4] = bottom_right;
-                    ib[index * 6 + 5] = top_right;
-                }
-
-                ++index;
-            }
-        }
-
-        return (vb, ib);
-    }
-
-    public IEnumerable<Vector3> get_vertices() {
+    public ReadOnlySpan<Vector3> get_vertices() {
+        var list = new Vector3[get_vertex_count()];
         var pos = chunk.center;
 
         var n = chunk.terrain.noise.sample(
@@ -189,18 +127,27 @@ public sealed class TerrainShapeGenerator : IShapeGenerator, IShapeGenerator2 {
             (float)chunk.terrain.chunk_size / pixel_count, (float)chunk.terrain.chunk_size / pixel_count
         );
 
+        int index = 0;
+
         for (var x = 0; x < pixel_count + 1; x++) {
             for (var y = 0; y < pixel_count + 1; y++) {
-                yield return plane.to_world(
+                list[index] = plane.to_world(
                     pos.X + chunk.terrain.chunk_size * (float)x / pixel_count,
                     pos.Y + chunk.terrain.chunk_size * (float)y / pixel_count,
-                    n[x, y]
+                    (float)n[x, y]
                 );
+                ++index;
             }
         }
+
+        return list;
     }
 
-    public IEnumerable<Vector3i> get_indices() {
+    public ReadOnlySpan<Vector3i> get_indices() {
+        var list = new Vector3i[get_index_count()];
+
+        int index = 0;
+
         for (var x = 1; x < pixel_count + 1; ++x) {
             for (var y = 1; y < pixel_count + 1; ++y) {
                 var bottom_left = (y - 1) + (x - 1) * (pixel_count + 1);
@@ -208,10 +155,21 @@ public sealed class TerrainShapeGenerator : IShapeGenerator, IShapeGenerator2 {
                 var top_left = y + (x - 1) * (pixel_count + 1);
                 var top_right = y + x * (pixel_count + 1);
 
-                yield return (bottom_left, bottom_right, top_left);
-                yield return (top_left, bottom_right, top_right);
+                list[index].X = bottom_left;
+                list[index].Y = bottom_right;
+                list[index].Z = top_left;
+                ++index;
+
+                // list.Add(new Vector3i(bottom_left, bottom_right, top_left));
+                list[index].X = top_left;
+                list[index].Y = bottom_right;
+                list[index].Z = top_right;
+                ++index;
+                //list.Add(new Vector3i(top_left, bottom_right, top_right));
             }
         }
+
+        return list;
     }
 }
 

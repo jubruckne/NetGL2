@@ -1,7 +1,5 @@
 using System.Numerics;
-using Assimp;
-using BulletSharp;
-using MemoryHelper = Jitter2.UnmanagedMemory.MemoryHelper;
+using OpenTK.Mathematics;
 
 namespace NetGL;
 /*
@@ -42,21 +40,28 @@ using System.Runtime.CompilerServices;
 /// <typeparam name="T">type of array</typeparam>
 [DebuggerTypeProxy(typeof(NativeArrayDebuggerTypeProxy<>))]
 [DebuggerDisplay("NativeArray<{typeof(T).Name}>[{length}]")]
-public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: unmanaged {
+public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T : unmanaged {
     public int rows { get; private set; }
     public int columns { get; private set; }
     public int length { get; private set; }
 
-    private nint array;
+    private nint data;
 
     /// <summary>Get the specific item of specific index.</summary>
-    /// <param name="i">index</param>
+    /// <param name="index">index</param>
     /// <returns>The item of specific index</returns>
-    public T this[int i] {
+    public T this[int index] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => get_reference(i);
+        get {
+            if (index < 0 || index >= length) Error.index_out_of_range(index);
+            return ((T*)data)[index];
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => get_reference(i) = value;
+        set {
+            if (index < 0 || index >= length) Error.index_out_of_range(index);
+            ((T*)data)[index] = value;
+        }
     }
 
     /// <summary>Get the specific item of specific index.</summary>
@@ -65,45 +70,33 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
     /// <returns>The item of specific index</returns>
     public T this[int col, int row] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => get_reference(row * columns + col);
+        get => this[row * columns + col];
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => get_reference(row * columns + col) = value;
+        set => this[row * columns + col] = value;
     }
 
-    public NativeView.Numbers<TNumber> as_number<TNumber>() where TNumber: unmanaged, INumberBase<TNumber> {
+    public NativeView<V> get_view<V>() where V : unmanaged {
         return new(
-            array,
-            sizeof(TNumber),
-            length,
-            sizeof(T) * length
+            data,
+            sizeof(V),
+            length
         );
     }
 
-    public NativeView.Structs<TElement> as_struct<TElement>() where TElement: unmanaged {
+    public NativeView<V> get_view<V>(nint element_offset) where V : unmanaged {
+        if (element_offset > sizeof(T)) Error.index_out_of_range(nameof(element_offset), element_offset);
         return new(
-            array,
-            sizeof(TElement),
-            length,
-            sizeof(T) * length
-        );
-    }
-
-    public NativeView.Structs<TElement> as_struct<TElement>(nint offset) where TElement: unmanaged {
-        if (offset > sizeof(T)) Error.index_out_of_range(nameof(offset), offset);
-        return new(
-            array + offset,
+            data + element_offset,
             sizeof(T),
-            length,
-            sizeof(T) * length
+            length
         );
     }
 
-    public NativeView.Structs<TElement> as_struct<TElement>(string field) where TElement: unmanaged {
+    public NativeView<V> get_view<V>(string element_name) where V : unmanaged {
         return new(
-            array + Marshal.OffsetOf<T>(field),
+            data + Marshal.OffsetOf<T>(element_name),
             sizeof(T),
-            length,
-            sizeof(T) * length
+            length
         );
     }
 
@@ -118,14 +111,16 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
     /// <summary>Create new <see cref="NativeArray{T}"/></summary>
     /// <param name="length">length of array</param>
     public NativeArray(int length) {
-        if(length < 0) {
+        if (length < 0) {
             Error.index_out_of_range(nameof(length), length);
         }
+
         var bytes = sizeof(T) * length;
-        if(bytes < 0) {
+        if (bytes < 0) {
             Error.index_out_of_range(nameof(T), bytes);
         }
-        this.array = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes, 16);
+
+        this.data = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes, 16);
 
         this.length = length;
         this.rows = length;
@@ -134,14 +129,14 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
 
     /// <summary>Create new <see cref="NativeArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>
     /// <param name="span">Elements of the <see cref="NativeArray{T}"/> are initialized by this <see cref="ReadOnlySpan{T}"/>.</param>
-    public NativeArray(ReadOnlySpan<T> span): this(span.Length) {
-        span.CopyTo(new Span<T>((void*)array, length));
+    public NativeArray(ReadOnlySpan<T> span) : this(span.Length) {
+        span.CopyTo(new Span<T>((void*)data, length));
     }
 
     public void resize(int new_length) {
         if (new_length == length) return;
 
-        if(new_length < 0 || new_length < length) {
+        if (new_length < 0 || new_length < length) {
             Error.index_out_of_range(nameof(length), length);
         }
 
@@ -149,17 +144,17 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
         var bytes_old = length * obj_size;
         var bytes_new = new_length * obj_size;
 
-        if(bytes_old < 0) {
+        if (bytes_old < 0) {
             Error.index_out_of_range(nameof(T), bytes_old);
         }
 
         var new_array = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes_new, 16);
 
-        System.Buffer.MemoryCopy((void*)array, (void*)new_array, bytes_new, bytes_old);
+        System.Buffer.MemoryCopy((void*)data, (void*)new_array, bytes_new, bytes_old);
 
         clear();
 
-        this.array = new_array;
+        this.data = new_array;
         this.length = new_length;
         this.rows = length;
         this.columns = 1;
@@ -169,51 +164,22 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
     ~NativeArray() => clear();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool is_disposed() => array == IntPtr.Zero;
+    private bool is_disposed() => data == IntPtr.Zero;
 
     /// <summary>Get pointer address of this array.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public nint get_pointer() => array;
-
-    /// <summary>Get reference to head item (Returns ref to null if empty)</summary>
-    /// <returns>reference to head item</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ref T get_reference() {
-        if(length == 0) {
-            Error.index_out_of_range(0);
-        }
-        return ref Unsafe.AsRef<T>((T*)array);
-    }
-
-    /// <summary>Get reference to head item (Returns ref to null if empty)</summary>
-    /// <returns>reference to head item</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ref T get_reference(int index) {
-        if((uint)index >= (uint)length) {
-            Error.index_out_of_range(index);
-        }
-        return ref Unsafe.Add(ref get_reference(), index);
-    }
-
-    /// <summary>Get reference to head item (Returns ref to null if empty)</summary>
-    /// <returns>reference to head item</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ref T get_reference(int column, int row) {
-        if(column >= this.columns) Error.index_out_of_range(nameof(column), column);
-        if(row >= this.rows) Error.index_out_of_range(nameof(row), row);
-        return ref get_reference(row * columns + column);
-    }
+    public nint get_pointer() => data;
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator() {
-        if(is_disposed()) Error.already_disposed(this);
+        if (is_disposed()) Error.already_disposed(this);
         // Avoid boxing by using class enumerator.
-        return new EnumeratorClass(this);
+        return new Enumerator(this);
     }
 
     IEnumerator IEnumerable.GetEnumerator() {
-        if(is_disposed()) Error.already_disposed(this);
+        if (is_disposed()) Error.already_disposed(this);
         // Avoid boxing by using class enumerator.
-        return new EnumeratorClass(this);
+        return new Enumerator(this);
     }
 
     public void insert(in T[] items, int at = 0) {
@@ -227,21 +193,33 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
     /// <param name="destination">managed memory array</param>
     /// <param name="arrayIndex">start index of destination array</param>
     public void copy_to(T[] destination, int arrayIndex) {
-        if(is_disposed()) Error.already_disposed(this);
-        if((uint)arrayIndex >= (uint)destination.Length) { throw new ArgumentOutOfRangeException(nameof(arrayIndex)); }
-        if(arrayIndex + length > destination.Length) { throw new ArgumentException("There is not enouph length of destination array"); }
+        if (is_disposed()) Error.already_disposed(this);
+        if ((uint)arrayIndex >= (uint)destination.Length) {
+            throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+        }
+
+        if (arrayIndex + length > destination.Length) {
+            throw new ArgumentException("There is not enouph length of destination array");
+        }
 
         var obj_size = sizeof(T);
-        fixed(T* arrayPtr = destination) {
+        fixed (T* arrayPtr = destination) {
             var byteLen = (long)(length * obj_size);
             var dest = new IntPtr(arrayPtr) + arrayIndex * obj_size;
-            System.Buffer.MemoryCopy((void*)array, (void*)dest, byteLen, byteLen);
+            System.Buffer.MemoryCopy((void*)data, (void*)dest, byteLen, byteLen);
         }
     }
 
     /// <summary>Copy fron <see cref="NativeArray{T}"/>.</summary>
     /// <param name="source">source array of type <see cref="NativeArray{T}"/></param>
     public void copy_from(NativeArray<T> source) => copy_from(source.get_pointer(), 0, source.length);
+
+    public void copy_from<S>(in S[] source) where S: unmanaged {
+        var source_len = (long)(source.Length * sizeof(S));
+        fixed (S* ptr = source) {
+            System.Buffer.MemoryCopy(ptr, (void*)this.data, this.length * sizeof(T), source_len);
+        }
+    }
 
     /// <summary>Copy from <see cref="ReadOnlySpan{T}"/> to this <see cref="NativeArray{T}"/> of index 0.</summary>
     /// <param name="span"><see cref="ReadOnlySpan{T}"/> object.</param>
@@ -251,13 +229,19 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
     /// <param name="source"><see cref="ReadOnlySpan{T}"/> object.</param>
     /// <param name="start">start index of destination. (destination is this <see cref="NativeArray{T}"/>.)</param>
     public void copy_from(ReadOnlySpan<T> source, int start) {
-        if(is_disposed()) Error.already_disposed(this);
-        if(start < 0) { throw new ArgumentOutOfRangeException(); }
-        if(start + source.Length > length) { throw new ArgumentOutOfRangeException(); }
+        if (is_disposed()) Error.already_disposed(this);
+        if (start < 0) {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        if (start + source.Length > length) {
+            throw new ArgumentOutOfRangeException();
+        }
+
         var obj_size = sizeof(T);
-        fixed(T* ptr = source) {
+        fixed (T* ptr = source) {
             var byteLen = (long)(source.Length * obj_size);
-            System.Buffer.MemoryCopy(ptr, (void*)(this.array + start * obj_size), byteLen, byteLen);
+            System.Buffer.MemoryCopy(ptr, (void*)(this.data + start * obj_size), byteLen, byteLen);
         }
     }
 
@@ -266,39 +250,51 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
     /// <param name="start">start index of destination. (destination is this <see cref="NativeArray{T}"/>.)</param>
     /// <param name="length">count of copied item. (NOT length of bytes.)</param>
     public void copy_from(IntPtr source, int start, int length) {
-        if(is_disposed()) Error.already_disposed(this);
-        if(length == 0) { return; }
-        if(source == IntPtr.Zero) { throw new ArgumentNullException(nameof(source),"source is null"); }
-        if(start < 0 || length < 0) { throw new ArgumentOutOfRangeException(); }
-        if(start + length > this.length) { throw new ArgumentOutOfRangeException(); }
+        if (is_disposed()) Error.already_disposed(this);
+        if (length == 0) {
+            return;
+        }
+
+        if (source == IntPtr.Zero) {
+            throw new ArgumentNullException(nameof(source), "source is null");
+        }
+
+        if (start < 0 || length < 0) {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        if (start + length > this.length) {
+            throw new ArgumentOutOfRangeException();
+        }
+
         var obj_size = sizeof(T);
         var byteLen = (long)(length * obj_size);
-        System.Buffer.MemoryCopy((void*)source, (void*)(this.array + start * obj_size), byteLen, byteLen);
+        System.Buffer.MemoryCopy((void*)source, (void*)(this.data + start * obj_size), byteLen, byteLen);
     }
 
     /// <summary>Return <see cref="Span{T}"/> of this <see cref="NativeArray{T}"/>.</summary>
     /// <returns><see cref="Span{T}"/></returns>
     public Span<T> as_span() {
-        if(this.length == 0) {
+        if (this.length == 0) {
             Error.index_out_of_range(0);
         }
 
-        return new Span<T>((T*)this.array, this.length);
+        return new Span<T>((T*)this.data, this.length);
     }
 
     /// <summary>Return <see cref="Span{T}"/> starts with specified index.</summary>
     /// <param name="start">start index</param>
     /// <returns><see cref="Span{T}"/></returns>
     public Span<T> as_span(int start) {
-        if(this.length == 0) {
+        if (this.length == 0) {
             Error.index_out_of_range(0);
         }
 
-        if((uint)start > (uint)this.length) {
+        if ((uint)start > (uint)this.length) {
             Error.index_out_of_range(nameof(start), start);
         }
 
-        return new Span<T>((T*)this.array + start, this.length - start);
+        return new Span<T>((T*)this.data + start, this.length - start);
     }
 
     /// <summary>Return <see cref="Span{T}"/> of specified length starts with specified index.</summary>
@@ -306,18 +302,19 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
     /// <param name="length">length of span</param>
     /// <returns><see cref="Span{T}"/></returns>
     public Span<T> as_span(int start, int length) {
-        if(this.length == 0) {
+        if (this.length == 0) {
             Error.index_out_of_range(0);
         }
-        if((uint)start > (uint)this.length) {
+
+        if ((uint)start > (uint)this.length) {
             Error.index_out_of_range(nameof(start), start + length);
         }
 
-        if((uint)length > (uint)this.length - (uint)start) {
+        if ((uint)length > (uint)this.length - (uint)start) {
             Error.index_out_of_range(nameof(length), start + length);
         }
 
-        return new Span<T>((T*)this.array + start, length);
+        return new Span<T>((T*)this.data + start, length);
     }
 
     /// <summary>
@@ -330,54 +327,51 @@ public sealed unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T: 
     }
 
     private void clear() {
-        if(this.array == 0) return;
-        NativeMemory.AlignedFree((void*)array);
-        this.array = 0;
+        if (this.data == 0) return;
+        NativeMemory.AlignedFree((void*)data);
+        this.data = 0;
         this.length = 0;
     }
 
     /// <summary>Enumerator of <see cref="NativeArray{T}"/></summary>
-    private class EnumeratorClass: IEnumerator<T> {
-        private readonly T* _ptr;
-        private readonly int _len;
-        private int _index;
+    private sealed class Enumerator: IEnumerator<T> {
+        private T* _ptr;
+        private readonly nint _start;
+        private readonly nint _end;
 
         /// <summary>Get current element</summary>
-        public T Current { get; private set; }
+        public T Current {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => *_ptr;
+        }
 
-        internal EnumeratorClass(NativeArray<T> array) {
-            _ptr = (T*)array.array;
-            _len = array.length;
-            _index = 0;
-            Current = default;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Enumerator(in NativeArray<T> array) {
+            _start = array.get_pointer();
+            _end = _start + array.length * sizeof(T);
+            _ptr = (T*)(_start - sizeof(T)) - 1;
         }
 
         /// <summary>Dispose of <see cref="IDisposable"/></summary>
-        public void Dispose() { }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose() {}
 
         /// <summary>Move to next element</summary>
         /// <returns>true if success to move next. false to end.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool MoveNext() {
-            if((uint)_index < (uint)_len) {
-                Current = _ptr[_index];
-                _index++;
+            if ((nuint)_ptr < (nuint)_end) {
+                ++_ptr;
                 return true;
             }
-            return MoveNextRare();
-        }
 
-        private bool MoveNextRare() {
-            _index = _len + 1;
-            Current = default;
             return false;
         }
 
-        object IEnumerator.Current => Current;
+        object IEnumerator.Current => throw new NotImplementedException();
 
-        void IEnumerator.Reset() {
-            _index = 0;
-            Current = default;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IEnumerator.Reset() => _ptr = (T*)(_start - sizeof(T)) - 1;
     }
 }
 

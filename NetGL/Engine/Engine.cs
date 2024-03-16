@@ -233,6 +233,8 @@ public class Engine: GameWindow {
     }
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
+        Garbage.measure_begin();
+
         base.OnUpdateFrame(e);
 
         if (!IsFocused)
@@ -266,12 +268,15 @@ public class Engine: GameWindow {
         BackgroundTaskScheduler.process_completed_tasks();
 
         world.update(game_time, delta_time);
+        Garbage.measure("Engine.update");
+
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
+        Garbage.measure_begin();
         base.OnRenderFrame(e);
 
-        //Console.WriteLine($"frame:{frame}, {GC.CollectionCount(2)}");
+        Console.WriteLine($"starting frame:{frame}...");
 
         frame_time += e.Time;
 
@@ -300,8 +305,8 @@ public class Engine: GameWindow {
 
         //GC.Collect(0, GCCollectionMode.Default, false);
 
-        if(frame % 100 == 0) Garbage.log();
         SwapBuffers();
+        Garbage.measure("Engine.render");
     }
 
     private void render_ui() {

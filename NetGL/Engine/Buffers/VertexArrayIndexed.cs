@@ -16,10 +16,12 @@ public class VertexArrayIndexed: VertexArray {
         this.index_buffer = index_buffer;
     }
 
+    /*
     public override void bind() {
         base.bind();
-        index_buffer.bind();
+        //index_buffer.bind();
     }
+    */
 
     public override void upload() {
         if (handle == 0)
@@ -32,6 +34,8 @@ public class VertexArrayIndexed: VertexArray {
         upload_attribute_pointers();
 
         GL.BindVertexArray(0);
+
+        Error.check();
 
         //Console.WriteLine();
     }

@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NetGL;
 using OpenTK.Mathematics;
 
@@ -24,7 +26,7 @@ public static class sp {
         new IcoSphereGenerator.IcoSphere(tesselation);
 }
 
-public class IcoSphereGenerator: IShapeGenerator {
+public class IcoSphereGenerator : IShapeGenerator {
     public record struct IcoSphere(int tesselation = 2);
 
     private Sphere sphere;
@@ -35,7 +37,7 @@ public class IcoSphereGenerator: IShapeGenerator {
         this.options = options;
     }
 
-    public IEnumerable<Vector3> get_vertices() {
+    public ReadOnlySpan<Vector3> get_vertices() {
         var t = (float)((1.0 + Math.Sqrt(5.0)) / 2.0);
         var vert = new[] {
             new Vector3(-1, t, 0),
@@ -56,38 +58,43 @@ public class IcoSphereGenerator: IShapeGenerator {
 
         // normalize vector to unit length
         for (var i = 0; i < vert.Length; i++)
-            yield return vert[i].Normalized();
+            vert[i].Normalize();
+
+        return vert;
     }
 
-    public IEnumerable<Vector3i> get_indices() {
-        // 5 faces around point 0
+    public ReadOnlySpan<Vector3i> get_indices() {
+        return work().ToArray().AsSpan();
 
-        yield return (0, 5, 11);
-        yield return (0, 1, 5);
-        yield return (0, 7, 1);
-        yield return (0, 10, 7);
-        yield return (0, 11, 10);
+        IEnumerable<Vector3i> work() {
+            // 5 faces around point 0
+            yield return (0, 5, 11);
+            yield return (0, 1, 5);
+            yield return (0, 7, 1);
+            yield return (0, 10, 7);
+            yield return (0, 11, 10);
 
-        // 5 adjacent faces
-        yield return (1, 9, 5);
-        yield return (5, 4, 11);
-        yield return (11, 2, 10);
-        yield return (10, 6, 7);
-        yield return (7, 8, 1);
+            // 5 adjacent faces
+            yield return (1, 9, 5);
+            yield return (5, 4, 11);
+            yield return (11, 2, 10);
+            yield return (10, 6, 7);
+            yield return (7, 8, 1);
 
-        // 5 faces around point 3
-        yield return (3, 4, 9);
-        yield return (3, 2, 4);
-        yield return (3, 6, 2);
-        yield return (3, 8, 6);
-        yield return (3, 9, 8);
+            // 5 faces around point 3
+            yield return (3, 4, 9);
+            yield return (3, 2, 4);
+            yield return (3, 6, 2);
+            yield return (3, 8, 6);
+            yield return (3, 9, 8);
 
-        // 5 adjacent faces
-        yield return (4, 5, 9);
-        yield return (2, 11, 4);
-        yield return (6, 10, 2);
-        yield return (8, 7, 6);
-        yield return (9, 1, 8);
+            // 5 adjacent faces
+            yield return (4, 5, 9);
+            yield return (2, 11, 4);
+            yield return (6, 10, 2);
+            yield return (8, 7, 6);
+            yield return (9, 1, 8);
+        }
     }
 }
 
@@ -104,18 +111,23 @@ public class UVSphereGenerator: IShapeGenerator {
 
     public override string ToString() => "Sphere";
 
-    public IEnumerable<Vector3> get_vertices() {
+    public ReadOnlySpan<Vector3> get_vertices() {
+        var list = new List<Vector3>();
+
         float x, y, z, xy;
         float sectorStep = (float)(2f * Math.PI / options.meridians);
         float stackStep = (float)(Math.PI / options.parallels);
 
-        for (int i = 0; i <= options.parallels; ++i) {
-            float stackAngle = (float)(Math.PI / 2f - i * stackStep);
+        float stackAngle;
+        float sectorAngle;
+
+        for (var i = 0; i <= options.parallels; ++i) {
+            stackAngle = (float)(Math.PI / 2f - i * stackStep);
             xy = sphere.radius * (float)Math.Cos(stackAngle);
             z = sphere.radius * (float)Math.Sin(stackAngle);
 
-            for (int j = 0; j <= options.meridians; ++j) {
-                float sectorAngle = j * sectorStep;
+            for (var j = 0; j <= options.meridians; ++j) {
+                sectorAngle = j * sectorStep;
 
                 x = xy * (float)Math.Cos(sectorAngle);
                 y = xy * (float)Math.Sin(sectorAngle);
@@ -127,22 +139,25 @@ public class UVSphereGenerator: IShapeGenerator {
                 u = polarX * 0.5f / (float) Math.PI + 0.5f;
                 v = polarY / (float) Math.PI;
                 */
-                yield return new Vector3(x, y, z);
+                list.Add(new Vector3(x, y, z));
             }
         }
 
         // Duplicate vertices along one seam
-        for (int i = 1; i <= options.parallels - 1; i++) {
-            float stackAngle = (float)Math.PI / 2 - i * stackStep;
+        for (var i = 1; i <= options.parallels - 1; i++) {
+            stackAngle = (float)Math.PI / 2 - i * stackStep;
             xy = sphere.radius * (float)Math.Cos(stackAngle);
             z = sphere.radius * (float)Math.Sin(stackAngle);
 
-            yield return new Vector3(xy, 0, z); // Add an extra vertex at the seam
+            list.Add(new Vector3(xy, 0, z)); // Add an extra vertex at the seam
         }
 
+        return list.as_readonly_span();
     }
 
-    public IEnumerable<Vector3i> get_indices() {
+    public ReadOnlySpan<Vector3i> get_indices() {
+        var list = new List<Vector3i>();
+
         // Calculate the total vertices per row, considering the extra vertex at the seam for each row
         int verticesPerRow = options.meridians + 1;
 
@@ -160,10 +175,12 @@ public class UVSphereGenerator: IShapeGenerator {
                     d = (i - 1) * verticesPerRow; // Wrap to the first vertex of the previous row
                 }
 
-                yield return (c, b, a);
-                yield return (d, c, a);
+                list.Add(new Vector3i(c, b, a));
+                list.Add(new(d, c, a));
             }
         }
+
+        return list.as_readonly_span();
     }
 }
 
@@ -180,14 +197,16 @@ public class CubeSphereGenerator: IShapeGenerator {
 
     public override string ToString() => "Cube";
 
-    public IEnumerable<Vector3> get_vertices() {
-        // Generate vertices for 6 faces of a cube
-        // Iterating over each face of the cube to generate vertices
-        for (int face = 0; face < 6; face++) {
+    public ReadOnlySpan<Vector3> get_vertices() {
+        var list = new List<Vector3>();
+
+        for (var face = 0; face < 6; face++) {
             foreach (var vertex in get_face_vertices(face)) {
-                yield return vertex;
+                list.Add(vertex);
             }
         }
+
+        return list.as_readonly_span();
     }
 
     private IEnumerable<Vector3> get_face_vertices(int faceIndex) {
@@ -214,7 +233,9 @@ public class CubeSphereGenerator: IShapeGenerator {
         }
     }
 
-    public IEnumerable<Vector3i> get_indices() {
+    public ReadOnlySpan<Vector3i> get_indices() {
+        var list = new List<Vector3i>();
+
         int verticesPerRow = options.subdivisions + 1;
         int faceVertexCount = verticesPerRow * verticesPerRow;
 
@@ -228,11 +249,13 @@ public class CubeSphereGenerator: IShapeGenerator {
                     int bottomRight = bottomLeft + 1;
 
                     // First triangle
-                    yield return new Vector3i(topLeft, bottomLeft, topRight);
+                    list.Add(new Vector3i(topLeft, bottomLeft, topRight));
                     // Second triangle
-                    yield return new Vector3i(topRight, bottomLeft, bottomRight);
+                    list.Add(new Vector3i(topRight, bottomLeft, bottomRight));
                 }
             }
         }
+
+        return list.as_readonly_span();
     }
 }

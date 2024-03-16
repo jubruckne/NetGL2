@@ -37,25 +37,33 @@ public class CubeShapeGenerator: IShapeGenerator {
 
     public override string ToString() => "Cube";
 
-    public IEnumerable<Vector3> get_vertices() {
+    public ReadOnlySpan<Vector3> get_vertices() {
         var half_width = cube.size.width * 0.5f;
         var half_height = cube.size.height * 0.5f;
         var half_depth = cube.size.depth * 0.5f;
 
-        return [
-            new Vector3(options.position.X - half_width, options.position.Y - half_height, options.position.Z + half_depth),    // 0
-            new Vector3(options.position.X + half_width, options.position.Y - half_height, options.position.Z + half_depth),     // 1
-            new Vector3(options.position.X + half_width, options.position.Y + half_height, options.position.Z + half_depth),      // 2
-            new Vector3(options.position.X - half_width, options.position.Y + half_height, options.position.Z + half_depth),     // 3
-            new Vector3(options.position.X - half_width, options.position.Y - half_height, options.position.Z - half_depth),   // 4
-            new Vector3(options.position.X + half_width, options.position.Y - half_height, options.position.Z - half_depth),    // 5
-            new Vector3(options.position.X + half_width, options.position.Y + half_height, options.position.Z - half_depth),     // 6
-            new Vector3(options.position.X - half_width, options.position.Y + half_height, options.position.Z - half_depth)     // 7
-        ];
+        return new[] {
+            new Vector3(options.position.X - half_width, options.position.Y - half_height,
+                options.position.Z + half_depth), // 0
+            new Vector3(options.position.X + half_width, options.position.Y - half_height,
+                options.position.Z + half_depth), // 1
+            new Vector3(options.position.X + half_width, options.position.Y + half_height,
+                options.position.Z + half_depth), // 2
+            new Vector3(options.position.X - half_width, options.position.Y + half_height,
+                options.position.Z + half_depth), // 3
+            new Vector3(options.position.X - half_width, options.position.Y - half_height,
+                options.position.Z - half_depth), // 4
+            new Vector3(options.position.X + half_width, options.position.Y - half_height,
+                options.position.Z - half_depth), // 5
+            new Vector3(options.position.X + half_width, options.position.Y + half_height,
+                options.position.Z - half_depth), // 6
+            new Vector3(options.position.X - half_width, options.position.Y + half_height,
+                options.position.Z - half_depth) // 7
+        };
     }
 
-    public IEnumerable<Vector3i> get_indices() {
-        return [
+    public ReadOnlySpan<Vector3i> get_indices() {
+        return new Vector3i[] {
             // front face
             (0, 1, 2), (2, 3, 0),
             // top face
@@ -68,6 +76,6 @@ public class CubeShapeGenerator: IShapeGenerator {
             (1, 4, 5), (1, 0, 4),
             // right face
             (1, 5, 6), (6, 2, 1)
-        ];
+        };
     }
 }

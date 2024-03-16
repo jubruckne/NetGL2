@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using OpenTK.Mathematics;
 using Vector3 = OpenTK.Mathematics.Vector3;
 
@@ -16,7 +17,9 @@ public readonly struct Plane {
         local_y = forward;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Vector3 to_world(float x, float y, float height) => new Vector3(x, height, -y);
+
     public Vector3 to_world(in Vector2 position, float height) => new Vector3(position.X, height, -position.Y);
 
     public (Vector2 position, float height) world_to_point_on_plane(in Vector3 world_pos) {

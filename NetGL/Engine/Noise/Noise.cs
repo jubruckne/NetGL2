@@ -73,6 +73,7 @@ public class Noise {
     }
 
     public float[,] sample(int width, int height, float offset_x, float offset_y, float stride_x, float stride_y) {
+        // Console.WriteLine("------>> sampling noise: " + width * height);
         var samples = new float[width, height];
         int x, y;
         float nx, ny;

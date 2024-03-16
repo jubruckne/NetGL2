@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-public class Shader: IAssetType<Shader> {
+public class Shader: IAssetType<Shader>, IBindable {
     static string IAssetType<Shader>.path => "Shaders";
 
     static Shader IAssetType<Shader>.load_from_file(string path) {
@@ -239,14 +239,11 @@ public class Shader: IAssetType<Shader> {
     public override string ToString() => name;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool bind() {
+    public void bind() {
         if (Shader.current_shader != this) {
+            Console.WriteLine("Shader.bind: " + name);
             Shader.current_shader = this;
             GL.UseProgram(handle);
-
-            return true;
         }
-
-        return false;
     }
 }

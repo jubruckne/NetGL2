@@ -4,28 +4,70 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public interface IIndexBuffer : IBuffer {
-    DrawElementsType draw_element_type { get; }
-    PrimitiveType primitive_type { get; }
-    int get_max_vertex_count();
-}
+public abstract class IndexBuffer: Buffer<byte> {
+    public abstract DrawElementsType draw_element_type { get; }
+    public abstract PrimitiveType primitive_type { get; }
+    public abstract int get_max_vertex_count();
 
-public static class IndexBuffer {
-    public static IIndexBuffer create(IEnumerable<Vector3i> items, int vertex_count = ushort.MaxValue) {
+    protected IndexBuffer(int byte_size) : base(BufferTarget.ElementArrayBuffer, byte_size) {}
+    protected IndexBuffer(ReadOnlySpan<byte> data): base(BufferTarget.ElementArrayBuffer, data) {}
+
+    public static IndexBuffer create(ReadOnlySpan<Vector3i> items, int vertex_count = ushort.MaxValue) {
         return vertex_count switch {
-            < byte.MaxValue => IndexBuffer<byte>.make(items),
-            < ushort.MaxValue => IndexBuffer<ushort>.make(items),
-            _ => IndexBuffer<int>.make(items)
+            < ushort.MaxValue => new IndexBuffer<ushort>(items.Length),
+            _ => new IndexBuffer<int>(items.cast_to<int>())
         };
     }
+
+    public static IndexBuffer create(ReadOnlySpan<int> items, int vertex_count = ushort.MaxValue) {
+        IndexBuffer ib = vertex_count switch {
+            < ushort.MaxValue => new IndexBuffer<ushort>(items.Length),
+            _ => new IndexBuffer<int>(items.Length)
+        };
+
+        return ib;
+    }
+
+
+    public static IndexBuffer create<T>(int capacity) where T: unmanaged, IBinaryInteger<T> {
+        return new IndexBuffer<T>(capacity);
+    }
+
+    public static IndexBuffer create<T>(ReadOnlySpan<IndexBuffer<T>.Index> data) where T: unmanaged, IBinaryInteger<T> {
+        return new IndexBuffer<T>(data);
+    }
+
+
+    public abstract void bind();
+    public abstract int count { get; }
+    public abstract int item_size { get; }
+    public abstract Type item_type { get; }
+    public abstract int size { get; }
+    public abstract void upload();
+    public abstract Buffer.Status status { get; }
 }
 
-public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
-    where T: unmanaged, IBinaryInteger<T> {
+public class IndexBuffer<T>: IndexBuffer where T: unmanaged, INumberBase<T> {
+    public readonly struct Index {
+        public readonly T p1, p2, p3;
 
-    int IIndexBuffer.get_max_vertex_count() => get_max_vertex_count();
+        private Index(T p1, T p2, T p3) {
+            this.p1 = p1;
+            this.p2 = p2;
+            this.p3 = p3;
+        }
 
-    public static int get_max_vertex_count() => new T() switch {
+        public static implicit operator Index((T p1, T p2, T p3) index)
+            => new (index.p1, index.p2, index.p3);
+
+        public static implicit operator Index(Vector3i index)
+            => new (T.CreateChecked(index.X), T.CreateChecked(index.Y),T.CreateChecked(index.Z));
+
+        public static implicit operator Index((int p1, int p2, int p3) index)
+            => new (T.CreateChecked(index.p1), T.CreateChecked(index.p2),T.CreateChecked(index.p3));
+    }
+
+    public override int get_max_vertex_count() => T.One switch {
         byte => byte.MaxValue,
         ushort => ushort.MaxValue,
         short => short.MaxValue,
@@ -34,13 +76,33 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
         _ => throw new ArgumentOutOfRangeException(nameof(T), $"Unexpected type {typeof(T).Name}!")
     };
 
-    internal IndexBuffer(int triangle_count = 0)
-        : base(BufferTarget.ElementArrayBuffer, triangle_count * 3) {
+    public override int size { get; }
+
+    public override void bind() {
+        throw new NotImplementedException();
     }
 
-    internal IndexBuffer(in T[] items) : base(BufferTarget.ElementArrayBuffer, items) {
+    public override Status status { get; }
+
+    public override void upload() {
+        throw new NotImplementedException();
     }
 
+    public override int count { get; }
+    public override int item_size { get; }
+    public override Type item_type { get; }
+
+    public IndexBuffer(int triangle_count): base(triangle_count * T.One.size_of()) { }
+    public IndexBuffer(ReadOnlySpan<Index> data): base(data.cast_to<Index, byte>()) { }
+    public IndexBuffer(ReadOnlySpan<T> data): base(data.cast_to<T, byte>()) { }
+
+    public NativeView<T> get_view() => buffer.as_view<T>();
+
+    /*
+    internal IndexBuffer(in Vector3i[] items) : base(BufferTarget.ElementArrayBuffer, items) {
+    }
+*/
+/*
     public static IndexBuffer<T> make(in byte[] items) {
         if (T.Zero is byte)
             return new IndexBuffer<T>(items.reinterpret_ref<byte, T>());
@@ -101,14 +163,14 @@ public class IndexBuffer<T>: Buffer<T>, IIndexBuffer
         }
 
         if (T.Zero is int) {
-            return new IndexBuffer<T>(items.reinterpret_ref<Vector3i, T>());
+            return new IndexBuffer<T>(items.reinterpret_ref<Vector3i, T>().ToArray());
         }
 
         throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
     }
 
     public static IndexBuffer<T> make(IEnumerable<Vector3i> items) => make(items.ToArray());
-
+*/
 
     public DrawElementsType draw_element_type => typeof(T) switch {
         { } t when t == typeof(byte) => DrawElementsType.UnsignedByte,

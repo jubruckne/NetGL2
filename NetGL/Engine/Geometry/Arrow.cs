@@ -42,7 +42,7 @@ public class ArrowShapeGenerator: IShapeGenerator {
         this.options.segments = Math.Max(6, this.options.segments);
     }
 
-    public IEnumerable<Vector3> get_vertices() {
+    public ReadOnlySpan<Vector3> get_vertices() {
         List<Vector3> vertices = new List<Vector3>();
         Vector3 direction = Vector3.Normalize(arrow.to - arrow.from);
         // Check if direction is parallel to Vector3.UnitY
@@ -86,10 +86,10 @@ public class ArrowShapeGenerator: IShapeGenerator {
         vertices.Add(arrow.to); // Tip point
         vertices.Add(arrow.from); // This is the new central point of the bottom cap
 
-        return vertices;
+        return vertices.as_readonly_span();
     }
 
-    public IEnumerable<Vector3i> get_indices() {
+    public ReadOnlySpan<Vector3i> get_indices() {
         List<Vector3i> indices = new List<Vector3i>();
 
         var center_point_index = options.segments * 3 + 2 - 1;
@@ -128,6 +128,6 @@ public class ArrowShapeGenerator: IShapeGenerator {
             indices.Add(new Vector3i(tipBaseStartIndex + i, tipBaseStartIndex + next, tipPointIndex));
         }
 
-        return indices;
+        return indices.as_readonly_span();
     }
 }
