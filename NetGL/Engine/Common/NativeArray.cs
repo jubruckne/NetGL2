@@ -41,10 +41,65 @@ using System.Runtime.CompilerServices;
 [DebuggerTypeProxy(typeof(NativeArrayDebuggerTypeProxy<>))]
 [DebuggerDisplay("NativeArray<{typeof(T).Name}>[{length}]")]
 public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T : unmanaged {
+    public class Cursor<V> where V: unmanaged {
+        private readonly View<V> view;
+        private int position = 0;
+
+        public V value {
+            get => view[position];
+            set => view[position] = value;
+        }
+
+        internal Cursor(in View<V> view) => this.view = view;
+
+        public void write(in V value) {
+            view[position] = value;
+            next();
+        }
+
+        private bool next() {
+            if (position < view.length) {
+                ++position;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static Cursor<V> operator++(Cursor<V> cursor) {
+            cursor.next();
+            return cursor;
+        }
+
+        public static implicit operator bool(in Cursor<V> cursor) => cursor.position < cursor.view.length;
+        public static explicit operator V(in Cursor<V> cursor) => cursor.value;
+    }
+
+    public class View<V> where V : unmanaged {
+        public readonly int length = 0;
+        private readonly nint start;
+        private readonly nint stride;
+
+        internal View(nint start, nint stride, int length) {
+            this.length = length;
+            this.start = start;
+            this.stride = stride;
+        }
+
+        public ref V this[int index] {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get {
+                if (index < 0 || start + index * stride >= length) Error.index_out_of_range(nameof(index), index);
+                return ref *(V*)(start + index * stride);
+            }
+        }
+    }
+
     public int rows { get; private set; }
     public int columns { get; private set; }
     public int length { get; private set; }
 
+    private (GCHandle handle, T[] array)? managed_array = null;
     private nint data;
 
     /// <summary>Get the specific item of specific index.</summary>
@@ -75,7 +130,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
         set => this[row * columns + col] = value;
     }
 
-    public NativeView<V> get_view<V>() where V : unmanaged {
+    public View<V> view<V>() where V : unmanaged {
         return new(
             data,
             sizeof(V),
@@ -83,7 +138,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
         );
     }
 
-    public NativeView<V> get_view<V>(nint element_offset) where V : unmanaged {
+    internal NativeView<V> view<V>(nint element_offset) where V : unmanaged {
         if (element_offset > sizeof(T)) Error.index_out_of_range(nameof(element_offset), element_offset);
         return new(
             data + element_offset,
@@ -92,7 +147,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
         );
     }
 
-    public NativeView<V> get_view<V>(string element_name) where V : unmanaged {
+    internal NativeView<V> view<V>(string element_name) where V : unmanaged {
         return new(
             data + Marshal.OffsetOf<T>(element_name),
             sizeof(T),
@@ -128,13 +183,32 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
     }
 
     /// <summary>Create new <see cref="NativeArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>
+    /// <param name="array">Elements of the <see cref="NativeArray{T}"/> are initialized by this <see cref="ReadOnlySpan{T}"/>.</param>
+    /// <param name="capture">Whether the original array is captured without copying into unmanaged memory..</param>
+    public NativeArray(in T[] array, bool capture) {
+        if (capture) {
+            this.managed_array = (GCHandle.Alloc(array, GCHandleType.Pinned), array);
+            this.data = managed_array.Value.handle.AddrOfPinnedObject();
+        } else {
+            this.data = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)(array.Length * sizeof(T)), 16);
+            copy_from(array);
+        }
+
+        this.length = array.Length;
+        this.rows = length;
+        this.columns = 1;
+    }
+
+    /// <summary>Create new <see cref="NativeArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>
     /// <param name="span">Elements of the <see cref="NativeArray{T}"/> are initialized by this <see cref="ReadOnlySpan{T}"/>.</param>
     public NativeArray(ReadOnlySpan<T> span) : this(span.Length) {
-        span.CopyTo(new Span<T>((void*)data, length));
+        span.CopyTo(this.as_span());
     }
 
     public void resize(int new_length) {
         if (new_length == length) return;
+
+        if(managed_array != null) Error.exception("Can not resize managed array!");
 
         if (new_length < 0 || new_length < length) {
             Error.index_out_of_range(nameof(length), length);
@@ -327,8 +401,14 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
     }
 
     private void clear() {
-        if (this.data == 0) return;
-        NativeMemory.AlignedFree((void*)data);
+        if (managed_array.HasValue) {
+            managed_array.Value.handle.Free();
+            managed_array = null;
+        } else {
+            if (data == 0) return;
+            NativeMemory.AlignedFree((void*)data);
+        }
+
         this.data = 0;
         this.length = 0;
     }

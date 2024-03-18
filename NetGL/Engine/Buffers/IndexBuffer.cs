@@ -1,73 +1,45 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public abstract class IndexBuffer: Buffer<byte> {
-    public abstract DrawElementsType draw_element_type { get; }
-    public abstract PrimitiveType primitive_type { get; }
-    public abstract int get_max_vertex_count();
-
-    protected IndexBuffer(int byte_size) : base(BufferTarget.ElementArrayBuffer, byte_size) {}
-    protected IndexBuffer(ReadOnlySpan<byte> data): base(BufferTarget.ElementArrayBuffer, data) {}
-
-    public static IndexBuffer create(ReadOnlySpan<Vector3i> items, int vertex_count = ushort.MaxValue) {
-        return vertex_count switch {
-            < ushort.MaxValue => new IndexBuffer<ushort>(items.Length),
-            _ => new IndexBuffer<int>(items.cast_to<int>())
-        };
-    }
-
-    public static IndexBuffer create(ReadOnlySpan<int> items, int vertex_count = ushort.MaxValue) {
-        IndexBuffer ib = vertex_count switch {
-            < ushort.MaxValue => new IndexBuffer<ushort>(items.Length),
-            _ => new IndexBuffer<int>(items.Length)
-        };
-
-        return ib;
-    }
-
-
-    public static IndexBuffer create<T>(int capacity) where T: unmanaged, IBinaryInteger<T> {
-        return new IndexBuffer<T>(capacity);
-    }
-
-    public static IndexBuffer create<T>(ReadOnlySpan<IndexBuffer<T>.Index> data) where T: unmanaged, IBinaryInteger<T> {
-        return new IndexBuffer<T>(data);
-    }
-
-
-    public abstract void bind();
-    public abstract int count { get; }
-    public abstract int item_size { get; }
-    public abstract Type item_type { get; }
-    public abstract int size { get; }
-    public abstract void upload();
-    public abstract Buffer.Status status { get; }
+public interface IIndexBuffer: IBuffer {
+    DrawElementsType draw_element_type { get; }
+    PrimitiveType primitive_type { get; }
+    int max_vertex_count { get; }
 }
 
-public class IndexBuffer<T>: IndexBuffer where T: unmanaged, INumberBase<T> {
-    public readonly struct Index {
-        public readonly T p1, p2, p3;
+public static class IndexBuffer {
+    public static IIndexBuffer create(ReadOnlySpan<Vector3i> items, int vertex_count) {
+        return vertex_count switch {
+            < ushort.MaxValue => new IndexBuffer<ushort>(items.cast_to<ushort>()),
+            _ => new IndexBuffer<int>(items.reinterpret_as<Vector3i, Index<int>>())
+        };
+    }
+}
 
-        private Index(T p1, T p2, T p3) {
-            this.p1 = p1;
-            this.p2 = p2;
-            this.p3 = p3;
-        }
+[StructLayout(LayoutKind.Sequential)]
+public readonly struct Index<T> where T: unmanaged, INumberBase<T> {
+    public readonly T p1, p2, p3;
 
-        public static implicit operator Index((T p1, T p2, T p3) index)
-            => new (index.p1, index.p2, index.p3);
-
-        public static implicit operator Index(Vector3i index)
-            => new (T.CreateChecked(index.X), T.CreateChecked(index.Y),T.CreateChecked(index.Z));
-
-        public static implicit operator Index((int p1, int p2, int p3) index)
-            => new (T.CreateChecked(index.p1), T.CreateChecked(index.p2),T.CreateChecked(index.p3));
+    private Index(T p1, T p2, T p3) {
+        this.p1 = p1;
+        this.p2 = p2;
+        this.p3 = p3;
     }
 
-    public override int get_max_vertex_count() => T.One switch {
+    public static implicit operator Index<T>((T p1, T p2, T p3) index)
+        => new (index.p1, index.p2, index.p3);
+
+    public static implicit operator Index<T>(Vector3i index)
+        => new (T.CreateChecked(index.X), T.CreateChecked(index.Y),T.CreateChecked(index.Z));
+}
+
+public class IndexBuffer<T>: Buffer<Index<T>>, IIndexBuffer where T: unmanaged, INumberBase<T> {
+    public int max_vertex_count => T.One switch {
         byte => byte.MaxValue,
         ushort => ushort.MaxValue,
         short => short.MaxValue,
@@ -76,27 +48,11 @@ public class IndexBuffer<T>: IndexBuffer where T: unmanaged, INumberBase<T> {
         _ => throw new ArgumentOutOfRangeException(nameof(T), $"Unexpected type {typeof(T).Name}!")
     };
 
-    public override int size { get; }
+    public IndexBuffer(int triangle_count): base(BufferTarget.ElementArrayBuffer,triangle_count * Unsafe.SizeOf<Index>()) { }
+    public IndexBuffer(ReadOnlySpan<Index<T>> data): base(BufferTarget.ElementArrayBuffer, data) { }
+    public IndexBuffer(ReadOnlySpan<T> data): base(BufferTarget.ElementArrayBuffer, data.reinterpret_as<T, Index<T>>()) { }
 
-    public override void bind() {
-        throw new NotImplementedException();
-    }
-
-    public override Status status { get; }
-
-    public override void upload() {
-        throw new NotImplementedException();
-    }
-
-    public override int count { get; }
-    public override int item_size { get; }
-    public override Type item_type { get; }
-
-    public IndexBuffer(int triangle_count): base(triangle_count * T.One.size_of()) { }
-    public IndexBuffer(ReadOnlySpan<Index> data): base(data.cast_to<Index, byte>()) { }
-    public IndexBuffer(ReadOnlySpan<T> data): base(data.cast_to<T, byte>()) { }
-
-    public NativeView<T> get_view() => buffer.as_view<T>();
+    public NativeArray<Index<T>>.View<Index<T>> view() => buffer.view<Index<T>>();
 
     /*
     internal IndexBuffer(in Vector3i[] items) : base(BufferTarget.ElementArrayBuffer, items) {
@@ -172,12 +128,12 @@ public class IndexBuffer<T>: IndexBuffer where T: unmanaged, INumberBase<T> {
     public static IndexBuffer<T> make(IEnumerable<Vector3i> items) => make(items.ToArray());
 */
 
-    public DrawElementsType draw_element_type => typeof(T) switch {
-        { } t when t == typeof(byte) => DrawElementsType.UnsignedByte,
-        { } t when t == typeof(short) => DrawElementsType.UnsignedShort,
-        { } t when t == typeof(ushort) => DrawElementsType.UnsignedShort,
-        { } t when t == typeof(int) => DrawElementsType.UnsignedInt,
-        { } t when t == typeof(uint) => DrawElementsType.UnsignedInt,
+    public DrawElementsType draw_element_type => T.One switch {
+        byte => DrawElementsType.UnsignedByte,
+        short => DrawElementsType.UnsignedShort,
+        ushort => DrawElementsType.UnsignedShort,
+        int => DrawElementsType.UnsignedInt,
+        uint => DrawElementsType.UnsignedInt,
         _ => throw new InvalidOperationException("Unsupported type")
     };
 

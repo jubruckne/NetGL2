@@ -99,7 +99,7 @@ internal sealed class TerrainChunk : IShape {
 
         lock (index_buffer_per_resolution) {
             if (!index_buffer_per_resolution.TryGetValue(resolution, out ib)) {
-                ib = IndexBuffer.create(gen.get_indices(), vb.count);
+                ib = IndexBuffer.create(gen.get_indices(), vb.length);
                 index_buffer_per_resolution.Add(resolution, ib);
             }
         }

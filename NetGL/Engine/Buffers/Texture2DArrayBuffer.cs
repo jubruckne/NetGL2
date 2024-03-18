@@ -5,20 +5,20 @@ namespace NetGL;
 public class Texture2DArrayBuffer: TextureBuffer {
     protected readonly Texture[] textures;
 
-    public override int count { get; }
+    public override int length { get; }
     public override int item_size { get; }
     public override Type item_type { get; }
-    public override int size { get; }
+    public override int total_size { get; }
 
     protected Texture2DArrayBuffer(TextureTarget target, in Texture[] textures): base(target) {
         handle = 0;
 
-        count = textures.Length;
+        length = textures.Length;
         width = textures[0].width;
         height = textures[0].height;
         item_size = textures[0].image_data.Length;
         item_type = textures[0].image_data.GetType();
-        size = textures.Length * textures[0].image_data.Length;
+        total_size = textures.Length * textures[0].image_data.Length;
         this.textures = textures;
     }
 
@@ -46,7 +46,7 @@ public class Texture2DArrayBuffer: TextureBuffer {
             PixelInternalFormat.Rgba,
             width,
             height,
-            count,
+            length,
             border: 0,
             PixelFormat.Rgba,
             PixelType.UnsignedByte,

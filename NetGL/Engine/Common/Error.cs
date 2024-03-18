@@ -24,8 +24,16 @@ public static class Error {
         throw new ObjectDisposedException(typeof(T).Name, "Object is already free!");
 
     [DoesNotReturn, StackTraceHidden]
+    public static void exception(string message) =>
+        throw new System.Exception(message);
+
+    [DoesNotReturn, StackTraceHidden]
     public static void index_out_of_range<T>(string parameter, T index) =>
         throw new IndexOutOfRangeException($"Index out of range: {parameter}:{index}!");
+
+    [DoesNotReturn, StackTraceHidden]
+    public static void empty_array<T>(string parameter) =>
+        throw new System.Exception($"Array is empty: {typeof(T).GetFormattedName()}:{parameter}!");
 
     [DoesNotReturn, StackTraceHidden]
     public static void index_out_of_range<T>(T index) =>

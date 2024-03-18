@@ -1,20 +1,17 @@
-using System.Runtime.CompilerServices;
-using OpenTK.Mathematics;
-
 namespace NetGL;
 
-using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
+using System.Runtime.CompilerServices;
 
 public interface IBindable {
     void bind();
 }
 
 public interface IBuffer: IBindable {
-    int count { get; }
-    int item_size{ get; }
+    int length { get; }
     Type item_type { get; }
-    int size { get; }
+    int item_size{ get; }
+    int total_size { get; }
     void upload();
     Buffer.Status status { get; }
 }
@@ -27,10 +24,10 @@ public abstract class Buffer: IBuffer {
         Modified
     }
 
-    public abstract int count { get; }
+    public abstract int length { get; }
     public abstract int item_size { get; }
     public abstract Type item_type { get; }
-    public abstract int size { get; }
+    public abstract int total_size { get; }
 
     public abstract void upload();
     public abstract void bind();
@@ -50,34 +47,21 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         buffer.Dispose();
     }
 
-    protected Buffer(BufferTarget target, in T[] items) {
-        this.target = target;
-        this.handle = 0;
-        buffer = new NativeArray<T>(items);
-    }
-
-    /*
-    protected Buffer(BufferTarget target, in Vector3i[] items) {
-        this.target = target;
-        this.handle = 0;
-        buffer = new NativeArray<T>(Unsafe.SizeOf<Vector3i>() * items.Length);
-        buffer.copy_from(items);
-    }*/
-
     protected Buffer(BufferTarget target, in ReadOnlySpan<T> items) {
         this.target = target;
         this.handle = 0;
-        buffer = new NativeArray<T>(items);
+        if(items.Length == 0) Error.empty_array<T>(nameof(items));
+        this.buffer = new NativeArray<T>(items);
     }
 
     protected Buffer(BufferTarget target, int count = 0) {
         this.target = target;
         this.handle = 0;
-        buffer = new NativeArray<T>(count);
+        this.buffer = new NativeArray<T>(count);
     }
 
     public override Type item_type => typeof(T);
-    
+
     public T this[int index] {
         get {
             if (index < 0 || index >= buffer.length)
@@ -119,7 +103,6 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         buffer[index] = item;
     }
 
-
     public int append(in T[] items) {
         var position = buffer.length;
         resize(buffer.length + items.Length);
@@ -134,15 +117,12 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         return position;
     }
 
-    public override int count { 
-        get => buffer.length;
-    }
-
-    public override int item_size { get => Marshal.SizeOf(new T()); }
-    public override int size { get => item_size * count; }
+    public override int length => buffer.length;
+    public override int item_size => Unsafe.SizeOf<T>();
+    public override int total_size => item_size * length;
 
     public override void bind() {
-        Console.WriteLine("Buffer.bind: " + GetType().GetFormattedName());
+        Console.WriteLine("Buffer.bind: " + typeof(T).GetFormattedName());
 
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");

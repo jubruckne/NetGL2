@@ -24,7 +24,7 @@ public class Model {
 
     public static Model from_shape(IShapeGenerator shape_generator) {
         VertexBuffer<Struct<Vector3, Vector3>> vb = new(shape_generator.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
-        var ib = IndexBuffer.create(shape_generator.get_indices(), vb.count);
+        var ib = IndexBuffer.create(shape_generator.get_indices(), vb.length);
         vb.upload();
         ib.upload();
 
@@ -74,12 +74,12 @@ public class Model {
         }
 
         foreach (var mesh in assimp.Meshes) {
-            var vb_pos = new VertexBuffer<Assimp.Vector3D>(mesh.Vertices, VertexAttribute.Position);
+            var vb_pos = new VertexBuffer<Assimp.Vector3D>(mesh.Vertices.as_readonly_span(), VertexAttribute.Position);
             vb_pos.upload();
-            var vb_norm = new VertexBuffer<Assimp.Vector3D>(mesh.Normals, VertexAttribute.Normal);
+            var vb_norm = new VertexBuffer<Assimp.Vector3D>(mesh.Normals.as_readonly_span(), VertexAttribute.Normal);
             vb_norm.upload();
 
-            var ib = IndexBuffer<int>.make(mesh.GetIndices());
+            var ib = new IndexBuffer<int>(mesh.GetIndices());
             ib.upload();
 
             var va = new VertexArrayIndexed(ib, vb_pos, vb_norm);

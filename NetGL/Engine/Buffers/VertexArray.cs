@@ -69,13 +69,13 @@ public class VertexArray: IBindable {
     }
 
     public override string ToString() {
-        return $"vert:{vertex_buffers.sum(buffer => buffer.count):N0}";
+        return $"vert:{vertex_buffers.sum(buffer => buffer.length):N0}";
     }
 
     public virtual void draw() {
         foreach (var buffer in vertex_buffers) {
             //buffer.bind();
-            GL.DrawArrays(primitive_type, 0, buffer.count);
+            GL.DrawArrays(primitive_type, 0, buffer.length);
         }
     }
 
