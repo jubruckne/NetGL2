@@ -146,7 +146,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         GL.BindVertexArray(prevVAO);
         GL.BindBuffer(BufferTarget.ArrayBuffer, prevArrayBuffer);
 
-        Error.check();
+        Error.assert_opengl();
     }
 
     private static void RecreateFontDeviceTexture() {
@@ -228,8 +228,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
                 -1.0f,
                 1.0f);
 
-            if (_shader == 0)
-                throw new Error.Exception("_shader == 0");
+            Error.assert(_shader != 0);
 
             GL.ProgramUniformMatrix4(_shader, _shaderProjectionMatrixLocation, false, ref mvp);
             GL.ProgramUniform1(_shader, _shaderFontTextureLocation, 0);
@@ -413,7 +412,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         if (prevScissorTestEnabled) GL.Enable(EnableCap.ScissorTest); else GL.Disable(EnableCap.ScissorTest);
         GL.PolygonMode(MaterialFace.FrontAndBack, (PolygonMode)prevPolygonMode[0]);
 
-        Error.check();
+        Error.assert_opengl();
     }
 
     public static void Dispose() {

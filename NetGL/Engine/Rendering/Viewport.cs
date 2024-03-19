@@ -13,7 +13,7 @@ public class Viewport {
     public int height;
     public float aspect_ratio => (float)width / height;
 
-    private bool resized = false;
+    private bool resized;
 
     public Viewport(string name, int x, int y, int width, int height, Color clear_color) {
         this.name = name;
@@ -51,7 +51,8 @@ public class Viewport {
     }
 
     public void clear() {
-        if (!is_current) throw new Error.WrongContextException(ToString(), current_viewport?.ToString() ?? "None");
+        Error.assert(this, is_current);
+
         if (this == Gameplay) {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         } else {

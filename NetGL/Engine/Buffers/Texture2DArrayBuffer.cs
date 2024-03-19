@@ -71,6 +71,6 @@ public class Texture2DArrayBuffer: TextureBuffer {
 
         GL.GenerateMipmap(GenerateMipmapTarget.Texture2DArray);
 
-        Error.check();
+        Error.assert_opengl();
     }
 }

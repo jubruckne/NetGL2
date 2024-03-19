@@ -35,7 +35,7 @@ public class VertexArrayIndexed: VertexArray {
 
         GL.BindVertexArray(0);
 
-        Error.check();
+        Error.assert_opengl();
 
         //Console.WriteLine();
     }
@@ -47,6 +47,6 @@ public class VertexArrayIndexed: VertexArray {
     public override void draw() {
         //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
         GL.DrawElements(PrimitiveType.Triangles, index_buffer.length * 3, index_buffer.draw_element_type, 0);
-        Error.check();
+        Error.assert_opengl();
     }
 }

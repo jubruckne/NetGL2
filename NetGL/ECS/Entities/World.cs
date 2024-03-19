@@ -1,7 +1,6 @@
 using System.Numerics;
 using BulletSharp;
 using OpenTK.Mathematics;
-using Quaternion = System.Numerics.Quaternion;
 using Vector3 = OpenTK.Mathematics.Vector3;
 
 namespace NetGL.ECS;
@@ -46,59 +45,17 @@ public class World: Entity {
         world_entities.add(e);
     }
 
-    private Entity get_camera_entity() {
-        foreach (var entity in children) {
-            if (entity.has<FirstPersonCamera>()) {
-                return entity;
-            }
-        }
-
-        throw new InvalidOperationException("no camera found!");
-    }
-
-    struct RenderItem: IComparable<RenderItem> {
-        Viewport viewport;
-        Camera camera;
-        Transform transform;
-        Shader shader;
-        Material material;
-        Light[] lights;
-        bool depth_test;
-        bool cull_face;
-        bool blend;
-        bool wireframe;
-        bool front_facing;
-
-        public int CompareTo(RenderItem other) {
-            if (viewport == other.viewport) {
-                if (camera == other.camera) {
-                    if (shader == other.shader) {
-                        if (material == other.material) {
-                            return 0;
-                        }
-                        return 1;
-                    }
-                    return 1;
-                }
-                return 1;
-            }
-            return 1;
-        }
-    }
-
-    private List<RenderItem> render_items;
-
     public void render() {
         foreach (var entity in children.with_component<Camera>()) {
             foreach(var cam in entity.get_all<Camera>()) {
                 // Console.WriteLine($"Switching to cam {cam.name}");
                 //render_items.Sort(new Comparison<RenderItem>((item, renderItem) => ));
 
-                if (cam!.entity.parent != null) {
+                if (cam.entity.parent != null) {
                     // Console.WriteLine($"Switching to viewport {cam.viewport}");
                     cam.viewport.make_current();
                     cam.viewport.clear();
-                    Error.check();
+                    Error.assert_opengl();
 
                     foreach (var child in cam.entity.parent.children) {
                         // Console.WriteLine("  " + child.name);
@@ -114,7 +71,7 @@ public class World: Entity {
                 }
             }
 
-            Error.check();
+            Error.assert_opengl();
         }
     }
 

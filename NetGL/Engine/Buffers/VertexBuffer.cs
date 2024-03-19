@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
@@ -24,10 +25,11 @@ public class VertexBuffer<T>: Buffer<T>, IVertexBuffer where T: unmanaged {
             offset += attrib.size_of;
             ((Map<string, VertexAttribute>)attribute_definitions).add(attrib.name, attrib);
         }
+
+        Error.assert((offset, Unsafe.SizeOf<T>()), offset == Unsafe.SizeOf<T>());
     }
 
     public ArrayView<V> get_attributes<V>(in VertexAttribute att) where V: unmanaged => buffer.get_view<V>(att.name);
-
     public ArrayWriter<T> get_writer() => new ArrayWriter<T>(get_view());
     public ArrayWriter<V> get_writer<V>(string attribute_name) where V : unmanaged => new ArrayWriter<V>(get_view<V>(attribute_name));
     public ArrayView<T> get_view() => buffer.get_view<T>();

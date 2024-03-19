@@ -773,8 +773,6 @@ public sealed class FastNoiseLite
                     y += t;
                 }
                 break;
-            default:
-                break;
         }
     }
 
@@ -815,8 +813,6 @@ public sealed class FastNoiseLite
                     y = r - y;
                     z = r - z;
                 }
-                break;
-            default:
                 break;
         }
     }
@@ -863,8 +859,6 @@ public sealed class FastNoiseLite
                 x += t; y += t;
             }
             break;
-            default:
-                break;
         }
     }
 

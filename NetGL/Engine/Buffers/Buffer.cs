@@ -3,8 +3,11 @@ namespace NetGL;
 using OpenTK.Graphics.OpenGL4;
 using System.Runtime.CompilerServices;
 
-public interface IBindable {
+public interface IBindable: IEquatable<IBindable> {
+    int handle { get; }
     void bind();
+
+    bool IEquatable<IBindable>.Equals(IBindable? other) => other?.handle == handle;
 }
 
 public interface IBuffer: IBindable {
@@ -23,6 +26,8 @@ public abstract class Buffer: IBuffer {
         Uploaded,
         Modified
     }
+
+    public int handle { get; protected set; }
 
     public abstract int length { get; }
     public abstract int item_size { get; }
@@ -43,7 +48,6 @@ public abstract class Buffer: IBuffer {
 public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
     protected readonly NativeArray<T> buffer;
     private readonly BufferTarget target;
-    private int handle;
 
     ~Buffer() {
         buffer.Dispose();

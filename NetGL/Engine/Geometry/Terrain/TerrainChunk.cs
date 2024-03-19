@@ -110,6 +110,8 @@ internal sealed class TerrainChunk : IShape {
         float px = 0;
         float py = 0;
 
+        var center = this.center;
+
         for (var x = 0; x < pixel_count + 1; x++) {
             px = center.X + terrain.chunk_size * (float)x / pixel_count;
             for (var y = 0; y < pixel_count + 1; y++) {

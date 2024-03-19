@@ -121,17 +121,19 @@ public class Engine: GameWindow {
        environment.get<VertexArrayRenderer>().depth_test = false;
        environment.get<VertexArrayRenderer>().cull_face = true;
 
-        world.add_directional_light(
-            ambient:(0.4f, 0.4f, 0.4f),
-            diffuse:(0.9f, 0.9f, 0.9f),
-            specular:(1.0f, 1.0f, 1.0f)
-            ).data.direction.set_azimuth_altitude(90, 45);
+       Console.WriteLine(RenderState.depth_test);
+
+       world.add_directional_light(
+                                   ambient:(0.4f, 0.4f, 0.4f),
+                                   diffuse:(0.9f, 0.9f, 0.9f),
+                                   specular:(1.0f, 1.0f, 1.0f)
+                                  ).data.direction.set_azimuth_altitude(90, 45);
 
         Entity player = world.create_entity("Player");
         player.transform.position = (0, 8, 0);
         player.transform.rotation = Rotation.Forward;
 
-        player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:28f, sensitivity:0.75f);
+        player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:228f, sensitivity:0.75f);
 /*
         var oc1 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:325, y:200), field_of_view:60f, enable_input:false);
         var oc2 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:125, y:25), field_of_view:60f, enable_input:false);
@@ -226,7 +228,7 @@ public class Engine: GameWindow {
         AssetManager.load_all_files<Script>();
         AssetManager.for_each<Script>(script => script.run(this));
 
-        Error.check();
+        Error.assert_opengl();
 
         CursorState = CursorState.Normal;
 
@@ -297,9 +299,9 @@ public class Engine: GameWindow {
         Viewport.Gameplay.make_current();
 
         world.render();
-        Error.check();
+        Error.assert_opengl();
         if(debug) render_ui();
-        Error.check();
+        Error.assert_opengl();
 
         BackgroundTaskScheduler.process_scheduled_tasks();
 
@@ -331,7 +333,7 @@ public class Engine: GameWindow {
 
         ImGui.StyleColorsClassic();
 
-        Error.check();
+        Error.assert_opengl();
 
         if (frame_times.count > 5) {
             ImGui.Text("Frame Time (ms):");
@@ -354,7 +356,7 @@ public class Engine: GameWindow {
 
         ImGui.PopStyleVar(4);
         ImGui.End();
-        Error.check();
+        Error.assert_opengl();
 
         ImGuiRenderer.render();
     }

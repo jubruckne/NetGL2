@@ -3,8 +3,7 @@ using OpenTK.Graphics.OpenGL4;
 namespace NetGL;
 
 public abstract class TextureBuffer: Buffer {
-    protected int handle;
-    protected TextureTarget target;
+    protected readonly TextureTarget target;
 
     public int width { get; protected init; }
     public int height { get; protected init; }

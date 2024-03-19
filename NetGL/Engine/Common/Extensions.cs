@@ -10,9 +10,9 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 namespace NetGL;
 
 public static class TypeExtensions {
-    public static string get_type_name<T>(this T t, bool with_generic_arguments = true) {
+    public static string get_type_name<T>(this T t, bool with_generic_arguments = true) where T: notnull {
         if (t is Type tt) return get_type_name(tt);
-        var type = typeof(T);
+        var type = t.GetType();
         if(type.IsGenericType) {
             if(!with_generic_arguments)
                 return $"{type.Name[..type.Name.IndexOf('`')]}";
@@ -192,6 +192,10 @@ public static class AngleExt {
 }
 
 public static class ArrayExt {
+    public static Dictionary<TKey, TValue> writeable<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dict)
+        where TKey: notnull
+        => (Dictionary<TKey, TValue>)dict;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool is_float<T>(in T t) where T: unmanaged {
         return t is float or double or OpenTK.Mathematics.Half or Half;

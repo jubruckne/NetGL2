@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
 public class ArrayView<V>: IEnumerable<V> where V : unmanaged {
-    public readonly int length = 0;
+    public readonly int length;
     private readonly nint start;
     private readonly nint stride;
 
@@ -38,73 +38,68 @@ public class ArrayView<V>: IEnumerable<V> where V : unmanaged {
 
 public class ArrayWriter<V> where V: unmanaged {
     private readonly ArrayView<V> view;
+    private readonly int length;
+    private int pos;
 
     public int position {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private set;
-    } = 0;
-
-    public bool eof => position >= view.length;
-
-    public V value {
-        get => view[position];
-        set => view[position] = value;
+        get => pos;
     }
 
-    internal ArrayWriter(in ArrayView<V> view) => this.view = view;
+    public bool eof => pos >= length;
+
+    public V value {
+        get => view[pos];
+        set => view[pos] = value;
+    }
+
+    internal ArrayWriter(in ArrayView<V> view) {
+        this.view   = view;
+        this.length = view.length;
+        this.pos    = 0;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void write(in V value) {
-        view[position] = value;
+        view[pos] = value;
         next();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void write(in V value1, in V value2) {
-        view[position] = value1;
+        view[pos] = value1;
         if(!next())
-            Error.index_out_of_range(position, view.length);
+            Error.index_out_of_range(pos, view.length);
 
-        view[position] = value2;
+        view[pos] = value2;
         next();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void write(in V value1, in V value2, in V value3) {
-        view[position] = value1;
+        view[pos] = value1;
         if(!next())
-            Error.index_out_of_range(position, view.length);
+            Error.index_out_of_range(pos, view.length);
 
-        view[position] = value2;
+        view[pos] = value2;
         if(!next())
-            Error.index_out_of_range(position, view.length);
+            Error.index_out_of_range(pos, view.length);
 
-        view[position] = value3;
+        view[pos] = value3;
         next();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool next() {
-        if (position < view.length) {
-            ++position;
+        if (pos < length) {
+            ++pos;
             return true;
         }
 
         return false;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ArrayWriter<V> operator++(ArrayWriter<V> writer) {
-        writer.next();
-        return writer;
-    }
-
-    public override string ToString() => $"{this.get_type_name()} (view={view}, position={position:N0})";
-
-    public static implicit operator bool(in ArrayWriter<V> writer) => writer.position < writer.view.length;
-    public static explicit operator V(in ArrayWriter<V> writer) => writer.value;
+    public override string ToString() => $"{this.get_type_name()} (view={view}, position={pos:N0})";
 }
 
 public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T : unmanaged {
@@ -125,6 +120,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
 
         this.data = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes, 64);
         this.length = length;
+        zero();
     }
 
     /// <summary>Create new <see cref="NativeArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>

@@ -35,7 +35,7 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
 
         if (entity.try_get<MaterialComponent>(out var mat)) {
             mat.material.ambient_texture?.bind();
-            shader.set_material(mat!.material);
+            shader.set_material(mat.material);
         }
 
         var lights = entity.get_all<Light>(Entity.EntityRelationship.ParentsRecursive);
@@ -70,7 +70,7 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
             va.draw();
         }
 
-        Error.check();
+        Error.assert_opengl();
     }
 }
 

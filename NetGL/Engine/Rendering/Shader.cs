@@ -1,15 +1,14 @@
-using System.Runtime.CompilerServices;
-using NetGL.ECS;
-
 namespace NetGL;
 
+using System.Runtime.CompilerServices;
+using ECS;
 using System;
 using System.IO;
 using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-public class Shader: IAssetType<Shader>, IBindable {
+public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     static string IAssetType<Shader>.path => "Shaders";
 
     static Shader IAssetType<Shader>.load_from_file(string path) {
@@ -17,17 +16,18 @@ public class Shader: IAssetType<Shader>, IBindable {
     }
 
     public readonly string name;
-    private readonly int handle;
+    public int handle { get; init; }
     private readonly Dictionary<string, int> uniform_locations;
-    private string _path;
+
     public IReadOnlyList<string> uniforms => uniform_locations.Keys.ToList();
 
-    private static Shader? current_shader = null;
+    public static readonly IReadOnlyDictionary<int, WeakReference<Shader>> instances = new Dictionary<int, WeakReference<Shader>>();
 
     protected Shader(string name) {
         this.name = name;
         uniform_locations = [];
         handle = GL.CreateProgram();
+        Shader.instances.writeable().Add(handle, new WeakReference<Shader>(this));
     }
 
     public Shader(string name, string vertex_program, string fragment_program, string geometry_program = "")
@@ -78,7 +78,7 @@ public class Shader: IAssetType<Shader>, IBindable {
         if(geometry_shader_handle != -1)
             GL.DeleteShader(geometry_shader_handle);
 
-        Error.check();
+        Error.assert_opengl();
 
         // cache uniform locations.
         GL.GetProgram(handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
@@ -236,14 +236,17 @@ public class Shader: IAssetType<Shader>, IBindable {
         GL.ProgramUniform4(handle, uniform_locations.GetValueOrDefault(name, -1), data);
     }
 
+    public override int GetHashCode() => handle;
+    public override bool Equals(object? obj) => Equals(obj as Shader);
+    public bool Equals(Shader? other) {
+        if (other is null) return false;
+        return other.handle == this.handle;
+    }
+
     public override string ToString() => name;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void bind() {
-        if (Shader.current_shader != this) {
-            //Console.WriteLine("Shader.bind: " + name);
-            Shader.current_shader = this;
-            GL.UseProgram(handle);
-        }
+        GL.UseProgram(handle);
     }
 }

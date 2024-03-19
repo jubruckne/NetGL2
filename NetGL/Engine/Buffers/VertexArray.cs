@@ -3,7 +3,7 @@ using OpenTK.Graphics.OpenGL4;
 namespace NetGL;
 
 public class VertexArray: IBindable {
-    protected int handle;
+    public int handle { get; protected set; }
 
     public readonly PrimitiveType primitive_type;
 
@@ -63,7 +63,7 @@ public class VertexArray: IBindable {
             GL.EnableVertexAttribArray(attribute.location);
         }
 
-        Error.check();
+        Error.assert_opengl();
     }
 
     public override string ToString() {

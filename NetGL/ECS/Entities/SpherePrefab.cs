@@ -1,7 +1,7 @@
 namespace NetGL.ECS;
 
 public static class SpherePrefab {
-    private static (Sphere sphere, Model model, Shader shader)? last = null;
+    private static (Sphere sphere, Model model, Shader shader)? last;
 
     public static Entity create_sphere_uv(this World world, string name, Entity? parent = null, Transform? transform = null, float radius = 0.5f, int rows = 32, int colums = 24, Material? material = null) {
         var entity = world.create_entity(name, parent, transform);
@@ -52,7 +52,7 @@ public static class SpherePrefab {
         entity.add_shader(shader);
         entity.add_vertex_array_renderer(model.vertex_arrays[0]);
 
-        Error.check();
+        Error.assert_opengl();
 
         return entity;
     }

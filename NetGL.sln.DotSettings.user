@@ -11,9 +11,10 @@
 	<s:Boolean x:Key="/Default/Dpa/EnableInspections/=SqlCommandDuration/@EntryIndexedValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/Dpa/EnableInspections/=SqlConnectionCount/@EntryIndexedValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/Dpa/EnableInspections/=SqlRecordCount/@EntryIndexedValue">False</s:Boolean>
-	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationClosure/@EntryIndexedValue">10485760</s:Int64>
-	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationLoh/@EntryIndexedValue">10485760</s:Int64>
-	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationTopSoh/@EntryIndexedValue">10485760</s:Int64>
+	<s:Boolean x:Key="/Default/Dpa/ExcludeFilters/=_002A_003B_002A_003BNetGL_002ETexture_003Bload_005Ffrom_005Ffile/@EntryIndexedValue">True</s:Boolean>
+	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationClosure/@EntryIndexedValue">5242880</s:Int64>
+	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationLoh/@EntryIndexedValue">5242880</s:Int64>
+	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationTopSoh/@EntryIndexedValue">5242880</s:Int64>
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;
   &lt;Assembly Path="/usr/local/share/dotnet/shared/Microsoft.NETCore.App/8.0.0/System.Private.CoreLib.dll" /&gt;
   &lt;Assembly Path="/usr/local/share/dotnet/packs/Microsoft.NETCore.App.Ref/8.0.0/ref/net8.0/System.Collections.Concurrent.dll" /&gt;

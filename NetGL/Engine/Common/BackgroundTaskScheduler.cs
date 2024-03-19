@@ -13,7 +13,7 @@ public static class BackgroundTaskScheduler {
         public int priority { get; }
         public Thread? worker { get; set; }
         private readonly string id;
-        private TResult data;
+        private TResult data = default!;
 
         private readonly Func<TResult> threaded;
         private readonly Action<TResult> completed;

@@ -1,5 +1,4 @@
 using OpenTK.Graphics.OpenGL4;
-using ArbTextureFilterAnisotropic = OpenTK.Graphics.OpenGL.ArbTextureFilterAnisotropic;
 
 namespace NetGL;
 
@@ -38,6 +37,6 @@ public class TextureCubemapBuffer: Texture2DArrayBuffer {
             );
         }
 
-        Error.check();
+        Error.assert_opengl();
     }
 }

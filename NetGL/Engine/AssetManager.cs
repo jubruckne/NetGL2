@@ -24,7 +24,7 @@ public class Asset<T>: Asset {
 }
 
 public static class AssetManager {
-    private static readonly string asset_root;
+    private static readonly string asset_root = "";
 
     static AssetManager() {
         var current = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);

@@ -1,36 +1,196 @@
+using System.Reflection;
 using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
 
-public class RenderState {
-    public Shader shader;
-    public bool depth_test;
-    public bool cull_face;
-    public bool blending;
-    public bool wireframe;
-    public bool front_facing;
+public interface IState {
+    string name { get; }
+    object value { get; }
+}
 
-    public void bind() {
-        shader.bind();
+public abstract class State<T>: IState
+    where T: IEquatable<T> {
 
-        if(depth_test)
-            GL.Enable(EnableCap.DepthTest);
-        else
-            GL.Disable(EnableCap.DepthTest);
+    public string name { get; }
+    private T state;
+    private readonly bool write_through;
 
-        if(cull_face)
-            GL.Enable(EnableCap.CullFace);
-        else
-            GL.Disable(EnableCap.CullFace);
+    protected abstract void set_state(T state);
+    protected abstract T get_state();
 
-        if (blending) {
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-        } else {
-            GL.Disable(EnableCap.Blend);
+    object IState.value => this.value;
+
+    public T value {
+        get => this.state;
+        set {
+            // ReSharper disable ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (this.state == null || this.state.Equals(value)) return;
+            // ReSharper restore ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+
+            this.state = value;
+            if(write_through) set_state(value);
+        }
+    }
+
+    protected State(T state, bool write_through) {
+        name = this.get_type_name();
+        this.write_through = write_through;
+        this.state         = state;
+        this.value         = state;
+    }
+
+    public bool verify() => get_state().Equals(state);
+    public void assert() => Error.assert(this, verify());
+
+    public override string ToString() => $"{this.get_type_name()}={value}";
+
+    public static explicit operator T(State<T> render_state) => render_state.value;
+}
+
+public static partial class RenderState {
+    public static readonly State<NetGL.Shader> shader = create<RenderState.Shader>();
+    public static readonly State<bool> depth_test = create<RenderState.DepthTest>();
+    public static readonly State<bool> cull_face = create<RenderState.CullFace>();
+    public static readonly State<bool> blending = create<RenderState.Blending>();
+    public static readonly State<bool> wireframe = create<RenderState.Wireframe>();
+    public static readonly State<bool> front_facing = create<RenderState.FrontFacing>();
+
+    private static T create<T>() {
+        var type = typeof(T);
+
+        var ctor = type.GetConstructor(
+                                       BindingFlags.Instance | BindingFlags.NonPublic,
+                                       null,
+                                       [],
+                                       null
+                                      );
+
+        if (ctor != null)
+            return (T)ctor.Invoke(null);
+
+        Error.exception($"Can not construct type {type.get_type_name()}");
+        return default;
+    }
+
+    public static void bind(params IState[] states) {
+        foreach (var state in states) {
+            switch (state) {
+                case RenderState.CullFace cf:
+                    RenderState.cull_face.value = cf.value;
+                    break;
+                case RenderState.DepthTest dt:
+                    RenderState.depth_test.value = dt.value;
+                    break;
+                case RenderState.FrontFacing ff:
+                    RenderState.front_facing.value = ff.value;
+                    break;
+                case Shader sh:
+                    RenderState.shader.value = sh.value;
+                    break;
+                case RenderState.Wireframe wf:
+                    RenderState.wireframe.value = wf.value;
+                    break;
+                case RenderState.Blending bl:
+                    RenderState.blending.value = bl.value;
+                    break;
+                default:
+                    Error.index_out_of_range(state);
+                    break;
+            }
+        }
+    }
+
+    public static void toggle(this State<bool> render_state) =>
+        render_state.value = !render_state.value;
+
+    public static void enable(this State<bool> render_state) =>
+        render_state.value = true;
+
+    public static void disable(this State<bool> render_state) =>
+        render_state.value = false;
+
+    public static void assert() {
+        shader.assert();
+        depth_test.assert();
+        cull_face.assert();
+        blending.assert();
+        wireframe.assert();
+        front_facing.assert();
+    }
+}
+
+public static partial class RenderState {
+    public class DepthTest: State<bool> {
+        private DepthTest(): base(true, true) {}
+        public DepthTest(bool state): base(state, false) {}
+
+        protected override void set_state(bool state) {
+            if (state) GL.Enable(EnableCap.DepthTest);
+            else GL.Disable(EnableCap.DepthTest);
         }
 
-        GL.PolygonMode(MaterialFace.FrontAndBack, wireframe ? PolygonMode.Line : PolygonMode.Fill);
-        GL.FrontFace(front_facing ? FrontFaceDirection.Ccw : FrontFaceDirection.Cw);
+        protected override bool get_state() => GL.GetBoolean(GetPName.DepthTest);
+    }
+
+    public class CullFace: State<bool> {
+        private CullFace(): base(true, true) {}
+        public CullFace(bool state): base(state, false) {}
+
+        protected override bool get_state() => GL.GetBoolean(GetPName.CullFace);
+
+        protected override void set_state(bool state) {
+            if (state) GL.Enable(EnableCap.CullFace);
+            else GL.Disable(EnableCap.CullFace);
+        }
+    }
+
+    public class Blending: State<bool> {
+        private Blending(): base(false, true) {}
+        public Blending(bool state): base(state, false) {}
+
+        protected override bool get_state() => GL.GetBoolean(GetPName.Blend);
+
+        protected override void set_state(bool state) {
+            if (state) GL.Enable(EnableCap.Blend);
+            else GL.Disable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        }
+    }
+
+    public class Wireframe: State<bool> {
+        private Wireframe(): base(false, true) {}
+        public Wireframe(bool state): base(state, false) {}
+
+        protected override bool get_state() => GL.GetInteger(GetPName.PolygonMode) == (int)MaterialFace.FrontAndBack;
+
+        protected override void set_state(bool state)
+            => GL.PolygonMode(MaterialFace.FrontAndBack, state ? PolygonMode.Line : PolygonMode.Fill);
+    }
+
+    public class FrontFacing: State<bool> {
+        private FrontFacing(): base(true, true) {}
+        public FrontFacing(bool state): base(state, false) {}
+
+        protected override bool get_state() => GL.GetInteger(GetPName.FrontFace) == (int)FrontFaceDirection.Ccw;
+
+        protected override void set_state(bool state) =>
+            GL.FrontFace(state ? FrontFaceDirection.Ccw : FrontFaceDirection.Cw);
+    }
+
+    public class Shader: State<NetGL.Shader> {
+        private Shader(): base(null!, true) {}
+        public Shader(NetGL.Shader shader): base(shader, false) {}
+
+        protected override void set_state(NetGL.Shader shader) => shader.bind();
+
+        protected override NetGL.Shader get_state() {
+            var current = GL.GetInteger(GetPName.CurrentProgram);
+            if (NetGL.Shader.instances.TryGetValue(current, out var sh)) {
+                if (sh.TryGetTarget(out var shader)) {
+                    return shader;
+                }
+            }
+            return null!;
+        }
     }
 }
