@@ -1,3 +1,5 @@
+using NetGL.Debug;
+
 namespace NetGL;
 
 using OpenTK.Mathematics;
@@ -46,7 +48,7 @@ internal sealed class TerrainChunk : IShape {
     public bool ready { get; private set; }
     public VertexArrayIndexed? vertex_array { get; private set; }
 
-    private static readonly Dictionary<int, IIndexBuffer> index_buffer_per_resolution = new ();
+    private static readonly Dictionary<int, IndexBuffer<int>> index_buffer_per_resolution = new ();
 
     public TerrainChunk(in Terrain terrain, in Key key) {
         this.key = key;
@@ -55,6 +57,7 @@ internal sealed class TerrainChunk : IShape {
     }
 
     private void upload(VertexArrayIndexed va) {
+        Console.WriteLine(Thread.CurrentThread.Name);
         //Garbage.measure_begin();
 
         foreach(var b in va.vertex_buffers)
@@ -89,22 +92,78 @@ internal sealed class TerrainChunk : IShape {
     }
 
     private VertexArrayIndexed create() {
-        // Garbage.measure_begin();
+        Garbage.measure_begin();
 
         var gen = generate();
-        VertexBuffer<Struct<Vector3, Vector3>> vb = new(gen.get_vertices_and_normals(), VertexAttribute.Position,
-            VertexAttribute.Normal);
 
-        IIndexBuffer? ib;
+        int pixel_count = terrain.chunk_size * resolution / 16;
+        int vertex_count = (pixel_count + 1) * (pixel_count + 1);
+        int index_count = pixel_count * pixel_count * 2;
+
+        var vb = new VertexBuffer<(Vector3 position, Vector3 normal)>(vertex_count,
+            VertexAttribute.Position,
+            VertexAttribute.Normal
+        );
+
+        var vertex_writer = vb.get_writer<Vector3>("position");
+
+        float px = 0;
+        float py = 0;
+
+        for (var x = 0; x < pixel_count + 1; x++) {
+            px = center.X + terrain.chunk_size * (float)x / pixel_count;
+            for (var y = 0; y < pixel_count + 1; y++) {
+                py = center.Y + terrain.chunk_size * (float)y / pixel_count;
+                vertex_writer.write(terrain.plane.to_world(
+                    px,
+                    py,
+                    terrain.noise.sample(px, py)));
+            }
+        }
+
+        Error.assert(vertex_writer.eof);
+
+        IndexBuffer<int> ib;
 
         lock (index_buffer_per_resolution) {
-            if (!index_buffer_per_resolution.TryGetValue(resolution, out ib)) {
-                ib = IndexBuffer.create(gen.get_indices(), vb.length);
+            if (!index_buffer_per_resolution.TryGetValue(resolution, out ib!)) {
+                ib = new IndexBuffer<int>(index_count);
+                var index_writer = ib.get_writer<int>();
+
+                for (var x = 1; x < pixel_count + 1; ++x) {
+                    for (var y = 1; y < pixel_count + 1; ++y) {
+                        var bottom_left = (y - 1) + (x - 1) * (pixel_count + 1);
+                        var bottom_right = (y - 1) + x * (pixel_count + 1);
+                        var top_left = y + (x - 1) * (pixel_count + 1);
+                        var top_right = y + x * (pixel_count + 1);
+
+                        index_writer.write(bottom_left, bottom_right, top_left);
+                        index_writer.write(top_left, bottom_right, top_right);
+                    }
+                }
+
+                Error.assert(index_writer, index_writer.eof);
+
                 index_buffer_per_resolution.Add(resolution, ib);
             }
         }
 
-        // Garbage.measure("VertexArrayIndexed.create");
+        var vert = vb.get_view();
+        foreach (var tri in ib.get_view()) {
+            var edge1 = vert[tri.p2].position - vert[tri.p1].position;
+            var edge2 = vert[tri.p3].position - vert[tri.p1].position;
+            var normal = Vector3.Cross(edge1, edge2);
+
+            vert[tri.p1].normal += normal;
+            vert[tri.p2].normal += normal;
+            vert[tri.p3].normal += normal;
+        }
+
+        for (var i = 0; i < vert.length; i++) {
+            vert[i].normal.Normalize();
+        }
+
+        Garbage.measure("TerrainChunk.create");
 
         return new VertexArrayIndexed(ib, vb);
     }

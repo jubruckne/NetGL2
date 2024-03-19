@@ -5,8 +5,15 @@ namespace NetGL;
 public class VertexArrayIndexed: VertexArray {
     public readonly IIndexBuffer index_buffer;
 
-    public VertexArrayIndexed(IIndexBuffer index_buffer, params IVertexBuffer[] vertex_buffers
-        ): base(index_buffer.primitive_type, vertex_buffers) {
+    public VertexArrayIndexed(IIndexBuffer index_buffer, IVertexBuffer vertex_buffer): base(index_buffer.primitive_type, [vertex_buffer]) {
+        if (vertex_buffer.length > index_buffer.max_vertex_count)
+            throw new ArgumentOutOfRangeException(nameof(index_buffer), $"IndexBuffer<{index_buffer.item_type.Name}> too small for VertexBuffer(count={vertex_buffer.length})!");
+
+        this.index_buffer = index_buffer;
+    }
+
+    public VertexArrayIndexed(IIndexBuffer index_buffer, params IVertexBuffer[] vertex_buffers)
+        : base(index_buffer.primitive_type, vertex_buffers) {
 
         foreach (var vb in vertex_buffers) {
             if (vb.length > index_buffer.max_vertex_count)
@@ -38,7 +45,7 @@ public class VertexArrayIndexed: VertexArray {
     }
 
     public override void draw() {
-        Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
+        //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
         GL.DrawElements(PrimitiveType.Triangles, index_buffer.length * 3, index_buffer.draw_element_type, 0);
         Error.check();
     }

@@ -27,7 +27,7 @@ public class Engine: GameWindow {
     public Engine(string title, Size2<int> window_size, WindowState window_state = WindowState.Normal, bool debug = false) :
         base(
             new() {
-                UpdateFrequency = 0,
+                UpdateFrequency = 10,
             }, new() {
                 APIVersion = new Version("4.1"),
                 AlphaBits = 8,
@@ -39,6 +39,7 @@ public class Engine: GameWindow {
                 Flags = ContextFlags.ForwardCompatible
             }) {
 
+        Thread.CurrentThread.Name = "[ENGINE]";
         this.debug = debug;
 
         Console.WriteLine($"OpenGL Version: {GL.GetString(StringName.Version)}");
@@ -268,15 +269,14 @@ public class Engine: GameWindow {
         BackgroundTaskScheduler.process_completed_tasks();
 
         world.update(game_time, delta_time);
-        Garbage.measure("Engine.update");
-
+        Garbage.measure($"Engine.update - frame: {frame}");
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
         Garbage.measure_begin();
         base.OnRenderFrame(e);
 
-        Console.WriteLine($"starting frame:{frame}...");
+        // Console.WriteLine($"starting frame:{frame}...");
 
         frame_time += e.Time;
 
@@ -306,7 +306,7 @@ public class Engine: GameWindow {
         //GC.Collect(0, GCCollectionMode.Default, false);
 
         SwapBuffers();
-        Garbage.measure("Engine.render");
+        Garbage.measure($"Engine.render - frame: {frame}");
     }
 
     private void render_ui() {

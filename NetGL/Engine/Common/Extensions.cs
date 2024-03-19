@@ -1,10 +1,7 @@
-using System.Buffers;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
 using System.Text;
 using OpenTK.Mathematics;
 using Half = System.Half;
@@ -13,23 +10,34 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 namespace NetGL;
 
 public static class TypeExtensions {
-    /// <summary>
-    /// Returns the type name. If this is a generic type, appends
-    /// the list of generic type arguments between angle brackets.
-    /// (Does not account for embedded / inner generic arguments.)
-    /// </summary>
-    /// <param name="type">The type.</param>
-    /// <returns>System.String.</returns>
-    public static string GetFormattedName(this Type type) {
+    public static string get_type_name<T>(this T t, bool with_generic_arguments = true) {
+        if (t is Type tt) return get_type_name(tt);
+        var type = typeof(T);
         if(type.IsGenericType) {
-            string genericArguments = type.GetGenericArguments()
+            if(!with_generic_arguments)
+                return $"{type.Name[..type.Name.IndexOf('`')]}";
+
+            var genericArguments = type.GetGenericArguments()
                 .Select(x => x.Name)
                 .Aggregate((x1, x2) => $"{x1}, {x2}");
-            return $"{type.Name.Substring(0, type.Name.IndexOf("`"))}"
-                   + $"<{genericArguments}>";
+            return $"{type.Name[..type.Name.IndexOf('`')]} <{genericArguments}>";
         }
         return type.Name;
     }
+
+    public static string get_type_name(this Type type, bool with_generic_arguments = true) {
+        if(type.IsGenericType) {
+            if(!with_generic_arguments)
+                return $"{type.Name[..type.Name.IndexOf('`')]}";
+
+            var genericArguments = type.GetGenericArguments()
+                .Select(x => x.get_type_name())
+                .Aggregate((x1, x2) => $"{x1}, {x2}");
+            return $"{type.Name[..type.Name.IndexOf('`')]}<{genericArguments}>";
+        }
+        return type.Name;
+    }
+
 
     public static unsafe int size_of<T>(this T integer) where T : unmanaged, INumberBase<T> {
         return sizeof(T);
@@ -325,11 +333,14 @@ public static class ArrayExt {
         return CollectionsMarshal.AsSpan(list);
     }
 
-    public static T? lookup<T>(this IEnumerable<T> list, Predicate<T> condition) where T: class{
+    /// <exception cref="T:System.ArgumentException"/>
+    public static T lookup<T>(this IEnumerable<T> list, Predicate<T> condition) {
         foreach(var item in list)
             if (condition(item))
                 return item;
-        return null;
+
+        Error.index_out_of_range(condition);
+        return default;
     }
 
     public static bool peek<T>(this IList<T> list, [MaybeNullWhen(false)] out T item) {

@@ -1,10 +1,9 @@
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using NetGL;
 using OpenTK.Mathematics;
 using Vector3 = OpenTK.Mathematics.Vector3;
 
-public class Selftest {
+public static class Selftest {
     private static bool failed;
 
     public static bool run() {

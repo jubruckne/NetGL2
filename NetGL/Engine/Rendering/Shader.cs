@@ -162,13 +162,6 @@ public class Shader: IAssetType<Shader>, IBindable {
         set_uniform("cam_position", pos);
     }
 
-    private static string[] directional_lights = [
-            "$\"directional_light[0].direction",
-            "$\"directional_light[1].direction",
-            "$\"directional_light[2].direction",
-            "$\"directional_light[3].direction",
-    ];
-
     public void set_light(IEnumerable<Light> lights) {
         int num_directional_lights = 0;
         int num_point_lights = 0;
@@ -180,10 +173,10 @@ public class Shader: IAssetType<Shader>, IBindable {
                     break;
                 case DirectionalLight directional:
                     // if(directional.data.direction.LengthSquared != 0) directional.data.direction.Normalize();
-                    set_uniform(directional_lights[num_directional_lights], directional.data.direction);
-                    set_uniform(directional_lights[num_directional_lights], directional.data.ambient.reinterpret_ref<Color, Vector3>());
-                    set_uniform(directional_lights[num_directional_lights], directional.data.specular.reinterpret_ref<Color, Vector3>());
-                    set_uniform(directional_lights[num_directional_lights], directional.data.diffuse.reinterpret_ref<Color, Vector3>());
+                    set_uniform($"directional_light[{num_directional_lights.ToString()}].direction", directional.data.direction);
+                    set_uniform($"directional_light[{num_directional_lights.ToString()}].ambient", directional.data.ambient.reinterpret_ref<Color, Vector3>());
+                    set_uniform($"directional_light[{num_directional_lights.ToString()}].specular", directional.data.specular.reinterpret_ref<Color, Vector3>());
+                    set_uniform($"directional_light[{num_directional_lights.ToString()}].diffuse", directional.data.diffuse.reinterpret_ref<Color, Vector3>());
                     num_directional_lights++;
                     break;
                 case PointLight pointlight:
@@ -248,7 +241,7 @@ public class Shader: IAssetType<Shader>, IBindable {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void bind() {
         if (Shader.current_shader != this) {
-            Console.WriteLine("Shader.bind: " + name);
+            //Console.WriteLine("Shader.bind: " + name);
             Shader.current_shader = this;
             GL.UseProgram(handle);
         }

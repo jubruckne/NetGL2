@@ -62,11 +62,25 @@ public class Noise {
         this.layers = [];
     }
 
+    public float sample(in float x, in float y) {
+        float sample = 0;
+
+        for(var l = 0; l < layers.Count - 1; l++) {
+            sample += layers[l].generate(
+                x * layers[l].frequency,
+                y * layers[l].frequency
+                ) * layers[l].amplitude;
+        }
+
+        return sample;
+    }
+
+
     public float sample(in Vector2 p) {
         float sample = 0;
 
-        for(int l = 0; l < layers.Count - 1; l ++) {
-            sample += layers[l].generate(p.X, p.Y) * layers[l].amplitude;
+        for(var l = 0; l < layers.Count - 1; l ++) {
+            sample += layers[l].generate(p.X * layers[l].frequency, p.Y * layers[l].frequency) * layers[l].amplitude;
         }
 
         return sample;

@@ -19,6 +19,14 @@ public static class IndexBuffer {
             _ => new IndexBuffer<int>(items.reinterpret_as<Vector3i, Index<int>>())
         };
     }
+
+    public static IIndexBuffer create(int index_count, int vertex_count) {
+        return vertex_count switch {
+            < ushort.MaxValue => new IndexBuffer<ushort>(index_count),
+            _ => new IndexBuffer<int>(index_count)
+        };
+    }
+
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -48,12 +56,9 @@ public class IndexBuffer<T>: Buffer<Index<T>>, IIndexBuffer where T: unmanaged, 
         _ => throw new ArgumentOutOfRangeException(nameof(T), $"Unexpected type {typeof(T).Name}!")
     };
 
-    public IndexBuffer(int triangle_count): base(BufferTarget.ElementArrayBuffer,triangle_count * Unsafe.SizeOf<Index>()) { }
+    public IndexBuffer(int triangle_count): base(BufferTarget.ElementArrayBuffer, triangle_count) { }
     public IndexBuffer(ReadOnlySpan<Index<T>> data): base(BufferTarget.ElementArrayBuffer, data) { }
     public IndexBuffer(ReadOnlySpan<T> data): base(BufferTarget.ElementArrayBuffer, data.reinterpret_as<T, Index<T>>()) { }
-
-    public NativeArray<Index<T>>.View<Index<T>> view() => buffer.view<Index<T>>();
-
     /*
     internal IndexBuffer(in Vector3i[] items) : base(BufferTarget.ElementArrayBuffer, items) {
     }
@@ -127,6 +132,12 @@ public class IndexBuffer<T>: Buffer<Index<T>>, IIndexBuffer where T: unmanaged, 
 
     public static IndexBuffer<T> make(IEnumerable<Vector3i> items) => make(items.ToArray());
 */
+
+
+    public ArrayWriter<Index<T>> get_writer() => new ArrayWriter<Index<T>>(get_view());
+    public ArrayWriter<V> get_writer<V>() where V: unmanaged => new ArrayWriter<V>(get_view<V>());
+    public ArrayView<Index<T>> get_view() => buffer.get_view<Index<T>>();
+    public ArrayView<V> get_view<V>() where V: unmanaged => buffer.get_view<V>();
 
     public DrawElementsType draw_element_type => T.One switch {
         byte => DrawElementsType.UnsignedByte,

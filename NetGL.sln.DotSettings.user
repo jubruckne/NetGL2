@@ -3,7 +3,7 @@
 	
 	<s:String x:Key="/Default/CodeInspection/Highlighting/SweaWarningsMode/@EntryValue">ShowAndRun</s:String>
 	<s:String x:Key="/Default/CodeInspection/PencilsConfiguration/ActualSeverity/@EntryValue">INFO</s:String>
-	<s:String x:Key="/Default/CustomTools/CustomToolsData/@EntryValue"></s:String>
+	
 	<s:Boolean x:Key="/Default/Dpa/EnableInspections/=AspControllerActionDuration/@EntryIndexedValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/Dpa/EnableInspections/=AspHandlerDuration/@EntryIndexedValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/Dpa/EnableInspections/=AspViewComponentDuration/@EntryIndexedValue">False</s:Boolean>
@@ -26,6 +26,7 @@
 	
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/SolutionBuilderNext/FileVerbosityLevel/@EntryValue">Quiet</s:String>
 	<s:Boolean x:Key="/Default/Environment/Hierarchy/Build/SolutionBuilderNext/LogToFile/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/Environment/Hierarchy/Build/SolutionBuilderNext/LogToOutput/@EntryValue">False</s:Boolean>
 	
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/SolutionBuilderNext/OutputVerbosityLevel/@EntryValue">Normal</s:String>
 	
@@ -40,6 +41,14 @@
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Housekeeping/UnitTestingMru/UnitTestRunner/LoggingInternal/@EntryValue">TRACE</s:String>
-	<s:String x:Key="/Default/Monitoring/StartMode/@EntryValue">Disabled</s:String>
+	<s:Boolean x:Key="/Default/Monitoring/Counters/=Microsoft_002DAspNetCore_002DServer_002DKestrel/@EntryIndexedValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/Monitoring/Counters/=Microsoft_002EAspNetCore_002EHosting/@EntryIndexedValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/Monitoring/Counters/=Microsoft_002EAspNetCore_002EHttp_002EConnections/@EntryIndexedValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/Monitoring/IsToolWindowHidden/@EntryValue">True</s:Boolean>
+	
+	
+	
+	
+	
 	
 	</wpf:ResourceDictionary>

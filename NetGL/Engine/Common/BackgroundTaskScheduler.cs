@@ -69,6 +69,7 @@ public static class BackgroundTaskScheduler {
             running_tasks.Add(task);
 
             task.worker = new(task.invoke_threaded);
+            task.worker.Name = "[WORKER]";
 
             task.worker.Priority = task.priority switch {
                 0 => ThreadPriority.Normal,

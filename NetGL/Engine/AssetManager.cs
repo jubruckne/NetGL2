@@ -83,7 +83,7 @@ public static class AssetManager {
     }
 
     public static ref readonly T load_from_file<T>(string filename) where T: IAssetType<T> {
-        Console.WriteLine($"Loading {filename}...");
+        // Console.WriteLine($"Loading {filename}...");
 
         if(!Path.Exists(filename))
             filename = $"{asset_root}/{T.path}/{filename}";

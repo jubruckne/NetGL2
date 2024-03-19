@@ -19,13 +19,11 @@ public class VertexArray: IBindable {
         int location = 0;
         vertex_attributes = new List<VertexAttribute>();
         foreach (var buffer in this.vertex_buffers) {
-            int offset = 0;
-            foreach (var attrib in buffer.attributes_definitions) {
+            foreach (var attrib in buffer.attribute_definitions) {
                 var a = attrib.copy();
+                Error.assert(a.offset >= 0);
                 a.location = location;
-                a.offset = offset;
                 a.buffer = buffer;
-                offset += a.size_of;
                 location++;
 
                 ((List<VertexAttribute>)vertex_attributes).Add(a);
@@ -74,7 +72,6 @@ public class VertexArray: IBindable {
 
     public virtual void draw() {
         foreach (var buffer in vertex_buffers) {
-            //buffer.bind();
             GL.DrawArrays(primitive_type, 0, buffer.length);
         }
     }

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
@@ -32,17 +33,37 @@ public static class Error {
         throw new IndexOutOfRangeException($"Index out of range: {parameter}:{index}!");
 
     [DoesNotReturn, StackTraceHidden]
-    public static void empty_array<T>(string parameter) =>
-        throw new System.Exception($"Array is empty: {typeof(T).GetFormattedName()}:{parameter}!");
+    public static void index_out_of_range<T>(T index, T max_index) =>
+        throw new IndexOutOfRangeException($"Index out of range: {index} >= {max_index}!");
 
     [DoesNotReturn, StackTraceHidden]
-    public static void index_out_of_range<T>(T index) =>
+    public static void empty_array<T>(string parameter, in T[] array) =>
+        throw new System.Exception($"Array is empty: {array.get_type_name()}:{parameter}!");
+
+    [DoesNotReturn, StackTraceHidden]
+    public static void empty_array<T>(string parameter) =>
+        throw new System.Exception($"Array is empty: {typeof(T).get_type_name()}:{parameter}!");
+
+    [DoesNotReturn, StackTraceHidden]
+    public static void index_out_of_range<T>(T index) {
         throw new IndexOutOfRangeException($"Index out of range: {index}!");
+    }
 
     public class WrongContextException : Exception {
         public WrongContextException(string expected, string current) : base(0, $"{expected} is not current! (current: {current})") {
         }
     }
+
+    public static void assert(bool condition, [CallerArgumentExpression("condition")] string? name = default) {
+        if (!condition)
+            throw new Exception($"Assertion failed: {name}!");
+    }
+
+    public static void assert<T>(T obj, bool condition, [CallerArgumentExpression("condition")] string? name = default) where T: notnull {
+        if (!condition)
+            throw new Exception($"Assertion failed: {name}! {obj.ToString()}");
+    }
+
 
     public static bool check(bool throw_exception = true) {
         var err = GL.GetError();

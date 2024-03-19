@@ -32,6 +32,8 @@ public abstract class Buffer: IBuffer {
     public abstract void upload();
     public abstract void bind();
 
+    public override string ToString() => $"{GetType().get_type_name(false)} (type={item_type.get_type_name()}, length={length:N0}, size={total_size:N0}, status={status})";
+
     public Status status {
         get;
         protected set;
@@ -122,7 +124,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
     public override int total_size => item_size * length;
 
     public override void bind() {
-        Console.WriteLine("Buffer.bind: " + typeof(T).GetFormattedName());
+        Console.WriteLine("Binding " + ToString());
 
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");

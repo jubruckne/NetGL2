@@ -11,9 +11,7 @@ public class AutoShader: Shader {
     }
 
     public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array, in Material material, bool is_sky_box = false) {
-        Console.WriteLine();
-        Console.WriteLine();
-        Console.WriteLine($"Creating shader {name} for {vertex_array}");
+        // Console.WriteLine($"\nCreating shader {name} for {vertex_array}");
         var vertex_code = new StringBuilder();
         var shader = new AutoShader(name);
 
@@ -150,7 +148,7 @@ public class AutoShader: Shader {
 
         fragment_code.AppendLine("}");
 
-        if (material.ambient_texture != null) {
+        if (false && material.ambient_texture != null) {
             Console.WriteLine($"AutoShader:\n{vertex_code}\n");
             Console.WriteLine(fragment_code);
         }
