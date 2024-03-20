@@ -46,6 +46,10 @@ public class VertexArrayIndexed: VertexArray {
 
     public override void draw() {
         //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
+        if (index_buffer.length > 256 * 256) {
+            Console.WriteLine(index_buffer.length);
+        }
+
         GL.DrawElements(PrimitiveType.Triangles, index_buffer.length * 3, index_buffer.draw_element_type, 0);
         Error.assert_opengl();
     }

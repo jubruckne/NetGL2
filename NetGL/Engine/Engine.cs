@@ -271,11 +271,11 @@ public class Engine: GameWindow {
         BackgroundTaskScheduler.process_completed_tasks();
 
         world.update(game_time, delta_time);
-        Garbage.measure($"Engine.update - frame: {frame}");
+        //Garbage.measure($"Engine.update - frame: {frame}");
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
-        Garbage.measure_begin();
+        //Garbage.measure_begin();
         base.OnRenderFrame(e);
 
         // Console.WriteLine($"starting frame:{frame}...");

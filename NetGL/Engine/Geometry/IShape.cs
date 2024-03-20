@@ -37,11 +37,11 @@ public interface IShapeGenerator {
         return CollectionsMarshal.AsSpan(list);
     }
 
-    ReadOnlySpan<Struct<Vector3, Vector3>> get_vertices_and_normals() {
+    ReadOnlySpan<VertexBuffer<Vector3, Vector3>.Vertex> get_vertices_and_normals() {
         var vertices = get_vertices();
         var indices = get_indices();
 
-        var list = new Struct<Vector3, Vector3>[vertices.Length];
+        var list = new VertexBuffer<Vector3, Vector3>.Vertex[vertices.Length];
 
         Vector3 edge2;
         Vector3 edge1;
@@ -60,14 +60,14 @@ public interface IShapeGenerator {
             edge2 = v3 - v1;
             faceNormal = Vector3.Cross(edge1, edge2);
 
-            list[tri.X].b += faceNormal;
-            list[tri.Y].b += faceNormal;
-            list[tri.Z].b += faceNormal;
+            list[tri.X].normal += faceNormal;
+            list[tri.Y].normal += faceNormal;
+            list[tri.Z].normal += faceNormal;
         }
 
         for (var i = 0; i < vertices.Length; i++) {
-            list[i].a = vertices[i];
-            list[i].b.Normalize();
+            list[i].position = vertices[i];
+            list[i].normal.Normalize();
         }
 
         return list.AsSpan();

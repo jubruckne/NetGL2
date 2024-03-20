@@ -23,7 +23,7 @@ public class Model {
     private void add_material(in Material mat) => ((List<Material>)materials).Add(mat);
 
     public static Model from_shape(IShapeGenerator shape_generator) {
-        VertexBuffer<Struct<Vector3, Vector3>> vb = new(shape_generator.get_vertices_and_normals(), VertexAttribute.Position, VertexAttribute.Normal);
+        VertexBuffer<Vector3, Vector3> vb = new(shape_generator.get_vertices_and_normals());
         var ib = IndexBuffer.create(shape_generator.get_indices(), vb.length);
         vb.upload();
         ib.upload();
@@ -74,15 +74,13 @@ public class Model {
         }
 
         foreach (var mesh in assimp.Meshes) {
-            var vb_pos = new VertexBuffer<Assimp.Vector3D>(mesh.Vertices.as_readonly_span(), VertexAttribute.Position);
-            vb_pos.upload();
-            var vb_norm = new VertexBuffer<Assimp.Vector3D>(mesh.Normals.as_readonly_span(), VertexAttribute.Normal);
-            vb_norm.upload();
+            var vb = new VertexBuffer<Assimp.Vector3D, Assimp.Vector3D>(mesh.Vertices.as_readonly_span(), mesh.Normals.as_readonly_span());
+            vb.upload();
 
             var ib = new IndexBuffer<int>(mesh.GetIndices());
             ib.upload();
 
-            var va = new VertexArrayIndexed(ib, vb_pos, vb_norm);
+            var va = new VertexArrayIndexed(ib, vb);
             va.upload();
 
             result.add_vertex_array(va);

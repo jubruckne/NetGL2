@@ -17,6 +17,12 @@ public class ArrayView<V>: IEnumerable<V> where V : unmanaged {
         this.stride = stride;
     }
 
+    internal ArrayView(ArrayView<V> view) {
+        this.length = view.length;
+        this.start  = view.start;
+        this.stride = view.stride;
+    }
+
     public unsafe ref V this[int index] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
@@ -30,6 +36,8 @@ public class ArrayView<V>: IEnumerable<V> where V : unmanaged {
             yield return this[i];
         }
     }
+
+    public ArrayWriter<V> new_writer() => new ArrayWriter<V>(this);
 
     IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
 
@@ -149,6 +157,27 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
     public void zero() => as_span().Clear();
     public void fill(in T value) => as_span().Fill(value);
 
+    public ArrayView<T> get_view() {
+        if (length == 0) Error.index_out_of_range(0);
+        return new(
+                   data,
+                   sizeof(T),
+                   length * sizeof(T)
+                  );
+    }
+
+    public ArrayView<T> get_view(Range range) {
+        if (length == 0) Error.index_out_of_range(0);
+
+        var range_data = range.GetOffsetAndLength(length);
+
+        return new(
+                   data + range_data.Offset * sizeof(T),
+                   sizeof(T),
+                   range_data.Length * sizeof(T)
+                  );
+    }
+
     public ArrayView<V> get_view<V>() where V : unmanaged {
         if (length == 0) Error.index_out_of_range(0);
 
@@ -157,6 +186,18 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
             sizeof(V),
             length * sizeof(T) / sizeof(V)
         );
+    }
+
+    public ArrayView<V> get_view<V>(Range range) where V : unmanaged {
+        if (length == 0) Error.index_out_of_range(0);
+
+        var range_data = range.GetOffsetAndLength(length);
+
+        return new(
+                   data + range_data.Offset * sizeof(T) / sizeof(V),
+                   sizeof(V),
+                   range_data.Length * sizeof(T) / sizeof(V)
+                  );
     }
 
     internal ArrayView<V> get_view<V>(nint element_offset) where V : unmanaged {
@@ -170,11 +211,11 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
         );
     }
 
-    internal ArrayView<V> get_view<V>(string element_name) where V : unmanaged {
+    internal ArrayView<V> get_view<V>(in string field_name) where V : unmanaged {
         if (length == 0) Error.index_out_of_range(0);
 
         return new(
-            data + Marshal.OffsetOf<T>(element_name),
+            data + Marshal.OffsetOf<T>(field_name),
             sizeof(T),
             length
         );

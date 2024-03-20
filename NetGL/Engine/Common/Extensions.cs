@@ -3,11 +3,30 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using Half = System.Half;
 using Vector3 = OpenTK.Mathematics.Vector3;
 
 namespace NetGL;
+
+public static class OpenTKExtensions {
+    public static VertexAttribPointerType to_vertex_attribute_pointer_type<T>(this T d) {
+        return d switch {
+            float  => VertexAttribPointerType.Float,
+            byte   => VertexAttribPointerType.UnsignedByte,
+            short  => VertexAttribPointerType.Short,
+            double => VertexAttribPointerType.Double,
+            int    => VertexAttribPointerType.Int,
+            ushort => VertexAttribPointerType.UnsignedShort,
+            uint   => VertexAttribPointerType.UnsignedInt,
+            Half   => VertexAttribPointerType.HalfFloat,
+            sbyte  => VertexAttribPointerType.Byte,
+            _      => throw new ArgumentOutOfRangeException(nameof(d), d, null)
+        };
+    }
+}
+
 
 public static class TypeExtensions {
     public static string get_type_name<T>(this T t, bool with_generic_arguments = true) where T: notnull {
@@ -195,6 +214,11 @@ public static class ArrayExt {
     public static Dictionary<TKey, TValue> writeable<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dict)
         where TKey: notnull
         => (Dictionary<TKey, TValue>)dict;
+
+    public static Map<TKey, TValue> writeable<TKey, TValue>(this ReadOnlyMap<TKey, TValue> dict)
+        where TKey: notnull
+        where TValue: notnull
+        => (Map<TKey, TValue>)dict;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool is_float<T>(in T t) where T: unmanaged {

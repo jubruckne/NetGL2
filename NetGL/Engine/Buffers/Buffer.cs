@@ -82,6 +82,9 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
             buffer[index] = value;
         }
     }
+
+    public ArrayView<T> this[System.Range range]
+        => buffer.get_view(range);
     
     public void resize(int new_size) {
         if (new_size < 0)
@@ -151,4 +154,8 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         buffer.Dispose();
         GC.SuppressFinalize(this);
     }
+
+    protected ArrayView<T> get_view() => buffer.get_view<T>();
+    protected ArrayView<T> get_view(System.Range range) => buffer.get_view<T>(range);
+    protected ArrayView<V> get_view<V>(string field_name) where V : unmanaged => buffer.get_view<V>(field_name);
 }

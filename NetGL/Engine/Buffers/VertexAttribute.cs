@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -15,11 +15,6 @@ public abstract class VertexAttribute {
     public VertexAttribPointerType pointer_type { get; }
     public bool normalized { get; }
 
-    public static VertexAttribute<Vector3> Position =>
-        new (name:"position", count: 3, pointer_type: VertexAttribPointerType.Float);
-    public static VertexAttribute<Vector3> Normal =>
-        new (name:"normal", count: 3, pointer_type: VertexAttribPointerType.Float);
-
 #pragma warning disable CS8618
     protected VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false) {
 #pragma warning restore CS8618
@@ -35,6 +30,7 @@ public abstract class VertexAttribute {
         get {
             return pointer_type switch {
                 VertexAttribPointerType.Float => $"vec{count}",
+                VertexAttribPointerType.HalfFloat => $"vec{count}",
                 _ => throw new NotImplementedException($"glsl_type for {name}, {pointer_type}, {count}!")
             };
         }
@@ -45,14 +41,9 @@ public abstract class VertexAttribute {
     public override string ToString() => $"{name}: {type_of.Name} => {pointer_type}[{count}]";
 }
 
-public class VertexAttribute<T>: VertexAttribute {
+public class VertexAttribute<T>: VertexAttribute where T: new() {
     public override Type type_of => typeof(T);
-    public override int size_of => Marshal.SizeOf<T>();
-
-    public new static VertexAttribute<T> Position =>
-        new (name:"position", count: 3, pointer_type: VertexAttribPointerType.Float);
-    public new static VertexAttribute<T> Normal =>
-        new (name:"normal", count: 3, pointer_type: VertexAttribPointerType.Float);
+    public override int size_of => Unsafe.SizeOf<T>();
 
     public override VertexAttribute copy() {
         var a = new VertexAttribute<T>(name, count, pointer_type, normalized) {
@@ -65,4 +56,9 @@ public class VertexAttribute<T>: VertexAttribute {
     internal VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false) :
         base(name, count, pointer_type, normalized) {
     }
+
+    internal VertexAttribute(string name, int count, bool normalized = false) :
+        base(name, count, new T().to_vertex_attribute_pointer_type(), normalized) {
+    }
+
 }

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using NetGL.Debug;
 
 namespace NetGL;
@@ -100,12 +101,11 @@ internal sealed class TerrainChunk : IShape {
         int vertex_count = (pixel_count + 1) * (pixel_count + 1);
         int index_count = pixel_count * pixel_count * 2;
 
-        var vb = new VertexBuffer<(Vector3 position, Vector3 normal)>(vertex_count,
-            VertexAttribute.Position,
-            VertexAttribute.Normal
-        );
+        Console.WriteLine($"Creating chunk {pixel_count} x {pixel_count}");
 
-        var vertex_writer = vb.get_writer<Vector3>("position");
+        var vb = new VertexBuffer<Vector3, Vector3>(vertex_count);
+
+        var vertex_writer = vb.positions.new_writer();
 
         float px = 0;
         float py = 0;
@@ -152,9 +152,9 @@ internal sealed class TerrainChunk : IShape {
 
         var vert = vb.get_view();
         foreach (var tri in ib.get_view()) {
-            var edge1 = vert[tri.p2].position - vert[tri.p1].position;
-            var edge2 = vert[tri.p3].position - vert[tri.p1].position;
-            var normal = Vector3.Cross(edge1, edge2);
+            var edge1  = vert[tri.p2].position - vert[tri.p1].position;
+            var edge2  = vert[tri.p3].position - vert[tri.p1].position;
+            var normal = Vector3.Cross((Vector3)edge1, (Vector3)edge2);
 
             vert[tri.p1].normal += normal;
             vert[tri.p2].normal += normal;
