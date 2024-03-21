@@ -29,7 +29,7 @@ public static class IndexBuffer {
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public readonly struct Index<T> where T: unmanaged, INumberBase<T> {
+public readonly struct Index<T> where T: unmanaged, IBinaryInteger<T> {
     public readonly T p1, p2, p3;
 
     private Index(T p1, T p2, T p3) {
@@ -38,106 +38,44 @@ public readonly struct Index<T> where T: unmanaged, INumberBase<T> {
         this.p3 = p3;
     }
 
+    public static readonly int max_vertex_count = T.One switch {
+        byte   => byte.MaxValue,
+        ushort => ushort.MaxValue,
+        short  => short.MaxValue,
+        int    => int.MaxValue,
+        uint   => int.MaxValue,
+        _      => throw new ArgumentOutOfRangeException(nameof(T), $"Unexpected type {typeof(T).Name}!")
+    };
+
+    public override string ToString() => $"<{p1},{p2},{p3}>";
+    public override int GetHashCode() => HashCode.Combine(p1, p2, p3);
+
     public static implicit operator Index<T>((T p1, T p2, T p3) index)
         => new (index.p1, index.p2, index.p3);
 
     public static implicit operator Index<T>(Vector3i index)
         => new (T.CreateChecked(index.X), T.CreateChecked(index.Y),T.CreateChecked(index.Z));
+
+    public static implicit operator Index<T>((int p1, int p2, int p3) index)
+        => new (T.CreateChecked(index.p1), T.CreateChecked(index.p2),T.CreateChecked(index.p3));
 }
 
-public class IndexBuffer<T>: Buffer<Index<T>>, IIndexBuffer where T: unmanaged, INumberBase<T> {
-    public int max_vertex_count => T.One switch {
-        byte => byte.MaxValue,
-        ushort => ushort.MaxValue,
-        short => short.MaxValue,
-        int => int.MaxValue,
-        uint => int.MaxValue,
-        _ => throw new ArgumentOutOfRangeException(nameof(T), $"Unexpected type {typeof(T).Name}!")
-    };
-
+public class IndexBuffer<T>: Buffer<Index<T>>, IIndexBuffer where T: unmanaged, IBinaryInteger<T> {
     public IndexBuffer(int triangle_count): base(BufferTarget.ElementArrayBuffer, triangle_count) { }
     public IndexBuffer(ReadOnlySpan<Index<T>> data): base(BufferTarget.ElementArrayBuffer, data) { }
     public IndexBuffer(ReadOnlySpan<T> data): base(BufferTarget.ElementArrayBuffer, data.reinterpret_as<T, Index<T>>()) { }
+
+    //public ArrayWriter<Index<T>> get_writer() => new ArrayWriter<Index<T>>(get_view());
+    //public ArrayWriter<V> get_writer<V>() where V: unmanaged => new ArrayWriter<V>(get_view<V>());
+    //public ArrayView<Index<T>> get_view() => buffer.get_view<Index<T>>();
+    //public ArrayView<V> get_view<V>() where V: unmanaged => buffer.get_view<V>();
+
     /*
-    internal IndexBuffer(in Vector3i[] items) : base(BufferTarget.ElementArrayBuffer, items) {
-    }
+    public override int length => buffer.length;
+    public override int item_size => Unsafe.SizeOf<Index<T>>();
+    public override Type item_type => typeof(Index<T>);
+    public override int total_size => item_size * length;
 */
-/*
-    public static IndexBuffer<T> make(in byte[] items) {
-        if (T.Zero is byte)
-            return new IndexBuffer<T>(items.reinterpret_ref<byte, T>());
-
-        throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
-    }
-
-    public static IndexBuffer<T> make(in ushort[] items) {
-        T test = T.Zero;
-
-        if (test is ushort)
-            return new IndexBuffer<T>(items.reinterpret_ref<ushort, T>());
-
-        throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
-    }
-
-
-    public static IndexBuffer<T> make(in int[] items) {
-        T test = T.Zero;
-
-        if (test is int)
-            return new IndexBuffer<T>(items.reinterpret_ref<int, T>());
-
-        throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
-    }
-
-    public static IndexBuffer<T> make(in Vector3i[] items) {
-        if (T.Zero is byte) {
-            byte[] target_items = new byte[items.Length * 3];
-
-            for (int index = 0; index < items.Length; index++) {
-                ref var item = ref items[index];
-                if (item.X > byte.MaxValue || item.Y > byte.MaxValue || item.Z > byte.MaxValue)
-                    throw new OverflowException();
-
-                target_items[index * 3] = (byte)item.X;
-                target_items[index * 3 + 1] = (byte)item.Y;
-                target_items[index * 3 + 2] = (byte)item.Z;
-            }
-
-            return make(target_items);
-        }
-
-        if (T.Zero is ushort) {
-            ushort[] target_items = new ushort[items.Length * 3];
-
-            for (int index = 0; index < items.Length; index++) {
-                ref var item = ref items[index];
-                if (item.X > ushort.MaxValue || item.Y > ushort.MaxValue || item.Z > ushort.MaxValue)
-                    throw new OverflowException($"{item} does not fit in IndexBuffer<{typeof(T).Name}>!");
-
-                target_items[index * 3] = (ushort)item.X;
-                target_items[index * 3 + 1] = (ushort)item.Y;
-                target_items[index * 3 + 2] = (ushort)item.Z;
-            }
-
-            return make(target_items);
-        }
-
-        if (T.Zero is int) {
-            return new IndexBuffer<T>(items.reinterpret_ref<Vector3i, T>().ToArray());
-        }
-
-        throw new InvalidOperationException($"Unsupported type {typeof(T).Name}!");
-    }
-
-    public static IndexBuffer<T> make(IEnumerable<Vector3i> items) => make(items.ToArray());
-*/
-
-
-    public ArrayWriter<Index<T>> get_writer() => new ArrayWriter<Index<T>>(get_view());
-    public ArrayWriter<V> get_writer<V>() where V: unmanaged => new ArrayWriter<V>(get_view<V>());
-    public ArrayView<Index<T>> get_view() => buffer.get_view<Index<T>>();
-    public ArrayView<V> get_view<V>() where V: unmanaged => buffer.get_view<V>();
-
     public DrawElementsType draw_element_type => T.One switch {
         byte => DrawElementsType.UnsignedByte,
         short => DrawElementsType.UnsignedShort,
@@ -148,6 +86,31 @@ public class IndexBuffer<T>: Buffer<Index<T>>, IIndexBuffer where T: unmanaged, 
     };
 
     public PrimitiveType primitive_type => PrimitiveType.Triangles;
+
+    public (int min, int max) calculate_vertex_range() {
+        int min = int.MaxValue, max = 0;
+
+        foreach (var i in indices) {
+            var p1 = int.CreateChecked(i.p1);
+            var p2 = int.CreateChecked(i.p2);
+            var p3 = int.CreateChecked(i.p3);
+
+            min = int.Min(min, p1);
+            min = int.Min(min, p2);
+            min = int.Min(min, p3);
+
+            max = int.Max(max, p1);
+            max = int.Max(max, p2);
+            max = int.Max(max, p3);
+        }
+
+        return (min, max);
+    }
+
+    public int max_vertex_count => Index<T>.max_vertex_count;
+
+    public ArrayView<Index<T>> indices => get_view();
+    public ArrayView<T> indices_individual => get_view<T>();
 
     public void reverse_winding() {
         for (var index = 0; index < buffer.length; index += 3) {

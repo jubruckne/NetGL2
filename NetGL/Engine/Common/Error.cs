@@ -7,52 +7,53 @@ using OpenTK.Graphics.OpenGL4;
 namespace NetGL;
 
 public static class Error {
-    [DoesNotReturn, StackTraceHidden]
-    public static void type_conversion_error<TFrom, TTo>(TFrom value) =>
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
+    public static dynamic type_conversion_error<TFrom, TTo>(TFrom value) =>
         throw new ArgumentException($"Can not convert {typeof(TFrom).Name}:{value} to {typeof(TTo).Name}!");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void already_disposed<T>(T obj) =>
         throw new ObjectDisposedException(typeof(T).Name, "Object is already free!");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void exception(string message) =>
         throw new Exception(message);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void index_out_of_range<T>(string parameter, T index) =>
         throw new IndexOutOfRangeException($"Index out of range: {parameter}:{index}!");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void index_out_of_range<T>(T index, T max_index) =>
         throw new IndexOutOfRangeException($"Index out of range: {index} >= {max_index}!");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void empty_array<T>(string parameter, in T[] array) =>
         throw new System.Exception($"Array is empty: {array.get_type_name()}:{parameter}!");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void empty_array<T>(string parameter) =>
         throw new System.Exception($"Array is empty: {typeof(T).get_type_name()}:{parameter}!");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void index_out_of_range<T>(T index) {
         throw new IndexOutOfRangeException($"Index out of range: {index}!");
     }
 
-    [StackTraceHidden]
-    public static void assert(bool condition, [CallerArgumentExpression("condition")] string? name = default) {
+    [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
+    public static bool assert([DoesNotReturnIf(false)]bool condition, [CallerArgumentExpression("condition")] string? name = default) {
         if (!condition)
-            throw new Exception($"Assertion failed: {name}!");
+            throw new ApplicationException($"Assertion failed: {name}!");
+        return true;
     }
 
-    [StackTraceHidden]
-    public static void assert<T>(T obj, bool condition, [CallerArgumentExpression("condition")] string? name = default) where T: notnull {
+    [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
+    public static void assert<T>(T obj, [DoesNotReturnIf(false)]bool condition, [CallerArgumentExpression("condition")] string? name = default) where T: notnull {
         if (!condition)
             throw new Exception($"Assertion failed: {name}! ({obj.ToString()})");
     }
 
-    [StackTraceHidden]
+    [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void assert_equal<T>(
         T value1,
         T value2,
@@ -62,8 +63,8 @@ public static class Error {
             throw new Exception($"Assertion failed: {name1}=={name2}: {value1}!={value2}!");
     }
 
-    [StackTraceHidden]
-    public static void assert_opengl<T>(T source) {
+    [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
+    public static bool assert_opengl<T>(T source) {
         var err = GL.GetError();
         var msg = "";
 
@@ -74,12 +75,12 @@ public static class Error {
             err = GL.GetError();
         }
 
-        if (msg == "") return;
+        if (msg == "") return true;
 
         throw new Exception($"OpenGL: {msg}! ({source})");
     }
 
-    [StackTraceHidden]
+    [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static bool assert_opengl() {
         var err = GL.GetError();
         var msg = "";

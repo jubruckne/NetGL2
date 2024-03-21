@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
 
 namespace NetGL;
 

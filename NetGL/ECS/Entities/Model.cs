@@ -28,7 +28,7 @@ public class Model {
         vb.upload();
         ib.upload();
 
-        var va = new VertexArrayIndexed(ib, vb);
+        var va = new VertexArrayIndexed(vb, ib);
 
         va.upload();
 
@@ -80,7 +80,7 @@ public class Model {
             var ib = new IndexBuffer<int>(mesh.GetIndices());
             ib.upload();
 
-            var va = new VertexArrayIndexed(ib, vb);
+            var va = new VertexArrayIndexed(vb, ib);
             va.upload();
 
             result.add_vertex_array(va);

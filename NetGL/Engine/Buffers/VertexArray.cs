@@ -10,11 +10,11 @@ public class VertexArray: IBindable {
     public readonly IVertexBuffer[] vertex_buffers;
     public IReadOnlyList<VertexAttribute> vertex_attributes { get; }
 
-    public VertexArray(PrimitiveType primitive_type = PrimitiveType.Triangles, params IVertexBuffer[] vertex_buffers) {
+    public VertexArray(IVertexBuffer[] vertex_buffers) {
         handle = 0;
 
         this.vertex_buffers = vertex_buffers;
-        this.primitive_type = primitive_type;
+        this.primitive_type = PrimitiveType.Triangles;
 
         int location = 0;
         vertex_attributes = new List<VertexAttribute>();

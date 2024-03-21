@@ -60,7 +60,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         this.buffer = new NativeArray<T>(items);
     }
 
-    protected Buffer(BufferTarget target, int count = 0) {
+    protected Buffer(BufferTarget target, int count) {
         this.target = target;
         this.handle = 0;
         this.buffer = new NativeArray<T>(count);
@@ -157,5 +157,6 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
 
     protected ArrayView<T> get_view() => buffer.get_view<T>();
     protected ArrayView<T> get_view(System.Range range) => buffer.get_view<T>(range);
+    protected ArrayView<V> get_view<V>() where V: unmanaged => buffer.get_view<V>();
     protected ArrayView<V> get_view<V>(string field_name) where V : unmanaged => buffer.get_view<V>(field_name);
 }

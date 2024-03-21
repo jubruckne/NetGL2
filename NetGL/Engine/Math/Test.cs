@@ -9,6 +9,8 @@ public class Test {
 
         v3 = v1 - v2;
 
+        Vector3<int> vi = new Vector3<int>();
+
         Console.WriteLine($"v3 length = {v3.normalize()}");
     }
 }

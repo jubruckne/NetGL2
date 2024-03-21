@@ -56,6 +56,10 @@ public class ArrayWriter<V> where V: unmanaged {
 
     public bool eof => pos >= length;
 
+    public int remaining => int.Max(0, length - pos);
+
+    public void rewind() => pos = 0;
+
     public V value {
         get => view[pos];
         set => view[pos] = value;
@@ -68,37 +72,37 @@ public class ArrayWriter<V> where V: unmanaged {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void write(in V value) {
+    public int write(in V value) {
         view[pos] = value;
-        next();
+        return pos++;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void write(in V value1, in V value2) {
+    public int write(in V value1, in V value2) {
         view[pos] = value1;
-        if(!next())
-            Error.index_out_of_range(pos, view.length);
-
-        view[pos] = value2;
-        next();
+        view[pos + 1] = value2;
+        return pos += 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void write(in V value1, in V value2, in V value3) {
-        view[pos] = value1;
-        if(!next())
-            Error.index_out_of_range(pos, view.length);
-
-        view[pos] = value2;
-        if(!next())
-            Error.index_out_of_range(pos, view.length);
-
-        view[pos] = value3;
-        next();
+    public int write(in V value1, in V value2, in V value3) {
+        view[pos]     = value1;
+        view[pos + 1] = value2;
+        view[pos + 2] = value3;
+        return pos += 3;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool next() {
+    public int write(in V value1, in V value2, in V value3, in V value4) {
+        view[pos]     = value1;
+        view[pos + 1] = value2;
+        view[pos + 2] = value3;
+        view[pos + 3] = value4;
+        return pos += 4;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool advance() {
         if (pos < length) {
             ++pos;
             return true;
@@ -107,7 +111,7 @@ public class ArrayWriter<V> where V: unmanaged {
         return false;
     }
 
-    public override string ToString() => $"{this.get_type_name()} (view={view}, position={pos:N0})";
+    public override string ToString() => $"{this.get_type_name()} (view={view}, position={pos:N0}, remaining={remaining:N0})";
 }
 
 public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T : unmanaged {

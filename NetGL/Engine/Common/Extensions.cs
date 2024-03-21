@@ -13,16 +13,24 @@ namespace NetGL;
 public static class OpenTKExtensions {
     public static VertexAttribPointerType to_vertex_attribute_pointer_type<T>(this T d) {
         return d switch {
-            float  => VertexAttribPointerType.Float,
-            byte   => VertexAttribPointerType.UnsignedByte,
-            short  => VertexAttribPointerType.Short,
-            double => VertexAttribPointerType.Double,
-            int    => VertexAttribPointerType.Int,
-            ushort => VertexAttribPointerType.UnsignedShort,
-            uint   => VertexAttribPointerType.UnsignedInt,
-            Half   => VertexAttribPointerType.HalfFloat,
-            sbyte  => VertexAttribPointerType.Byte,
-            _      => throw new ArgumentOutOfRangeException(nameof(d), d, null)
+            float                       => VertexAttribPointerType.Float,
+            byte                        => VertexAttribPointerType.UnsignedByte,
+            short                       => VertexAttribPointerType.Short,
+            double                      => VertexAttribPointerType.Double,
+            int                         => VertexAttribPointerType.Int,
+            ushort                      => VertexAttribPointerType.UnsignedShort,
+            uint                        => VertexAttribPointerType.UnsignedInt,
+            Half                        => VertexAttribPointerType.HalfFloat,
+            sbyte                       => VertexAttribPointerType.Byte,
+            System.Numerics.Vector3     => VertexAttribPointerType.Float,
+            OpenTK.Mathematics.Vector3  => VertexAttribPointerType.Float,
+            OpenTK.Mathematics.Vector3h => VertexAttribPointerType.HalfFloat,
+            OpenTK.Mathematics.Vector3i => VertexAttribPointerType.Int,
+            OpenTK.Mathematics.Vector3d => VertexAttribPointerType.Double,
+            Vectors.Vector3<float>      => VertexAttribPointerType.Float,
+            Vectors.Vector3<double>     => VertexAttribPointerType.Double,
+            Vectors.Vector3<Half>       => VertexAttribPointerType.HalfFloat,
+            _                           => Error.type_conversion_error<T, VertexAttribPointerType>(d)
         };
     }
 }
@@ -51,8 +59,13 @@ public static class TypeExtensions {
 
             var genericArguments = type.GetGenericArguments()
                 .Select(x => x.get_type_name())
-                .Aggregate((x1, x2) => $"{x1}, {x2}");
-            return $"{type.Name[..type.Name.IndexOf('`')]}<{genericArguments}>";
+                .Aggregate(static (x1, x2) => $"{x1}, {x2}");
+
+
+            var g = type.Name.IndexOf('`');
+            return g > 0
+                ? $"{type.Name[..type.Name.IndexOf('`')]}<{genericArguments}>"
+                : $"{type.Name}<{genericArguments}>";
         }
         return type.Name;
     }
@@ -211,6 +224,8 @@ public static class AngleExt {
 }
 
 public static class ArrayExt {
+    public static List<T> writeable<T>(this IReadOnlyList<T> list) => (List<T>)list;
+
     public static Dictionary<TKey, TValue> writeable<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dict)
         where TKey: notnull
         => (Dictionary<TKey, TValue>)dict;

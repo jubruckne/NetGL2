@@ -164,7 +164,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
     public void set_light(IEnumerable<Light> lights) {
         int num_directional_lights = 0;
-        int num_point_lights = 0;
+        //int num_point_lights = 0;
 
         foreach (var light in lights) {
             switch (light) {
@@ -179,9 +179,9 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
                     set_uniform($"directional_light[{num_directional_lights.ToString()}].diffuse", directional.data.diffuse.reinterpret_ref<Color, Vector3>());
                     num_directional_lights++;
                     break;
-                case PointLight pointlight:
-                    num_point_lights++;
-                    break;
+                //case PointLight pointlight:
+                //    num_point_lights++;
+                //    break;
                 default:
                     throw new NotImplementedException(light.name);
             }

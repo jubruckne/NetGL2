@@ -62,7 +62,7 @@ public static class BackgroundTaskScheduler {
 
     internal static void process_scheduled_tasks() {
         completed_tasks.Clear();
-        scheduled_tasks.Sort((x, y) => x.priority - y.priority);
+        scheduled_tasks.Sort(static (x, y) => x.priority - y.priority);
 
         while(running_tasks.Count <= 4 && scheduled_tasks.pop(out var task)) {
             //Console.WriteLine($"task: {task} started.");
@@ -83,7 +83,7 @@ public static class BackgroundTaskScheduler {
     }
 
     internal static void process_completed_tasks() {
-        if (running_tasks.pop(t => !t.worker!.IsAlive, out var task)) {
+        if (running_tasks.pop(static t => !t.worker!.IsAlive, out var task)) {
             //Console.WriteLine($"task: {task} completed.");
 
             completed_tasks.Add(task);

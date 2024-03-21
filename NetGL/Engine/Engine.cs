@@ -18,11 +18,12 @@ public class Engine: GameWindow {
 
     private readonly RevolvingList<float> frame_times = new(60);
     protected float game_time;
-    protected int frame;
 
     private float cursor_state_last_switch = 1f;
     private double frame_time;
     private int frame_count;
+
+    public static int frame;
 
     public Engine(string title, Size2<int> window_size, WindowState window_state = WindowState.Normal, bool debug = false) :
         base(
@@ -133,7 +134,7 @@ public class Engine: GameWindow {
         player.transform.position = (0, 8, 0);
         player.transform.rotation = Rotation.Forward;
 
-        player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:228f, sensitivity:0.75f);
+        player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:15f, sensitivity:0.75f);
 /*
         var oc1 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:325, y:200), field_of_view:60f, enable_input:false);
         var oc2 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:125, y:25), field_of_view:60f, enable_input:false);

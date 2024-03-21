@@ -1,9 +1,8 @@
-using System.Numerics;
+namespace NetGL;
+
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
-
-namespace NetGL;
 
 public interface IVertexBuffer: IBuffer {
     ReadOnlyMap<string, VertexAttribute> attribute_definitions { get; }
@@ -47,6 +46,9 @@ public class VertexBuffer<TPosition, TNormal>: VertexBuffer<VertexBuffer<TPositi
             this.position = position;
             this.normal   = normal;
         }
+
+        public override int GetHashCode() => HashCode.Combine(position, normal);
+        public override string ToString() => $"<pos={position}, norm={normal}>";
     }
 
     public VertexBuffer(in ReadOnlySpan<TPosition> positions, in ReadOnlySpan<TNormal> normals)
@@ -103,6 +105,7 @@ public class VertexBuffer<TPosition, TNormal, TAttributes>: VertexBuffer<VertexB
         public Vertex(TPosition position, TNormal normal) {
             this.position = position;
             this.normal   = normal;
+            this.attributes = default;
         }
 
         public Vertex(TPosition position, TNormal normal, TAttributes attributes) {
@@ -110,6 +113,9 @@ public class VertexBuffer<TPosition, TNormal, TAttributes>: VertexBuffer<VertexB
             this.normal     = normal;
             this.attributes = attributes;
         }
+
+        public override int GetHashCode() => HashCode.Combine(position, normal, attributes);
+        public override string ToString() => $"<pos={position}, norm={normal}, attr={attributes}>";
     }
 
     public VertexBuffer(in ReadOnlySpan<Vertex> vertices, params VertexAttribute[] attribute_definitions)

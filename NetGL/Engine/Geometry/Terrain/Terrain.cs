@@ -9,7 +9,7 @@ public class Terrain: Entity {
     public readonly VertexArrayRenderer renderer;
 
     public const int max_resolution = 128;
-    public readonly int chunk_size = 128;
+    public readonly int chunk_size = 256;
 
     private readonly Grid<TerrainChunk, TerrainChunk.Key> chunks;
     private readonly Camera camera;
@@ -32,7 +32,7 @@ public class Terrain: Entity {
         material = this.add_material(Material.random).material;
         renderer = this.add_vertex_array_renderer();
 
-        var chunk = allocate_chunk_at_world_position(new Vector3(0, 0, 0), 5);
+        var chunk = allocate_chunk_at_world_position(new Vector3(0, 0, 0), 0);
         this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, material));
         renderer.wireframe = false;
         this.add_behavior(_ => update());

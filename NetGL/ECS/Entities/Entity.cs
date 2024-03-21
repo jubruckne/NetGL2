@@ -36,6 +36,7 @@ public class Entity {
 
     internal Entity(string name, Entity? parent = null, Transform? transform = null) {
         this.name = name;
+        this.path = name;
         component_list = [];
         updateable_components = [];
         renderable_components = [];

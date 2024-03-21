@@ -1,27 +1,46 @@
-using OpenTK.Graphics.OpenGL4;
-
 namespace NetGL;
 
+using OpenTK.Graphics.OpenGL4;
+
 public class VertexArrayIndexed: VertexArray {
-    public readonly IIndexBuffer index_buffer;
+    public readonly record struct DrawRange {
+        public readonly int first_index;
+        public readonly int last_index;
+        public readonly int base_vertex;
 
-    public VertexArrayIndexed(IIndexBuffer index_buffer, IVertexBuffer vertex_buffer): base(index_buffer.primitive_type, [vertex_buffer]) {
-        if (vertex_buffer.length > index_buffer.max_vertex_count)
-            throw new ArgumentOutOfRangeException(nameof(index_buffer), $"IndexBuffer<{index_buffer.item_type.Name}> too small for VertexBuffer(count={vertex_buffer.length})!");
+        public int draw_count => last_index - first_index;
 
-        this.index_buffer = index_buffer;
-    }
-
-    public VertexArrayIndexed(IIndexBuffer index_buffer, params IVertexBuffer[] vertex_buffers)
-        : base(index_buffer.primitive_type, vertex_buffers) {
-
-        foreach (var vb in vertex_buffers) {
-            if (vb.length > index_buffer.max_vertex_count)
-                throw new ArgumentOutOfRangeException(nameof(index_buffer), $"IndexBuffer<{index_buffer.item_type.Name}> too small for VertexBuffer(count={vb.length})!");
+        public DrawRange(int first_index, int last_index, int base_vertex) {
+            this.first_index = first_index;
+            this.last_index = last_index;
+            this.base_vertex = base_vertex;
         }
 
-        this.index_buffer = index_buffer;
+        public override string ToString()
+            => $"<first={first_index}, last={last_index}, count={draw_count}, base_vertex={base_vertex}>";
     }
+
+    public readonly IIndexBuffer index_buffer;
+    public List<DrawRange>? draw_ranges { get; set; }
+
+    public VertexArrayIndexed(IVertexBuffer[] vertex_buffers, IIndexBuffer index_buffer, List<DrawRange> draw_ranges): base(vertex_buffers) {
+        /* foreach (var vb in vertex_buffers) {
+            if (vb.length > index_buffer.max_vertex_count)
+                throw new ArgumentOutOfRangeException(nameof(index_buffer), $"IndexBuffer<{index_buffer.item_type.Name}> too small for VertexBuffer(count={vb.length})!");
+        }*/
+
+        this.index_buffer = index_buffer;
+        this.draw_ranges   = draw_ranges;
+    }
+
+    public VertexArrayIndexed(IVertexBuffer vertex_buffer, IIndexBuffer index_buffer, List<DrawRange> draw_ranges)
+        : this([vertex_buffer], index_buffer, draw_ranges) {}
+
+    public VertexArrayIndexed(IVertexBuffer vertex_buffer, IIndexBuffer index_buffer)
+        : this([vertex_buffer], index_buffer,null!) {}
+
+    public VertexArrayIndexed(IVertexBuffer[] vertex_buffers, IIndexBuffer index_buffer)
+        : this(vertex_buffers, index_buffer, null!) {}
 
     public override void upload() {
         if (handle == 0)
@@ -41,16 +60,44 @@ public class VertexArrayIndexed: VertexArray {
     }
 
     public override string ToString() {
-        return $"vert:{vertex_buffers.sum(buffer => buffer.length):N0}, ind:{index_buffer.length:N0}";
+        return $"vert:{vertex_buffers.sum(static buffer => buffer.length):N0}, ind:{index_buffer.length:N0}";
     }
 
     public override void draw() {
         //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
-        if (index_buffer.length > 256 * 256) {
-            Console.WriteLine(index_buffer.length);
+        if (draw_ranges == null || draw_ranges.Count <= 1) {
+            GL.DrawElements(primitive_type, index_buffer.length * 3, index_buffer.draw_element_type, 0);
+        } else {
+            foreach (var dr in draw_ranges) {
+                //Console.WriteLine($"IndexedVertexArray.draw {dr}");
+
+                GL.DrawElementsBaseVertex(
+                                          primitive_type,
+                                          dr.draw_count * 3,
+                                          index_buffer.draw_element_type,
+                                          dr.first_index * 3,
+                                          dr.base_vertex
+                                         );
+            }
+
+            /*int to_draw     = index_buffer.length;
+            int base_vertex = 0;
+
+            while (to_draw > 0) {
+                GL.DrawElementsBaseVertex(
+                                          primitive_type,
+                                          int.Min(to_draw, draw_ranges) * 3,
+                                          index_buffer.draw_element_type,
+                                          0,
+                                          base_vertex * 3
+                                          );
+                to_draw     -= draw_ranges;
+                base_vertex += draw_ranges;
+
+            }
+*/
         }
 
-        GL.DrawElements(PrimitiveType.Triangles, index_buffer.length * 3, index_buffer.draw_element_type, 0);
         Error.assert_opengl();
     }
 }
