@@ -69,8 +69,6 @@ public class VertexArrayIndexed: VertexArray {
             GL.DrawElements(primitive_type, index_buffer.length * 3, index_buffer.draw_element_type, 0);
         } else {
             foreach (var dr in draw_ranges) {
-                //Console.WriteLine($"IndexedVertexArray.draw {dr}");
-
                 GL.DrawElementsBaseVertex(
                                           primitive_type,
                                           dr.draw_count * 3,
@@ -79,23 +77,6 @@ public class VertexArrayIndexed: VertexArray {
                                           dr.base_vertex
                                          );
             }
-
-            /*int to_draw     = index_buffer.length;
-            int base_vertex = 0;
-
-            while (to_draw > 0) {
-                GL.DrawElementsBaseVertex(
-                                          primitive_type,
-                                          int.Min(to_draw, draw_ranges) * 3,
-                                          index_buffer.draw_element_type,
-                                          0,
-                                          base_vertex * 3
-                                          );
-                to_draw     -= draw_ranges;
-                base_vertex += draw_ranges;
-
-            }
-*/
         }
 
         Error.assert_opengl();

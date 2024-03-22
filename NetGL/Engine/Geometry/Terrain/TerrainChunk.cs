@@ -21,7 +21,7 @@ internal sealed class TerrainChunk : IShape {
         }
 
         public static Key from_world_position(in Terrain terrain, in Vector3 world_position) {
-            var (position, _) = terrain.plane.world_to_point_on_plane(world_position);
+            var position = terrain.plane.world_to_point_on_plane_2d(world_position);
             var x = (short)Math.Floor(position.X / terrain.chunk_size);
             var y = (short)Math.Floor(position.Y / terrain.chunk_size);
             return new Key(x, y);
@@ -121,8 +121,8 @@ internal sealed class TerrainChunk : IShape {
             for (var x = 0; x <= width; ++x) {
                 px0 = center.X + chunk_size * (float)x / width;
                 px1 = center.X + chunk_size * (float)(x+1) / width;
-                triangulator.quad(
-                                  plane.to_world(
+                //triangulator.quad(
+                            /*      plane.to_world(
                                                  px0,
                                                  py0,
                                                  noise.sample(px0, py0)
@@ -142,7 +142,7 @@ internal sealed class TerrainChunk : IShape {
                                                  py1,
                                                  noise.sample(px0, py1)
                                                 )
-                                 );
+                                 );*/
             }
         }
 

@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -29,10 +30,11 @@ public static class IndexBuffer {
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public readonly struct Index<T> where T: unmanaged, IBinaryInteger<T> {
-    public readonly T p1, p2, p3;
+public struct Index<T> where T: unmanaged, IBinaryInteger<T> {
+    public T p1, p2, p3;
 
-    private Index(T p1, T p2, T p3) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining), SkipLocalsInit]
+    public Index(T p1, T p2, T p3) {
         this.p1 = p1;
         this.p2 = p2;
         this.p3 = p3;
@@ -50,12 +52,15 @@ public readonly struct Index<T> where T: unmanaged, IBinaryInteger<T> {
     public override string ToString() => $"<{p1},{p2},{p3}>";
     public override int GetHashCode() => HashCode.Combine(p1, p2, p3);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Index<T>((T p1, T p2, T p3) index)
         => new (index.p1, index.p2, index.p3);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Index<T>(Vector3i index)
         => new (T.CreateChecked(index.X), T.CreateChecked(index.Y),T.CreateChecked(index.Z));
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Index<T>((int p1, int p2, int p3) index)
         => new (T.CreateChecked(index.p1), T.CreateChecked(index.p2),T.CreateChecked(index.p3));
 }

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
-public class ArrayView<V>: IEnumerable<V> where V : unmanaged {
+public sealed class ArrayView<V>: IEnumerable<V> where V : unmanaged {
     public readonly int length;
     private readonly nint start;
     private readonly nint stride;
@@ -24,6 +24,7 @@ public class ArrayView<V>: IEnumerable<V> where V : unmanaged {
     }
 
     public unsafe ref V this[int index] {
+        [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if ((uint)index >= (uint)length) Error.index_out_of_range(index, length);
@@ -44,7 +45,7 @@ public class ArrayView<V>: IEnumerable<V> where V : unmanaged {
     public override string ToString() => $"{GetType().get_type_name()} (length={length:N0}, stride={stride:N0})";
 }
 
-public class ArrayWriter<V> where V: unmanaged {
+public sealed class ArrayWriter<V> where V: unmanaged {
     private readonly ArrayView<V> view;
     private readonly int length;
     private int pos;
@@ -61,7 +62,9 @@ public class ArrayWriter<V> where V: unmanaged {
     public void rewind() => pos = 0;
 
     public V value {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => view[pos];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set => view[pos] = value;
     }
 
@@ -71,12 +74,14 @@ public class ArrayWriter<V> where V: unmanaged {
         this.pos    = 0;
     }
 
+    [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int write(in V value) {
         view[pos] = value;
         return pos++;
     }
 
+    [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int write(in V value1, in V value2) {
         view[pos] = value1;
@@ -84,6 +89,7 @@ public class ArrayWriter<V> where V: unmanaged {
         return pos += 2;
     }
 
+    [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int write(in V value1, in V value2, in V value3) {
         view[pos]     = value1;
@@ -92,6 +98,7 @@ public class ArrayWriter<V> where V: unmanaged {
         return pos += 3;
     }
 
+    [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int write(in V value1, in V value2, in V value3, in V value4) {
         view[pos]     = value1;
@@ -101,6 +108,7 @@ public class ArrayWriter<V> where V: unmanaged {
         return pos += 4;
     }
 
+    [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool advance() {
         if (pos < length) {
@@ -145,12 +153,14 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
     /// <param name="index">index</param>
     /// <returns>The item of specific index</returns>
     public T this[int index] {
+        [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (index < 0 || index >= length) Error.index_out_of_range(index);
             return ((T*)data)[index];
         }
 
+        [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
             if (index < 0 || index >= length) Error.index_out_of_range(index);
@@ -266,7 +276,6 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator() {
         if (is_disposed()) Error.already_disposed(this);
-        // Avoid boxing by using class enumerator.
 
         for (var index = 0; index < length; index++) {
             yield return this[index];

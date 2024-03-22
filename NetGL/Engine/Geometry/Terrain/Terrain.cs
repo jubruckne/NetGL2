@@ -73,7 +73,7 @@ public class Terrain: Entity {
     }
 
     private (Vector2 position, float height) get_terrain_position(in Vector3 world_position) {
-        var (tp, _) = plane.world_to_point_on_plane(world_position);
+        var tp = plane.world_to_point_on_plane_2d(world_position);
         return (tp, noise.sample(tp));
     }
 

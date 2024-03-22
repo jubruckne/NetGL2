@@ -42,6 +42,8 @@ public class VertexBuffer<TPosition, TNormal>: VertexBuffer<VertexBuffer<TPositi
         public TPosition position;
         public TNormal normal;
 
+        [SkipLocalsInit]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vertex(TPosition position, TNormal normal) {
             this.position = position;
             this.normal   = normal;
@@ -102,12 +104,15 @@ public class VertexBuffer<TPosition, TNormal, TAttributes>: VertexBuffer<VertexB
         public TNormal normal;
         public TAttributes attributes;
 
+        [SkipLocalsInit]
         public Vertex(TPosition position, TNormal normal) {
             this.position = position;
             this.normal   = normal;
             this.attributes = default;
         }
 
+        [SkipLocalsInit]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vertex(TPosition position, TNormal normal, TAttributes attributes) {
             this.position   = position;
             this.normal     = normal;
