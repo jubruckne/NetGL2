@@ -26,9 +26,21 @@ public class Terrain: Entity {
 
         this.material = this.add_material(Material.random).material;
         this.renderer = this.add_vertex_array_renderer();
-        this.chunks = new(1, 5, allocate_chunk);
+        this.chunks = new(2, 4, allocate_chunk);
 
-        var chunk = chunks.request_node(0, 0, chunks.max_level);
+        chunks.request_node(1.5f, 1, chunks.max_level);
+        chunks.request_node(2, 1, chunks.max_level);
+        chunks.request_node(2.5f, 1, chunks.max_level);
+        chunks.request_node(3f, 1, chunks.max_level);
+        chunks.request_node(3.5f, 1, chunks.max_level);
+        chunks.request_node(4f, 1, chunks.max_level);
+        var chunk = chunks.get_node(1, 1, chunks.max_level);
+
+
+
+        foreach (var q in chunks) {
+            Console.WriteLine(q);
+        }
 
         this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!, material));
         renderer.wireframe = true;

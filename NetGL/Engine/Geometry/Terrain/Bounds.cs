@@ -1,8 +1,11 @@
 namespace NetGL;
+
 using OpenTK.Mathematics;
 
-public readonly struct Bounds {
-    public readonly string name;
+public class Bounds {
+    public enum Tile { center = 0, top_left = 1, bottom_left = 2, top_right = 3, bottom_right = 4 }
+
+    public readonly Tile tile;
     public readonly Vector2 center;
 
     public readonly float left;
@@ -14,8 +17,8 @@ public readonly struct Bounds {
     public float width => right - left;
     public float size => (height + width) / 2;
 
-    public Bounds(string name, float left, float right, float bottom, float top) {
-        this.name = name;
+    public Bounds(Tile tile, float left, float right, float bottom, float top) {
+        this.tile = tile;
         this.left   = left;
         this.right  = right;
         this.bottom = bottom;
@@ -23,8 +26,8 @@ public readonly struct Bounds {
         (center.X, center.Y) = ((left + right) * 0.5f, (top + bottom) * 0.5f);
     }
 
-    public Bounds(string name, float x, float y, float size) {
-        this.name = name;
+    public Bounds(Tile tile, float x, float y, float size) {
+        this.tile = tile;
         var half_size = size * 0.5f;
 
         (center.X, center.Y) = (x, y);
@@ -35,15 +38,25 @@ public readonly struct Bounds {
         bottom = y - half_size;
     }
 
-    public Bounds(float x, float y, float size): this("center", x, y, size) {}
+    public Bounds(float x, float y, float size): this(Tile.center, x, y, size) {}
 
-    public (Bounds top_right, Bounds bottom_right, Bounds bottom_left, Bounds top_left) tile() {
-        return (
-            new Bounds("top_right", center.X, right, center.Y, top),
-            new Bounds("bottom_right", center.X, right, bottom, center.Y),
-            new Bounds("bottom_left", left, center.X, bottom, center.Y),
-            new Bounds("top_left", left, center.X, center.Y, top)
-        );
+    public Bounds[] tiles => [top_right, bottom_right, bottom_left, top_left];
+
+    public Bounds top_right => new Bounds(Tile.top_right, center.X, right, center.Y, top);
+    public Bounds bottom_right => new Bounds(Tile.bottom_right, center.X, right, bottom, center.Y);
+    public Bounds bottom_left => new Bounds(Tile.bottom_left, left, center.X, bottom, center.Y);
+    public Bounds top_left => new Bounds(Tile.top_left, left, center.X, center.Y, top);
+
+    public static Bounds? intersects(Vector2 point, in Bounds[] bounds) {
+        foreach (var b in bounds)
+            if (b.intersects(point)) return b;
+        return null;
+    }
+
+    public static Bounds? intersects(float x, float y, in Bounds[] bounds) {
+        foreach (var b in bounds)
+            if (b.intersects(x, y)) return b;
+        return null;
     }
 
     public bool intersects(Vector2 point) {
@@ -64,5 +77,5 @@ public readonly struct Bounds {
         return true;
     }
 
-    public override string ToString() => $"<{name} x:{center.X}, y:{center.Y}, size:{size}>";
+    public override string ToString() => $"<{tile} x:{center.X}, y:{center.Y}, size:{size} | left:{left} right:{right} bottom:{bottom} top:{top}>";
 }
