@@ -36,26 +36,26 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     }
 
     protected void compile_from_text(string vertex_program, string fragment_program, string geometry_program = "") {
-        Console.WriteLine("\ncompiling vertex shader...");
+        // Console.WriteLine("\ncompiling vertex shader...");
         var vertex_shader_handle = GL.CreateShader(ShaderType.VertexShader);
         GL.ShaderSource(vertex_shader_handle, vertex_program);
         compile(vertex_shader_handle);
 
-        Console.WriteLine("compiling fragment shader...");
+        // Console.WriteLine("compiling fragment shader...");
         var fragment_shader_handle = GL.CreateShader(ShaderType.FragmentShader);
         GL.ShaderSource(fragment_shader_handle, fragment_program);
         compile(fragment_shader_handle);
 
         var geometry_shader_handle = -1;
         if (geometry_program != "") {
-            Console.WriteLine("compiling geometry shader...");
+            // Console.WriteLine("compiling geometry shader...");
 
             geometry_shader_handle = GL.CreateShader(ShaderType.GeometryShader);
             GL.ShaderSource(geometry_shader_handle, geometry_program);
             compile(geometry_shader_handle);
         }
 
-        Console.WriteLine("attaching shaders...");
+        // Console.WriteLine("attaching shaders...");
 
         // Attach shaders...
         GL.AttachShader(handle, vertex_shader_handle);
@@ -64,7 +64,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         GL.AttachShader(handle, fragment_shader_handle);
 
         // And then link them together.
-        Console.WriteLine("linking shaders...");
+        // Console.WriteLine("linking shaders...");
 
         LinkProgram(handle);
 
@@ -78,7 +78,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         if(geometry_shader_handle != -1)
             GL.DeleteShader(geometry_shader_handle);
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
 
         // cache uniform locations.
         GL.GetProgram(handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);

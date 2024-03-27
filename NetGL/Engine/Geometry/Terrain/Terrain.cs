@@ -8,10 +8,7 @@ public class Terrain: Entity {
     public readonly Material material;
     public readonly VertexArrayRenderer renderer;
 
-    public const int max_resolution = 128;
-    public readonly int chunk_size = 256;
-
-    private readonly Grid<TerrainChunk, TerrainChunk.Key> chunks;
+    private readonly Quadtree<TerrainChunk> chunks;
     private readonly Camera camera;
 
     internal readonly Noise noise;
@@ -27,70 +24,63 @@ public class Terrain: Entity {
         noise.add_simplex_layer(0.01f, 2.5f);
         noise.add_value_layer(2.5f, 0.035f);
 
-        chunks = new(allocate_chunk);
+        this.material = this.add_material(Material.random).material;
+        this.renderer = this.add_vertex_array_renderer();
+        this.chunks = new(1, 5, allocate_chunk);
 
-        material = this.add_material(Material.random).material;
-        renderer = this.add_vertex_array_renderer();
+        var chunk = chunks.request_node(0, 0, chunks.max_level);
 
-        var chunk = allocate_chunk_at_world_position(new Vector3(0, 0, 0), 0);
-        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, material));
-        renderer.wireframe = false;
+        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!, material));
+        renderer.wireframe = true;
         this.add_behavior(_ => update());
     }
 
-    private TerrainChunk allocate_chunk_at_world_position(in Vector3 position, byte neighbors = 0) {
-        var key = TerrainChunk.Key.from_world_position(this, position);
-        var chunk = chunks.allocate(key);
+    private TerrainChunk allocate_chunk(float x, float y, float size, int level) {
+        var distance = world_to_terrain_distance(x, y);
 
-        for (byte n = 0; n < neighbors; n++) {
-            foreach (var neighbor_chunk in key.neighbors(n)) {
-                if(!chunks.is_allocated(neighbor_chunk))
-                    chunks.allocate(neighbor_chunk);
-            }
-        }
-
+        var chunk = new TerrainChunk(this, x, y, size);
+        chunk.create(priority: (int)distance);
         return chunk;
     }
 
-    private TerrainChunk allocate_chunk(TerrainChunk.Key key) {
-        var current_key = TerrainChunk.Key.from_world_position(this, camera.transform.position);
-        var distance = (int)Math.Sqrt(Math.Pow(key.x - current_key.x, 2) + Math.Pow(key.y - current_key.y, 2));
-
-        //Console.WriteLine($"Allocating chunk (key={key}, dist={distance})");
-
-        var (priority, resolution) = distance switch {
-            0 => (0, max_resolution),
-            1 => (1, max_resolution / 2),
-            2 => (2, max_resolution / 4),
-            3 => (3, max_resolution / 16),
-            4 => (4, max_resolution / 32),
-            _ => (6 + distance, max_resolution / 32)
-        };
-
-        var chunk = new TerrainChunk(this, key);
-        chunk.create(resolution, priority);
-        return chunk;
-    }
-
-    private (Vector2 position, float height) get_terrain_position(in Vector3 world_position) {
+    private (float terrain_x, float terrain_y, float height) world_to_terrain_position(in Vector3 world_position) {
         var tp = plane.world_to_point_on_plane_2d(world_position);
+        return (tp.X, tp.Y, noise.sample(tp));
+    }
+
+    public float world_to_terrain_distance(float terrain_x, float terrain_y) {
+        var pos = world_to_terrain_position(camera.transform.position);
+        return MathF.Sqrt(
+                          (pos.terrain_x - terrain_x) * (pos.terrain_x - terrain_x)
+                          + (pos.terrain_y - terrain_y) * (pos.terrain_y - terrain_y)
+                         );
+    }
+
+    public float world_to_terrain_distance(in Vector3 world_position, float terrain_x, float terrain_y) {
+        var pos = world_to_terrain_position(world_position);
+        return MathF.Sqrt(
+                          (pos.terrain_x - terrain_x) * (pos.terrain_x - terrain_x)
+                          + (pos.terrain_y - terrain_y) * (pos.terrain_y - terrain_y)
+                         );
+    }
+
+    private (Vector2 position, float height) world_to_terrain_position() {
+        var tp = plane.world_to_point_on_plane_2d(camera.transform.position);
         return (tp, noise.sample(tp));
     }
 
-    private void update() {
-        return;
 
-        var terrain_height = get_terrain_position(camera.transform.position).height + 8f;
+    private void update() {
+        var (terrain_pos, terrain_height) = world_to_terrain_position();
+
         if (camera.transform.position.Y < terrain_height) {
             camera.transform.position.Y = float.Lerp(camera.transform.position.Y, terrain_height, 0.09f);
         } else if (camera.transform.position.Y > terrain_height) {
             camera.transform.position.Y = float.Lerp(terrain_height, camera.transform.position.Y, 0.12f);
         }
-
-        var chunk_key = TerrainChunk.Key.from_world_position(this, camera.transform.position);
-
+/*
         //Console.WriteLine($"Player position={camera.transform.position}, terrain_key={chunk_key}, terrain_pos={TerrainChunk.Key.to_world_position(this, chunk_key, terrain_height - 8f)}");
-        if (chunks.is_allocated(chunk_key)) {
+        if (!chunks.is_allocated(terrain_pos.position.X, terrain_pos.position.Y, )) {
             if (chunks[chunk_key].resolution < max_resolution) {
                 Console.WriteLine($"requesting new chunk: {chunk_key}, world_pos={camera.transform.position}");
                 //chunks[chunk_key].update(max_resolution);
@@ -100,76 +90,7 @@ public class Terrain: Entity {
             //chunks.allocate(chunk_key);
         }
     }
-}
-
-public sealed class TerrainShapeGenerator : IShapeGenerator {
-    private readonly TerrainChunk chunk;
-    private readonly Plane plane;
-    private readonly int pixel_count;
-
-    internal TerrainShapeGenerator(TerrainChunk chunk) {
-        this.chunk = chunk;
-        this.plane = chunk.terrain.plane;
-        this.pixel_count = chunk.terrain.chunk_size * chunk.resolution / 16;
-        //Console.WriteLine($"res={chunk.resolution}, size={pixel_count} x {pixel_count}");
-    }
-
-    public int get_vertex_count() => (pixel_count + 1) * (pixel_count + 1);
-    public int get_index_count() => pixel_count * pixel_count * 2;
-
-    public ReadOnlySpan<Vector3> get_vertices() {
-        var list = new Vector3[get_vertex_count()];
-        var pos = chunk.center;
-
-        var n = chunk.terrain.noise.sample(
-            pixel_count + 1, pixel_count + 1,
-            pos.X, pos.Y,
-            (float)chunk.terrain.chunk_size / pixel_count, (float)chunk.terrain.chunk_size / pixel_count
-        );
-
-        int index = 0;
-
-        for (var x = 0; x < pixel_count + 1; x++) {
-            for (var y = 0; y < pixel_count + 1; y++) {
-                list[index] = plane.to_world(
-                    pos.X + chunk.terrain.chunk_size * (float)x / pixel_count,
-                    pos.Y + chunk.terrain.chunk_size * (float)y / pixel_count,
-                    (float)n[x, y]
-                );
-                ++index;
-            }
-        }
-
-        return list;
-    }
-
-    public ReadOnlySpan<Vector3i> get_indices() {
-        var list = new Vector3i[get_index_count()];
-
-        int index = 0;
-
-        for (var x = 1; x < pixel_count + 1; ++x) {
-            for (var y = 1; y < pixel_count + 1; ++y) {
-                var bottom_left = (y - 1) + (x - 1) * (pixel_count + 1);
-                var bottom_right = (y - 1) + x * (pixel_count + 1);
-                var top_left = y + (x - 1) * (pixel_count + 1);
-                var top_right = y + x * (pixel_count + 1);
-
-                list[index].X = bottom_left;
-                list[index].Y = bottom_right;
-                list[index].Z = top_left;
-                ++index;
-
-                // list.Add(new Vector3i(bottom_left, bottom_right, top_left));
-                list[index].X = top_left;
-                list[index].Y = bottom_right;
-                list[index].Z = top_right;
-                ++index;
-                //list.Add(new Vector3i(top_left, bottom_right, top_right));
-            }
-        }
-
-        return list;
+*/
     }
 }
 

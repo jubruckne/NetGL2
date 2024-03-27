@@ -31,13 +31,13 @@ public static class IndexBuffer {
 
 [StructLayout(LayoutKind.Sequential)]
 public struct Index<T> where T: unmanaged, IBinaryInteger<T> {
-    public T p1, p2, p3;
+    public T p0, p1, p2;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining), SkipLocalsInit]
-    public Index(T p1, T p2, T p3) {
+    public Index(T p0, T p1, T p2) {
+        this.p0 = p0;
         this.p1 = p1;
         this.p2 = p2;
-        this.p3 = p3;
     }
 
     public static readonly int max_vertex_count = T.One switch {
@@ -49,8 +49,8 @@ public struct Index<T> where T: unmanaged, IBinaryInteger<T> {
         _      => throw new ArgumentOutOfRangeException(nameof(T), $"Unexpected type {typeof(T).Name}!")
     };
 
-    public override string ToString() => $"<{p1},{p2},{p3}>";
-    public override int GetHashCode() => HashCode.Combine(p1, p2, p3);
+    public override string ToString() => $"<{p0},{p1},{p2}>";
+    public override int GetHashCode() => HashCode.Combine(p0, p1, p2);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Index<T>((T p1, T p2, T p3) index)
@@ -70,17 +70,6 @@ public class IndexBuffer<T>: Buffer<Index<T>>, IIndexBuffer where T: unmanaged, 
     public IndexBuffer(ReadOnlySpan<Index<T>> data): base(BufferTarget.ElementArrayBuffer, data) { }
     public IndexBuffer(ReadOnlySpan<T> data): base(BufferTarget.ElementArrayBuffer, data.reinterpret_as<T, Index<T>>()) { }
 
-    //public ArrayWriter<Index<T>> get_writer() => new ArrayWriter<Index<T>>(get_view());
-    //public ArrayWriter<V> get_writer<V>() where V: unmanaged => new ArrayWriter<V>(get_view<V>());
-    //public ArrayView<Index<T>> get_view() => buffer.get_view<Index<T>>();
-    //public ArrayView<V> get_view<V>() where V: unmanaged => buffer.get_view<V>();
-
-    /*
-    public override int length => buffer.length;
-    public override int item_size => Unsafe.SizeOf<Index<T>>();
-    public override Type item_type => typeof(Index<T>);
-    public override int total_size => item_size * length;
-*/
     public DrawElementsType draw_element_type => T.One switch {
         byte => DrawElementsType.UnsignedByte,
         short => DrawElementsType.UnsignedShort,
@@ -96,9 +85,9 @@ public class IndexBuffer<T>: Buffer<Index<T>>, IIndexBuffer where T: unmanaged, 
         int min = int.MaxValue, max = 0;
 
         foreach (var i in indices) {
-            var p1 = int.CreateChecked(i.p1);
-            var p2 = int.CreateChecked(i.p2);
-            var p3 = int.CreateChecked(i.p3);
+            var p1 = int.CreateChecked(i.p0);
+            var p2 = int.CreateChecked(i.p1);
+            var p3 = int.CreateChecked(i.p2);
 
             min = int.Min(min, p1);
             min = int.Min(min, p2);

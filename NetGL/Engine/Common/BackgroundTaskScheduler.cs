@@ -44,8 +44,6 @@ public static class BackgroundTaskScheduler {
     }
 
     public static void schedule(string id, Action threaded, Action completed, int priority = 99) {
-        //Console.WriteLine($"Scheduling thread: " + id);
-
         scheduled_tasks.Add(new BackgroundTask<int>(id, run_threaded, run_completed, priority));
 
         void run_completed(int obj) => completed();
@@ -53,16 +51,17 @@ public static class BackgroundTaskScheduler {
             threaded();
             return 0;
         }
+
+        scheduled_tasks.Sort(static (x, y) => x.priority - y.priority);
     }
 
     public static void schedule<TResult>(string id, Func<TResult> threaded, Action<TResult> completed, int priority = 99) {
-        //Console.WriteLine($"Scheduling thread: " + id);
         scheduled_tasks.Add(new BackgroundTask<TResult>(id, threaded, completed, priority));
+        scheduled_tasks.Sort(static (x, y) => x.priority - y.priority);
     }
 
     internal static void process_scheduled_tasks() {
         completed_tasks.Clear();
-        scheduled_tasks.Sort(static (x, y) => x.priority - y.priority);
 
         while(running_tasks.Count <= 4 && scheduled_tasks.pop(out var task)) {
             //Console.WriteLine($"task: {task} started.");

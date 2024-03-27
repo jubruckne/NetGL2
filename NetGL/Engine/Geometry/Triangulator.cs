@@ -10,13 +10,13 @@ public static class Triangulator {
         var normals = vb.normals;
 
         foreach (var tri in indices) {
-            var edge1  = positions[tri.p2] - positions[tri.p1];
-            var edge2  = positions[tri.p3] - positions[tri.p1];
+            var edge1  = positions[tri.p1] - positions[tri.p0];
+            var edge2  = positions[tri.p2] - positions[tri.p0];
             var normal = Vector3.Cross(edge1,edge2);
 
+            normals[tri.p0] += normal;
             normals[tri.p1] += normal;
             normals[tri.p2] += normal;
-            normals[tri.p3] += normal;
         }
 
         for (var i = 0; i < normals.length; i++) {
@@ -29,13 +29,13 @@ public static class Triangulator {
         var normals   = vb.normals;
 
         foreach (var tri in indices) {
-            var edge1  = positions[tri.p2] - positions[tri.p1];
-            var edge2  = positions[tri.p3] - positions[tri.p1];
+            var edge1  = positions[tri.p1] - positions[tri.p0];
+            var edge2  = positions[tri.p2] - positions[tri.p0];
             var normal = Vector3.Cross(edge1,edge2);
 
+            normals[tri.p0] += normal;
             normals[tri.p1] += normal;
             normals[tri.p2] += normal;
-            normals[tri.p3] += normal;
         }
 
         for (var i = 0; i < normals.length; i++) {
@@ -50,7 +50,7 @@ public sealed class Triangulator<TPosition, TIndex>
 
     private readonly ArrayWriter<TPosition> position_writer;
     private readonly ArrayWriter<Index<TIndex>> index_writer;
-    private readonly List<VertexArrayIndexed.DrawRange> draw_ranges;
+    private readonly VertexArrayIndexed.DrawRanges draw_ranges;
 
     private int base_vertex;
     private int start_index;
@@ -58,14 +58,14 @@ public sealed class Triangulator<TPosition, TIndex>
     public Triangulator(ArrayView<TPosition> positions, ArrayView<Index<TIndex>> indices) {
         position_writer = positions.new_writer();
         index_writer    = indices.new_writer();
-        draw_ranges     = new List<VertexArrayIndexed.DrawRange>();
+        draw_ranges     = new VertexArrayIndexed.DrawRanges();
         start_index     = 0;
         base_vertex     = 0;
     }
 
     public int vertex(in TPosition p) {
         if (position_writer.position - base_vertex + 3 >= Index<TIndex>.max_vertex_count) {
-            draw_ranges.Add(new VertexArrayIndexed.DrawRange(start_index, index_writer.position - 1, base_vertex));
+            draw_ranges.add(start_index, index_writer.position - 1, base_vertex);
             start_index = index_writer.position;
             base_vertex = position_writer.position;
         }
@@ -74,39 +74,44 @@ public sealed class Triangulator<TPosition, TIndex>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int triangle(in Index<TIndex> i) => index_writer.write(i);
-
-    [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void triangle(TIndex p0, TIndex p1, TIndex p2) => index_writer.write(new Index<TIndex>(p0, p1, p2));
-
-    [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void quad(in Index<TIndex> i0, in Index<TIndex> i1) {
-        index_writer.write(i0);
-        index_writer.write(i1);
+    public int triangle(in Index<int> i) {
+        var index = new Index<TIndex>(
+                                      TIndex.CreateChecked(i.p0 % Index<TIndex>.max_vertex_count),
+                                      TIndex.CreateChecked(i.p1 % Index<TIndex>.max_vertex_count),
+                                      TIndex.CreateChecked(i.p2 % Index<TIndex>.max_vertex_count)
+                                     );
+       return index_writer.write(index);
     }
 
-    [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void quad(TIndex p0, TIndex p1, TIndex p2, TIndex p3) {
-        index_writer.write(new Index<TIndex>(p0, p1, p2));
-        index_writer.write(new Index<TIndex>(p2, p3, p0));
+    public int triangle(int p0, int p1, int p2) {
+        var index = new Index<TIndex>(
+                                      TIndex.CreateChecked(p0 % Index<TIndex>.max_vertex_count),
+                                      TIndex.CreateChecked(p1 % Index<TIndex>.max_vertex_count),
+                                      TIndex.CreateChecked(p2 % Index<TIndex>.max_vertex_count)
+                                     );
+        return index_writer.write(index);
     }
 
-    public List<VertexArrayIndexed.DrawRange> finish() {
-        draw_ranges.Add(new(start_index, index_writer.position - 1, base_vertex));
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void quad(int p0, int p1, int p2, int p3) {
+        triangle(p2, p1, p0);
+        triangle(p0, p3, p2);
+    }
 
-        Error.assert(index_writer, index_writer.eof);
-        Error.assert(position_writer, position_writer.eof);
+    public VertexArrayIndexed.DrawRanges finish() {
+        draw_ranges.add(start_index, index_writer.position - 1, base_vertex);
+
+        Debug.assert(index_writer, index_writer.eof);
+        Debug.assert(position_writer, position_writer.eof);
 
         index_writer.rewind();
         position_writer.rewind();
         start_index = 0;
         base_vertex = 0;
 
-        var list = new List<VertexArrayIndexed.DrawRange>(draw_ranges);
-        draw_ranges.Clear();
+        var list = new VertexArrayIndexed.DrawRanges(draw_ranges);
+        draw_ranges.clear();
         return list;
     }
 }

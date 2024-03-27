@@ -1,6 +1,6 @@
-using OpenTK.Graphics.OpenGL4;
-
 namespace NetGL;
+
+using OpenTK.Graphics.OpenGL4;
 
 public class Texture2DArrayBuffer: TextureBuffer {
     protected readonly Texture[] textures;
@@ -71,6 +71,6 @@ public class Texture2DArrayBuffer: TextureBuffer {
 
         GL.GenerateMipmap(GenerateMipmapTarget.Texture2DArray);
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
     }
 }

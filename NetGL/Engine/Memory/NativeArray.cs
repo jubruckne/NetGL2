@@ -1,3 +1,5 @@
+using Spectre.Console;
+
 namespace NetGL;
 
 using System;
@@ -128,7 +130,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
 
     /// <summary>Create new <see cref="NativeArray{T}"/></summary>
     /// <param name="length">length of array</param>
-    public NativeArray(int length) {
+    public NativeArray(int length, bool zero_out = true) {
         if (length < 0) {
             Error.index_out_of_range(nameof(length), length);
         }
@@ -140,7 +142,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
 
         this.data = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes, 64);
         this.length = length;
-        zero();
+        if(zero_out) zero();
     }
 
     /// <summary>Create new <see cref="NativeArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>
@@ -166,6 +168,21 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
             if (index < 0 || index >= length) Error.index_out_of_range(index);
             ((T*)data)[index] = value;
         }
+    }
+
+    [SkipLocalsInit]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref T by_ref(int index) {
+        if (index < 0 || index >= length) Error.index_out_of_range(index);
+        return ref ((T*)data)[index];
+    }
+
+    [SkipLocalsInit]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref C by_ref<C>(int index) where C: unmanaged {
+        if (sizeof(T) != sizeof(C)) Error.type_conversion_error<T, C>(this[index]);
+        if (index < 0 || index >= length) Error.index_out_of_range(index);
+        return ref *(C*)get_address(index);
     }
 
     public void zero() => as_span().Clear();
@@ -265,7 +282,36 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool is_disposed() => data == IntPtr.Zero;
 
-    public nint get_pointer() {
+    public Pointer<T> get_pointer(int index) {
+        if (length == 0) Error.index_out_of_range(0);
+        if (index < 0 || index >= length) Error.index_out_of_range(index);
+
+        if (!is_disposed()) return new ArrayPointer<T>(this, index);
+
+        Error.already_disposed(this);
+        return null;
+    }
+
+    public Pointer<T> get_pointer() {
+        if (length == 0) Error.index_out_of_range(0);
+
+        if (!is_disposed()) return new ArrayPointer<T>(this, 0);
+
+        Error.already_disposed(this);
+        return null;
+    }
+
+    public nint get_address(int index) {
+        if (length == 0) Error.index_out_of_range(0);
+        if (index < 0 || index >= length) Error.index_out_of_range(index);
+
+        if (!is_disposed()) return data + sizeof(T) * index;
+
+        Error.already_disposed(this);
+        return 0;
+    }
+
+    public nint get_address() {
         if (length == 0) Error.index_out_of_range(0);
 
         if (!is_disposed()) return data;
@@ -273,6 +319,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
         Error.already_disposed(this);
         return 0;
     }
+
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator() {
         if (is_disposed()) Error.already_disposed(this);
@@ -320,7 +367,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
 
     /// <summary>Copy fron <see cref="NativeArray{T}"/>.</summary>
     /// <param name="source">source array of type <see cref="NativeArray{T}"/></param>
-    public void copy_from(NativeArray<T> source) => copy_from(source.get_pointer(), 0, source.length);
+    public void copy_from(NativeArray<T> source) => copy_from(source.get_address(), 0, source.length);
 
     public void copy_from<S>(in S[] source) where S: unmanaged {
         var source_len = (long)(source.Length * sizeof(S));

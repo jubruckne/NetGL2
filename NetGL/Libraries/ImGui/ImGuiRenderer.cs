@@ -1,10 +1,11 @@
+namespace NetGL;
+
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ImGuiNET;
-using NetGL;
 using OpenTK.Windowing.Common;
 using Vector2 = System.Numerics.Vector2;
 
@@ -146,7 +147,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         GL.BindVertexArray(prevVAO);
         GL.BindBuffer(BufferTarget.ArrayBuffer, prevArrayBuffer);
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
     }
 
     private static void RecreateFontDeviceTexture() {
@@ -228,7 +229,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
                 -1.0f,
                 1.0f);
 
-            Error.assert(_shader != 0);
+            Debug.assert(_shader != 0);
 
             GL.ProgramUniformMatrix4(_shader, _shaderProjectionMatrixLocation, false, ref mvp);
             GL.ProgramUniform1(_shader, _shaderFontTextureLocation, 0);
@@ -412,7 +413,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
         if (prevScissorTestEnabled) GL.Enable(EnableCap.ScissorTest); else GL.Disable(EnableCap.ScissorTest);
         GL.PolygonMode(MaterialFace.FrontAndBack, (PolygonMode)prevPolygonMode[0]);
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
     }
 
     public static void Dispose() {

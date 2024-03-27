@@ -1,6 +1,6 @@
-using OpenTK.Graphics.OpenGL4;
-
 namespace NetGL;
+
+using OpenTK.Graphics.OpenGL4;
 
 public class VertexArray: IBindable {
     public int handle { get; protected set; }
@@ -21,7 +21,7 @@ public class VertexArray: IBindable {
         foreach (var buffer in this.vertex_buffers) {
             foreach (var attrib in buffer.attribute_definitions) {
                 var a = attrib.copy();
-                Error.assert(a.offset >= 0);
+                Debug.assert(a.offset >= 0);
                 a.location = location;
                 a.buffer = buffer;
                 location++;
@@ -63,7 +63,7 @@ public class VertexArray: IBindable {
             GL.EnableVertexAttribArray(attribute.location);
         }
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
     }
 
     public override string ToString() {

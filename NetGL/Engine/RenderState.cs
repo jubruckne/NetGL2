@@ -1,7 +1,7 @@
+namespace NetGL;
+
 using System.Reflection;
 using OpenTK.Graphics.OpenGL4;
-
-namespace NetGL;
 
 public interface IState {
     string name { get; }
@@ -40,7 +40,7 @@ public abstract class State<T>: IState
     }
 
     public bool verify() => get_state().Equals(state);
-    public void assert() => Error.assert(this, verify());
+    public void assert() => Debug.assert(this, verify());
 
     public override string ToString() => $"{this.get_type_name()}={value}";
 

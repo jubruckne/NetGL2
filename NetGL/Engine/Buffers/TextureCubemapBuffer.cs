@@ -1,6 +1,6 @@
-using OpenTK.Graphics.OpenGL4;
-
 namespace NetGL;
+
+using OpenTK.Graphics.OpenGL4;
 
 public class TextureCubemapBuffer: Texture2DArrayBuffer {
     public TextureCubemapBuffer(in Texture right, in Texture left, in Texture top, in Texture bottom, in Texture front,
@@ -37,6 +37,6 @@ public class TextureCubemapBuffer: Texture2DArrayBuffer {
             );
         }
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
     }
 }

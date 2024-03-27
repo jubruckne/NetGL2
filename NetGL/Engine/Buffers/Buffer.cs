@@ -131,7 +131,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
     public override int total_size => item_size * length;
 
     public override void bind() {
-        Console.WriteLine("Binding " + ToString());
+        // Console.WriteLine("Binding " + ToString());
 
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");
@@ -145,7 +145,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         }
 
         bind();
-        GL.BufferData(target, buffer.length * item_size, buffer.get_pointer(), BufferUsageHint.StaticDraw);
+        GL.BufferData(target, buffer.length * item_size, buffer.get_address(), BufferUsageHint.StaticDraw);
 
         status = Status.Uploaded;
     }

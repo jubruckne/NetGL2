@@ -1,6 +1,6 @@
-using OpenTK.Graphics.OpenGL;
-
 namespace NetGL;
+
+using OpenTK.Graphics.OpenGL;
 
 public class Viewport {
     private static Viewport? current_viewport;
@@ -51,7 +51,7 @@ public class Viewport {
     }
 
     public void clear() {
-        Error.assert(this, is_current);
+        Debug.assert(this, is_current);
 
         if (this == Gameplay) {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);

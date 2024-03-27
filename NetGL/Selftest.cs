@@ -10,7 +10,53 @@ public static class Selftest {
         failed = false;
         TestRotation();
         TestPathfinder();
+        TestMemoryPool1();
+        TestMemoryPool2();
+        GC.AddMemoryPressure(9999999);
+        GC.Collect(3, GCCollectionMode.Forced, true, true);
+        GC.AddMemoryPressure(9999999);
+
+        GC.Collect(2, GCCollectionMode.Forced, true, true);
+        GC.AddMemoryPressure(9999999);
+        GC.Collect(1, GCCollectionMode.Forced, true, true);
+        GC.AddMemoryPressure(9999999);
+        GC.Collect(0, GCCollectionMode.Default, true, true);
+        GC.AddMemoryPressure(9999999);
+        GC.Collect(1, GCCollectionMode.Default, true, true);
+        GC.AddMemoryPressure(9999999);
+        GC.Collect(2, GCCollectionMode.Default, true, true);
+        GC.AddMemoryPressure(9999999);
+        TestMemoryPool3();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
         return !failed;
+    }
+
+    private static void TestMemoryPool1() {
+        Pointer.on_allocate += static pointer
+            => Console.WriteLine($"allocating: {pointer}, still alive: {Pointer.alive_count}");
+        Pointer.on_release += static pointer
+            => Console.WriteLine($"releasing: {pointer}, still alive: {Pointer.alive_count}");
+
+        var v = Pool<Vector3>.allocate();
+        Console.WriteLine("TestMemoryPool1 = " + v);
+
+        Console.WriteLine(Pool<Vector3>.capacity);
+        Console.WriteLine(Pool<Vector3>.count());
+    }
+
+    private static void TestMemoryPool2() {
+        var v = Pool<Vector3>.allocate();
+        Console.WriteLine("TestMemoryPool2 = " + v);
+
+        Console.WriteLine(Pool<Vector3>.capacity);
+        Console.WriteLine(Pool<Vector3>.count());
+    }
+
+    private static void TestMemoryPool3() {
+        Console.WriteLine(Pool<Vector3>.capacity);
+        Console.WriteLine(Pool<Vector3>.count());
+        Console.WriteLine(Pointer.alive_count);
     }
 
     private static void TestPathfinder() {

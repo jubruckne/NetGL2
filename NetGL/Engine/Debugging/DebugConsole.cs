@@ -1,4 +1,4 @@
-﻿namespace NetGL.Debug;
+﻿namespace NetGL;
 
 using ImGuiNET;
 using System;
@@ -11,7 +11,7 @@ using System.Text;
 public static class DebugConsole {
     private static readonly List<Message> messages = new();
     private static readonly List<string> history = new();
-    private static DebugListener? listener;
+    //private static DebugListener? listener;
     private static readonly Dictionary<string, Action<string[]>> commands = new();
     private static bool m_TimeStamps = true;
     private static bool m_ColoredOutput = true;
@@ -39,7 +39,7 @@ public static class DebugConsole {
     public static void initialize(bool listen_to_console = true) {
         default_settings();
 
-        if(listen_to_console) listener = new DebugListener();
+        //if(listen_to_console) listener = new DebugListener();
 
         register_command("clear", _ => messages.Clear());
     }

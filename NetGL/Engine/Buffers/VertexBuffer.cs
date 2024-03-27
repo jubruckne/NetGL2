@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace NetGL;
 
 using System.Runtime.CompilerServices;
@@ -7,6 +9,10 @@ using OpenTK.Graphics.OpenGL4;
 public interface IVertexBuffer: IBuffer {
     ReadOnlyMap<string, VertexAttribute> attribute_definitions { get; }
 }
+
+public delegate void Update<TPosition, TNormal, TAttributes>(int index, ref TPosition position, ref TNormal normal, ref TAttributes attribute);
+public delegate void Update<TPosition, TNormal>(int index, ref TPosition position, ref TNormal normal);
+public delegate void Update<TVertex>(int index, ref TVertex vertex);
 
 public class VertexBuffer<T>: Buffer<T>, IVertexBuffer where T: unmanaged {
     public ReadOnlyMap<string, VertexAttribute> attribute_definitions { get; } = new Map<string, VertexAttribute>();
@@ -27,7 +33,7 @@ public class VertexBuffer<T>: Buffer<T>, IVertexBuffer where T: unmanaged {
             this.attribute_definitions.writeable().add(attrib.name, attrib);
         }
 
-        Error.assert((offset, Unsafe.SizeOf<T>()), offset == Unsafe.SizeOf<T>());
+        Debug.assert((offset, Unsafe.SizeOf<T>()), offset == Unsafe.SizeOf<T>());
     }
 
     public ArrayView<T> vertices => get_view();
@@ -86,6 +92,15 @@ public class VertexBuffer<TPosition, TNormal>: VertexBuffer<VertexBuffer<TPositi
                ]
               ) {}
 
+
+    public unsafe void update(Update<TPosition, TNormal> update) {
+        var vtx = (Vertex*)buffer.get_address();
+        for (var i = 0; i < buffer.length; ++i) {
+            update(i, ref vtx->position, ref vtx->normal);
+            ++vtx;
+        }
+    }
+
     public ArrayView<TPosition> positions
         => get_view<TPosition>("position");
 
@@ -142,6 +157,14 @@ public class VertexBuffer<TPosition, TNormal, TAttributes>: VertexBuffer<VertexB
                    ..attribute_definitions
                ]
               ) {}
+
+
+    public void update(Update<TPosition, TNormal, TAttributes> update) {
+        for (var i = 0; i < length; ++i) {
+            ref var vtx = ref buffer.by_ref(i);
+            update(i, ref vtx.position, ref vtx.normal, ref vtx.attributes);
+        }
+    }
 
     public ArrayView<TPosition> positions
         => get_view<TPosition>("position");

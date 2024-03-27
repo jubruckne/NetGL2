@@ -52,7 +52,7 @@ public static class SpherePrefab {
         entity.add_shader(shader);
         entity.add_vertex_array_renderer(model.vertex_arrays[0]);
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
 
         return entity;
     }

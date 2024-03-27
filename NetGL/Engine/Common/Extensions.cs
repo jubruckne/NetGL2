@@ -27,9 +27,9 @@ public static class OpenTKExtensions {
             OpenTK.Mathematics.Vector3h => VertexAttribPointerType.HalfFloat,
             OpenTK.Mathematics.Vector3i => VertexAttribPointerType.Int,
             OpenTK.Mathematics.Vector3d => VertexAttribPointerType.Double,
-            Vectors.Vector3<float>      => VertexAttribPointerType.Float,
-            Vectors.Vector3<double>     => VertexAttribPointerType.Double,
-            Vectors.Vector3<Half>       => VertexAttribPointerType.HalfFloat,
+            Vectors.vec3<float>      => VertexAttribPointerType.Float,
+            Vectors.vec3<double>     => VertexAttribPointerType.Double,
+            Vectors.vec3<Half>       => VertexAttribPointerType.HalfFloat,
             _                           => Error.type_conversion_error<T, VertexAttribPointerType>(d)
         };
     }
@@ -205,24 +205,6 @@ public static class VectorExt {
 
 }
 
-public static class AngleExt {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float wrap_degrees(float angle) {
-        angle %= 360;
-        if (angle > 180) angle -= 360;
-        if (angle < -180) angle += 360;
-        return angle;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float degree_to_radians(this float degrees) =>
-        MathHelper.DegreesToRadians(wrap_degrees(degrees));
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float radians_to_degrees(this float radians) =>
-        wrap_degrees(MathHelper.RadiansToDegrees(radians));
-}
-
 public static class ArrayExt {
     public static List<T> writeable<T>(this IReadOnlyList<T> list) => (List<T>)list;
 
@@ -236,28 +218,18 @@ public static class ArrayExt {
         => (Map<TKey, TValue>)dict;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool is_float<T>(in T t) where T: unmanaged {
-        return t is float or double or OpenTK.Mathematics.Half or Half;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool is_integer<T>(in T t) where T: unmanaged {
-        return t is int or uint or short or ushort or byte or long or ulong or nint or nuint;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe bool can_reinterpret<TIn, TOut>(this TIn input) where TIn: unmanaged where TOut: unmanaged, INumberBase<TOut> {
         if (sizeof(TIn) != sizeof(TOut)) return false;
-        if (is_float(input) && is_float(TOut.One)) return true;
-        if (is_integer(input) && is_integer(TOut.One)) return true;
+        if (input.is_float() && TOut.One.is_float()) return true;
+        if (input.is_integer() && TOut.One.is_integer()) return true;
         return false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe bool can_reinterpret<TIn, TOut>() where TIn: unmanaged, INumberBase<TIn> where TOut: unmanaged, INumberBase<TOut> {
         if (sizeof(TIn) != sizeof(TOut)) return false;
-        if (is_float(TIn.One) && is_float(TOut.One)) return true;
-        if (is_integer(TIn.One) && is_integer(TOut.One)) return true;
+        if (TIn.One.is_float() && TOut.One.is_float()) return true;
+        if (TIn.One.is_integer() && TOut.One.is_integer()) return true;
         return false;
     }
 
@@ -303,9 +275,9 @@ public static class ArrayExt {
         var output = new TOut[span.Length * 3];
 
         for (var i = 0; i < span.Length; i++) {
-            output[i * 3] = TOut.CreateChecked(span[i].p1);
-            output[i * 3 + 1] = TOut.CreateChecked(span[i].p2);
-            output[i * 3 + 2] = TOut.CreateChecked(span[i].p3);
+            output[i * 3] = TOut.CreateChecked(span[i].p0);
+            output[i * 3 + 1] = TOut.CreateChecked(span[i].p1);
+            output[i * 3 + 2] = TOut.CreateChecked(span[i].p2);
         }
 
         return output;
@@ -315,9 +287,9 @@ public static class ArrayExt {
         var output = new TOut[span.Length * 3];
 
         for (var i = 0; i < span.Length; i++) {
-            output[i * 3] = TOut.CreateChecked(span[i].p1);
-            output[i * 3 + 1] = TOut.CreateChecked(span[i].p2);
-            output[i * 3 + 2] = TOut.CreateChecked(span[i].p3);
+            output[i * 3] = TOut.CreateChecked(span[i].p0);
+            output[i * 3 + 1] = TOut.CreateChecked(span[i].p1);
+            output[i * 3 + 2] = TOut.CreateChecked(span[i].p2);
         }
 
         return output;
@@ -455,10 +427,27 @@ public static class ArrayExt {
             action(e);
     }
 
-    public static int sum<T>(this IEnumerable<T> array, Func<T, int> sum_function) {
-        int result = 0;
-        foreach (var e in array)
+    public static int sum<T>(this IEnumerable<T> list, Func<T, int> sum_function) {
+        var result = 0;
+        foreach (var e in list)
             result += sum_function(e);
+        return result;
+    }
+
+    public static int count<T>(this IEnumerable<T> list, Func<T, bool> count_function) {
+        var result = 0;
+        foreach (var e in list)
+            if (count_function(e))
+                ++result;
+
+        return result;
+    }
+
+    public static int count<T>(this IEnumerable<T> list) {
+        var result = 0;
+        foreach (var e in list)
+            ++result;
+
         return result;
     }
 }

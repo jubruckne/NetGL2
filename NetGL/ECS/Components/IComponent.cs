@@ -11,10 +11,8 @@ public interface IRenderableComponent {
     void render(in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Vector3 camera_pos, in Matrix4 model_matrix);
 }
 
-public interface IComponent {
+public interface IComponent: INamed {
     Entity entity { get; }
-    string name { get; }
-
     string path => $"{entity.path}:{name}";
 }
 

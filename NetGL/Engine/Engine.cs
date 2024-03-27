@@ -2,7 +2,6 @@ using System.Numerics;
 using BulletSharp;
 using ImGuiNET;
 using NetGL;
-using NetGL.Debug;
 using NetGL.ECS;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
@@ -12,8 +11,6 @@ using Plane = NetGL.Plane;
 using Vector2 = System.Numerics.Vector2;
 
 public class Engine: GameWindow {
-    public readonly bool debug;
-
     public readonly World world;
 
     private readonly RevolvingList<float> frame_times = new(60);
@@ -23,9 +20,10 @@ public class Engine: GameWindow {
     private double frame_time;
     private int frame_count;
 
+    private bool debugging;
     public static int frame;
 
-    public Engine(string title, Size2<int> window_size, WindowState window_state = WindowState.Normal, bool debug = false) :
+    public Engine(string title, Size2<int> window_size, WindowState window_state = WindowState.Normal, bool debugging = false) :
         base(
             new() {
                 UpdateFrequency = 10,
@@ -40,21 +38,21 @@ public class Engine: GameWindow {
                 Flags = ContextFlags.ForwardCompatible
             }) {
 
-        Thread.CurrentThread.Name = "[ENGINE]";
-        this.debug = debug;
+        this.debugging = debugging;
+        Thread.CurrentThread.Name = "~ENGINE~";
 
-        Console.WriteLine($"OpenGL Version: {GL.GetString(StringName.Version)}");
-        Console.WriteLine($"Shading Language Version: {GL.GetString(StringName.ShadingLanguageVersion)}");
-        Console.WriteLine($"Vendor: {GL.GetString(StringName.Vendor)}");
-        Console.WriteLine($"Renderer: {GL.GetString(StringName.Renderer)}");
-        Console.WriteLine($"ContextFlags: {(ContextFlagMask)GL.GetInteger(GetPName.ContextFlags)}");
-        Console.WriteLine();
+        Debug.println($"OpenGL Version: {GL.GetString(StringName.Version)}");
+        Debug.println($"Shading Language Version: {GL.GetString(StringName.ShadingLanguageVersion)}");
+        Debug.println($"Vendor: {GL.GetString(StringName.Vendor)}");
+        Debug.println($"Renderer: {GL.GetString(StringName.Renderer)}");
+        Debug.println($"ContextFlags: {(ContextFlagMask)GL.GetInteger(GetPName.ContextFlags)}");
+        Debug.println();
 
-        Console.WriteLine($"Extensions: {GL.GetString(StringNameIndexed.Extensions, 0)}");
-        Console.WriteLine();
-        Console.WriteLine($"MaxElementsVertices: {GL.GetInteger(GetPName.MaxElementsVertices)}");
-        Console.WriteLine($"MaxElementsIndices: {GL.GetInteger(GetPName.MaxElementsIndices)}");
-        Console.WriteLine();
+        Debug.println($"Extensions: {GL.GetString(StringNameIndexed.Extensions, 0)}");
+        Debug.println();
+        Debug.println($"MaxElementsVertices: {GL.GetInteger(GetPName.MaxElementsVertices)}");
+        Debug.println($"MaxElementsIndices: {GL.GetInteger(GetPName.MaxElementsIndices)}");
+        Debug.println();
 
         GL.CullFace(CullFaceMode.Back);
         GL.Enable(EnableCap.CullFace);
@@ -66,7 +64,7 @@ public class Engine: GameWindow {
         GL.DepthFunc(DepthFunction.Less);
 
         world = new World();
-        if (debug) {
+        if (debugging) {
             ImGuiRenderer.initialize(this, "/System/Library/Fonts/Supplemental/Arial Unicode.ttf");
             DebugConsole.initialize();
            // DebugConsole.text_filter = "ImGui";
@@ -122,8 +120,9 @@ public class Engine: GameWindow {
        environment.get<VertexArrayRenderer>().depth_test = false;
        environment.get<VertexArrayRenderer>().cull_face = true;
 
-       Console.WriteLine(RenderState.depth_test);
+       Debug.println(RenderState.depth_test);
 
+       world.add_ambient_light(0.75f, 0.75f, 0.75f, 1f);
        world.add_directional_light(
                                    ambient:(0.4f, 0.4f, 0.4f),
                                    diffuse:(0.9f, 0.9f, 0.9f),
@@ -174,7 +173,7 @@ public class Engine: GameWindow {
         //ball.transform.position = (0, 3, 5);
         //Texture2DArrayBuffer tex = new Texture2DArrayBuffer([Texture.load_from_file("test.png")]);
 
-        Console.WriteLine("");
+        Debug.println();
 
         Entity real_arrow_x = world.create_arrow("ArrowX", from: (0, 0, 0), to: (10, 0, 0), material:Material.Red);
         Entity real_arrow_y = world.create_arrow("ArrowY", from: (0, 0, 0), to: (0f, 10, 0f), material:Material.Green);
@@ -229,7 +228,7 @@ public class Engine: GameWindow {
         AssetManager.load_all_files<Script>();
         AssetManager.for_each<Script>(script => script.run(this));
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
 
         CursorState = CursorState.Normal;
 
@@ -295,14 +294,14 @@ public class Engine: GameWindow {
         frame_count++;
         frame++;
 
-        if (debug) ImGuiRenderer.update((float)e.Time);
+        if (debugging) ImGuiRenderer.update((float)e.Time);
 
         Viewport.Gameplay.make_current();
 
         world.render();
-        Error.assert_opengl();
-        if(debug) render_ui();
-        Error.assert_opengl();
+        Debug.assert_opengl();
+        if(debugging) render_ui();
+        Debug.assert_opengl();
 
         BackgroundTaskScheduler.process_scheduled_tasks();
 
@@ -334,7 +333,7 @@ public class Engine: GameWindow {
 
         ImGui.StyleColorsClassic();
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
 
         if (frame_times.count > 5) {
             ImGui.Text("Frame Time (ms):");
@@ -357,7 +356,7 @@ public class Engine: GameWindow {
 
         ImGui.PopStyleVar(4);
         ImGui.End();
-        Error.assert_opengl();
+        Debug.assert_opengl();
 
         ImGuiRenderer.render();
     }
@@ -506,7 +505,6 @@ public class Engine: GameWindow {
 
                         var worldGravity = phy.data.World.Gravity;
                         if (ImGui.DragFloat3($"Gravity", ref worldGravity, 0.1f, -10, 10, "%.2f")) {
-                            Console.WriteLine(worldGravity);
                             phy.data.World.SetGravity(ref worldGravity);
                             phy.data.World.ApplyGravity();
                             phy.data.World.ClearForces();

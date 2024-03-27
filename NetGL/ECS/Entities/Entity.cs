@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NetGL.ECS;
 
-public class Entity {
+public class Entity: INamed {
     public string name { get; }
     public string path { get; private set; }
     public Transform transform { get; }

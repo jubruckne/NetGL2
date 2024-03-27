@@ -1,9 +1,9 @@
+namespace NetGL.ECS;
+
 using System.Numerics;
 using BulletSharp;
 using OpenTK.Mathematics;
 using Vector3 = OpenTK.Mathematics.Vector3;
-
-namespace NetGL.ECS;
 
 public class World: Entity {
     private readonly EntityList world_entities;
@@ -55,7 +55,7 @@ public class World: Entity {
                     // Console.WriteLine($"Switching to viewport {cam.viewport}");
                     cam.viewport.make_current();
                     cam.viewport.clear();
-                    Error.assert_opengl();
+                    Debug.assert_opengl();
 
                     foreach (var child in cam.entity.parent.children) {
                         // Console.WriteLine("  " + child.name);
@@ -71,7 +71,7 @@ public class World: Entity {
                 }
             }
 
-            Error.assert_opengl();
+            Debug.assert_opengl();
         }
     }
 

@@ -70,7 +70,7 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
             va.draw();
         }
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
     }
 }
 

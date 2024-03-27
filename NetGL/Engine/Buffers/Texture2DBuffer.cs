@@ -51,6 +51,6 @@ public class Texture2DBuffer: TextureBuffer {
 
         GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
-        Error.assert_opengl();
+        Debug.assert_opengl();
     }
 }
