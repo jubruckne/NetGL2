@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NetGL;
 
@@ -61,8 +62,8 @@ public class Quadtree<T>: IEnumerable<Quadtree<T>> where T: notnull {
     private readonly AllocateDelegate allocate;
     private readonly DistanceToLevelDelegate distance_to_level;
 
-    public Quadtree(int most_detailed_tile_size, int max_level, AllocateDelegate allocate): this(
-         new Bounds(0, 0, most_detailed_tile_size << max_level), -1, max_level, allocate) {
+    public Quadtree(float most_detailed_tile_size, int max_level, AllocateDelegate allocate): this(
+         new Bounds(0, 0, most_detailed_tile_size * MathF.Pow(max_level, 2)), -1, max_level, allocate) {
     }
 
     private Quadtree(Bounds bounds, int level, int max_level, AllocateDelegate allocate) {
@@ -78,37 +79,39 @@ public class Quadtree<T>: IEnumerable<Quadtree<T>> where T: notnull {
 
     public T this[float x, float y, int level] => get_node(x, y, level).data;
 
-    public bool is_allocated(float x, float y, int level) => try_get_node(x, y, level, out _);
+    public bool has_node(float x, float y, int level) => try_get_node(x, y, level, out _);
 
-    public bool try_get_node(float x, float y, int level, out Quadtree<T>? node) => try_get_node(x, y, level, out node, false);
+    public bool try_get_node(float x, float y, int level, [NotNullWhen(true)] out Quadtree<T>? node) => try_get_node(x, y, level, out node, false);
 
-    private bool try_get_node(float x, float y, int level, out Quadtree<T>? node, bool allocate_as_needed) {
-        if (level > max_level)
-            throw Error.index_out_of_range(level, max_level);
+    private bool try_get_node(float x, float y, int level, [NotNullWhen(true)] out Quadtree<T>? node, bool allocate_as_needed) {
+        Debug.assert(bounds.intersects(x, y));
+        Debug.assert(this.level <= level);
 
-        if (!bounds.intersects(x, y))
-            throw Error.index_out_of_range((x, y, level));
-
-        if (this.level > level) {
-            node = nodes.parent?.get_node(x, y, level) ?? throw Error.index_out_of_range((x, y, level));
-            return true;
-        }
-
+        // we found the requested level of detail
         if (this.level == level) {
             node = this;
             return true;
         }
 
-        // we don't have this level, so check its sub-nodes.
+        // this node is not level enough, so check its sub-nodes.
+
+        // we are already at the highest level
+        if (level >= max_level) {
+            node = default;
+            return false;
+        }
 
         var new_bounds = Bounds.intersects(x, y, bounds.tiles);
         Debug.assert(new_bounds != null);
 
         if (nodes[new_bounds.tile] is null && allocate_as_needed) {
             nodes[new_bounds.tile] = new(new_bounds, this.level + 1, max_level, allocate);
+            node = nodes[new_bounds.tile]!.get_node(x, y, level, true);
+            return true;
         }
+
         if (nodes[new_bounds.tile] is not null) {
-            node = nodes[new_bounds.tile]!.get_node(x, y, level, allocate_as_needed);
+            node = nodes[new_bounds.tile]!.get_node(x, y, level, false);
             return true;
         }
 
@@ -116,10 +119,10 @@ public class Quadtree<T>: IEnumerable<Quadtree<T>> where T: notnull {
         return false;
     }
 
-    public Quadtree<T> get_best_node(float x, float y, int level) {
-        for (var l = level; l >= 0; --l) {
+    public Quadtree<T> get_best_node(float x, float y) {
+        for (var l = max_level; l >= 0; --l) {
             if (try_get_node(x, y, l, out var n))
-                return n!;
+                return n;
         }
 
         throw Error.index_out_of_range((x, y, level));
@@ -133,7 +136,7 @@ public class Quadtree<T>: IEnumerable<Quadtree<T>> where T: notnull {
 
     private Quadtree<T> get_node(float x, float y, int level, bool allocate_as_needed) {
         if (try_get_node(x, y, level, out var n, allocate_as_needed))
-            return n!;
+            return n;
 
         throw Error.index_out_of_range((x, y, level));
     }

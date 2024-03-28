@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -11,7 +12,7 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 namespace NetGL;
 
 public static class OpenTKExtensions {
-    public static VertexAttribPointerType to_vertex_attribute_pointer_type<T>(this T d) {
+    public static VertexAttribPointerType to_vertex_attribute_pointer_type<T>(this T d) where T: unmanaged {
         return d switch {
             float                       => VertexAttribPointerType.Float,
             byte                        => VertexAttribPointerType.UnsignedByte,
@@ -37,6 +38,24 @@ public static class OpenTKExtensions {
 
 
 public static class TypeExtensions {
+    public static string join_to_string<T>(this IEnumerable<T> list, string format = "", string separator = ", ") {
+        StringBuilder sb = new();
+
+        if (format == "") {
+            sb.AppendJoin(separator, list);
+        } else {
+            format = "{0:" + format + "}";
+            foreach (var value in list) {
+                sb.AppendFormat(CultureInfo.InvariantCulture, format, value);
+                sb.Append(separator);
+            }
+
+            sb.Remove(sb.Length - 1, 1);
+        }
+
+        return sb.ToString();
+    }
+
     public static string get_type_name<T>(this T t, bool with_generic_arguments = true) where T: notnull {
         if (t is Type tt) return get_type_name(tt);
         var type = t.GetType();
@@ -45,9 +64,9 @@ public static class TypeExtensions {
                 return $"{type.Name[..type.Name.IndexOf('`')]}";
 
             var genericArguments = type.GetGenericArguments()
-                .Select(x => x.Name)
-                .Aggregate((x1, x2) => $"{x1}, {x2}");
-            return $"{type.Name[..type.Name.IndexOf('`')]} <{genericArguments}>";
+                .Select(static x => x.Name)
+                .Aggregate(static (x1, x2) => $"{x1}, {x2}");
+            return $"{type.Name[..type.Name.IndexOf('`')]} <{genericArguments}>".Replace(" >", ">");
         }
         return type.Name;
     }
@@ -58,7 +77,7 @@ public static class TypeExtensions {
                 return $"{type.Name[..type.Name.IndexOf('`')]}";
 
             var genericArguments = type.GetGenericArguments()
-                .Select(x => x.get_type_name())
+                .Select(static x => x.get_type_name())
                 .Aggregate(static (x1, x2) => $"{x1}, {x2}");
 
 
@@ -443,11 +462,5 @@ public static class ArrayExt {
         return result;
     }
 
-    public static int count<T>(this IEnumerable<T> list) {
-        var result = 0;
-        foreach (var e in list)
-            ++result;
-
-        return result;
-    }
+    public static int count<T>(this IEnumerable<T> list) => list.Count();
 }

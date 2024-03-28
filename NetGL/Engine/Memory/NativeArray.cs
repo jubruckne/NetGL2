@@ -1,5 +1,3 @@
-using Spectre.Console;
-
 namespace NetGL;
 
 using System;
@@ -8,128 +6,12 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
-public sealed class ArrayView<V>: IEnumerable<V> where V : unmanaged {
-    public readonly int length;
-    private readonly nint start;
-    private readonly nint stride;
-
-    internal ArrayView(nint start, nint stride, int length) {
-        this.length = length;
-        this.start = start;
-        this.stride = stride;
-    }
-
-    internal ArrayView(ArrayView<V> view) {
-        this.length = view.length;
-        this.start  = view.start;
-        this.stride = view.stride;
-    }
-
-    public unsafe ref V this[int index] {
-        [SkipLocalsInit]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get {
-            if ((uint)index >= (uint)length) Error.index_out_of_range(index, length);
-            return ref *(V*)(start + index * stride);
-        }
-    }
-
-    IEnumerator<V> IEnumerable<V>.GetEnumerator() {
-        for (var i = 0; i < length; i++) {
-            yield return this[i];
-        }
-    }
-
-    public ArrayWriter<V> new_writer() => new ArrayWriter<V>(this);
-
-    IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
-
-    public override string ToString() => $"{GetType().get_type_name()} (length={length:N0}, stride={stride:N0})";
-}
-
-public sealed class ArrayWriter<V> where V: unmanaged {
-    private readonly ArrayView<V> view;
-    private readonly int length;
-    private int pos;
-
-    public int position {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => pos;
-    }
-
-    public bool eof => pos >= length;
-
-    public int remaining => int.Max(0, length - pos);
-
-    public void rewind() => pos = 0;
-
-    public V value {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => view[pos];
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => view[pos] = value;
-    }
-
-    internal ArrayWriter(in ArrayView<V> view) {
-        this.view   = view;
-        this.length = view.length;
-        this.pos    = 0;
-    }
-
-    [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int write(in V value) {
-        view[pos] = value;
-        return pos++;
-    }
-
-    [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int write(in V value1, in V value2) {
-        view[pos] = value1;
-        view[pos + 1] = value2;
-        return pos += 2;
-    }
-
-    [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int write(in V value1, in V value2, in V value3) {
-        view[pos]     = value1;
-        view[pos + 1] = value2;
-        view[pos + 2] = value3;
-        return pos += 3;
-    }
-
-    [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int write(in V value1, in V value2, in V value3, in V value4) {
-        view[pos]     = value1;
-        view[pos + 1] = value2;
-        view[pos + 2] = value3;
-        view[pos + 3] = value4;
-        return pos += 4;
-    }
-
-    [SkipLocalsInit]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool advance() {
-        if (pos < length) {
-            ++pos;
-            return true;
-        }
-
-        return false;
-    }
-
-    public override string ToString() => $"{this.get_type_name()} (view={view}, position={pos:N0}, remaining={remaining:N0})";
-}
-
-public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T : unmanaged {
+public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmanaged {
     public int length { get; private set; }
     private nint data;
 
-    /// <summary>Create new <see cref="NativeArray{T}"/></summary>
-    /// <param name="length">length of array</param>
+    public int total_size => length * sizeof(T);
+
     public NativeArray(int length, bool zero_out = true) {
         if (length < 0) {
             Error.index_out_of_range(nameof(length), length);
@@ -282,25 +164,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool is_disposed() => data == IntPtr.Zero;
 
-    public Pointer<T> get_pointer(int index) {
-        if (length == 0) Error.index_out_of_range(0);
-        if (index < 0 || index >= length) Error.index_out_of_range(index);
-
-        if (!is_disposed()) return new ArrayPointer<T>(this, index);
-
-        Error.already_disposed(this);
-        return null;
-    }
-
-    public Pointer<T> get_pointer() {
-        if (length == 0) Error.index_out_of_range(0);
-
-        if (!is_disposed()) return new ArrayPointer<T>(this, 0);
-
-        Error.already_disposed(this);
-        return null;
-    }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public nint get_address(int index) {
         if (length == 0) Error.index_out_of_range(0);
         if (index < 0 || index >= length) Error.index_out_of_range(index);
@@ -311,6 +175,7 @@ public sealed unsafe class NativeArray<T> : IEnumerable<T>, IDisposable where T 
         return 0;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public nint get_address() {
         if (length == 0) Error.index_out_of_range(0);
 

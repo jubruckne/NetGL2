@@ -50,6 +50,7 @@
       </None>
       <None Remove="generated\**" />
       <None Remove="Assets\Scripts\**" />
+      <None Remove="Assets\Temp\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -59,11 +60,13 @@
     <ItemGroup>
       <Compile Remove="generated\**" />
       <Compile Remove="Assets\Scripts\**" />
+      <Compile Remove="Assets\Temp\**" />
     </ItemGroup>
 
     <ItemGroup>
       <EmbeddedResource Remove="generated\**" />
       <EmbeddedResource Remove="Assets\Scripts\**" />
+      <EmbeddedResource Remove="Assets\Temp\**" />
     </ItemGroup>
     
 </Project>

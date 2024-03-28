@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace NetGL;
 
 using Libraries;
@@ -86,9 +88,9 @@ public class Noise {
         return sample;
     }
 
-    public float[,] sample(int width, int height, float offset_x, float offset_y, float stride_x, float stride_y) {
+    public Field<half> sample(int width, int height, float offset_x, float offset_y, float stride_x, float stride_y) {
         // Console.WriteLine("------>> sampling noise: " + width * height);
-        var samples = new float[width, height];
+        var samples = new Field<half>(width, height);
         int x, y;
         float nx, ny;
 
@@ -104,7 +106,7 @@ public class Noise {
                 nx = (offset_x + x * stride_x) * frequency;
                 ny = (offset_y + y * stride_y) * frequency;
 
-                samples[x, y] += gen(nx, ny) * amplitude;
+                samples.by_ref(x, y) += (half)(gen(nx, ny) * amplitude);
             }
         }
 

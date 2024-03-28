@@ -1,8 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
+using NetGL.ECS.Events;
 
 namespace NetGL.ECS;
 
-public class Entity: INamed {
+public class Entity: INamed, IEventSender<Entity, EntityComponentAdded> {
     public string name { get; }
     public string path { get; private set; }
     public Transform transform { get; }
@@ -102,7 +103,6 @@ public class Entity: INamed {
                 return children.recursive;
 
             case EntityRelationship.HierarchyWithChildrenRecursive:
-                var root = children;
                 if (parent == null)
                     return [this];
 
@@ -202,6 +202,10 @@ public class Entity: INamed {
             if (component is C1 and C2 and C3) return true;
 
         return false;
+    }
+
+    public void send_event(Entity source, EntityComponentAdded data) {
+        throw new NotImplementedException();
     }
 
     public override string ToString() {

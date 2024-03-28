@@ -26,21 +26,25 @@ public class Terrain: Entity {
 
         this.material = this.add_material(Material.random).material;
         this.renderer = this.add_vertex_array_renderer();
-        this.chunks = new(2, 4, allocate_chunk);
+        this.chunks = new(1f, 6, allocate_chunk);
 
-        chunks.request_node(1.5f, 1, chunks.max_level);
-        chunks.request_node(2, 1, chunks.max_level);
-        chunks.request_node(2.5f, 1, chunks.max_level);
-        chunks.request_node(3f, 1, chunks.max_level);
-        chunks.request_node(3.5f, 1, chunks.max_level);
-        chunks.request_node(4f, 1, chunks.max_level);
+        Console.WriteLine($"Terrain max size: {chunks.bounds}");
+        var heightmap = noise.sample((int)chunks.bounds.width * 96, (int)chunks.bounds.height * 96, 0, 0, 0.1f, 0.1f);
+
+        heightmap.save_to_file("heightmap.json");
+        Console.WriteLine(heightmap);
+        chunks.request_node(0, 0, chunks.max_level);
+
+        Console.WriteLine(chunks.has_node(1, 1, chunks.max_level));
         var chunk = chunks.get_node(1, 1, chunks.max_level);
-
-
 
         foreach (var q in chunks) {
             Console.WriteLine(q);
         }
+
+
+        var best = chunks.get_best_node(0, 0);
+        Console.WriteLine(best);
 
         this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!, material));
         renderer.wireframe = true;

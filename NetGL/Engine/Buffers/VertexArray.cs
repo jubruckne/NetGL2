@@ -67,7 +67,7 @@ public class VertexArray: IBindable {
     }
 
     public override string ToString() {
-        return $"vert:{vertex_buffers.sum(buffer => buffer.length):N0}";
+        return $"vert:{vertex_buffers.sum(static buffer => buffer.length):N0}";
     }
 
     public virtual void draw() {

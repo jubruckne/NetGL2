@@ -55,6 +55,9 @@ public static class AssetManager {
         where T : IAssetType<T>
         => Directory.GetFiles(asset_path<T>(directory));
 
+    public static string temp_path() => $"{asset_root}/Temp/";
+    public static string temp_path(string filename) => $"{asset_root}/Temp/{filename}";
+
     public static string asset_path<T>() where T : IAssetType<T> => $"{asset_root}/{T.path}/";
     public static string asset_path<T>(string filename) where T : IAssetType<T> => $"{asset_root}/{T.path}/{filename}";
 

@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 
@@ -40,7 +41,7 @@ public abstract class VertexAttribute {
     public override string ToString() => $"{name}: {type_of.Name} => {pointer_type}[{count}]";
 }
 
-public class VertexAttribute<T>: VertexAttribute where T: new() {
+public class VertexAttribute<T>: VertexAttribute where T: unmanaged {
     public override Type type_of => typeof(T);
     public override int size_of => Unsafe.SizeOf<T>();
 

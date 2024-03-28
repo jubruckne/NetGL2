@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 
 namespace NetGL;
@@ -30,24 +31,7 @@ public static class Pointer {
     }
 }
 
-public unsafe class ArrayPointer<T>: Pointer<T> where T: unmanaged {
-    private NativeArray<T> array => (NativeArray<T>)owner!;
-
-    public ArrayPointer(in NativeArray<T> array, in int index): base(array, (T*)index, no_dispose_needed) {}
-
-    public override ref T value {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get {
-            if (ptr == nint.MaxValue)
-                Error.not_allocated(this);
-
-            return ref array.by_ref((int)ptr);
-        }
-    }
-}
-
-[SuppressMessage("ReSharper", "MemberInitializerValueIgnored")]
-public unsafe class Pointer<T>:
+public unsafe struct Pointer<T>:
     IPointer,
     IDisposable,
     IEquatable<Pointer<T>>,
@@ -57,8 +41,8 @@ public unsafe class Pointer<T>:
     public static int size_of => sizeof(T);
     public static Type type_of => typeof(T);
 
-    protected nint ptr = nint.MaxValue;
-    protected object? owner; // used to keep owner alive
+    private nint ptr = nint.MaxValue;
+    private object? owner; // used to keep owner alive
 
     public nint address => ptr;
     int IPointer.size_of() => sizeof(T);
@@ -73,15 +57,16 @@ public unsafe class Pointer<T>:
 
     public delegate void DisposeDelegate(nint ptr, in object? owner);
 
-    protected readonly DisposeDelegate on_dispose;
+    private readonly DisposeDelegate on_dispose;
 
+    /*
     ~Pointer() {
         if (ptr == nint.MaxValue) return;
         Pointer.raise_release(this);
         on_dispose(ptr, owner);
         owner = null;
         ptr = nint.MaxValue;
-    }
+    }*/
 
     public Pointer() {
         owner = null;
@@ -113,7 +98,7 @@ public unsafe class Pointer<T>:
 
     public bool is_owned => owner != null;
 
-    protected static void no_dispose_needed(nint this_ptr, in object? owner) {}
+    private static void no_dispose_needed(nint this_ptr, in object? owner) {}
 
     private static void dispose_self_allocated(nint this_ptr, in object? owner)
         => NativeMemory.Free((void*)this_ptr);
@@ -136,7 +121,7 @@ public unsafe class Pointer<T>:
         GC.SuppressFinalize(this);
     }
 
-    public virtual ref T value {
+    public ref T value {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (ptr == nint.MaxValue)
@@ -151,7 +136,7 @@ public unsafe class Pointer<T>:
         return $"{typeof(T).get_type_name()}* null";
     }
 
-    bool IEquatable<Pointer<T>>.Equals(Pointer<T>? other) => other is not null && other.ptr == ptr;
+    bool IEquatable<Pointer<T>>.Equals(Pointer<T> other) => other.ptr == ptr;
 
     public bool Equals(T other) {
         fixed (T* p1 = &value) {
@@ -194,4 +179,7 @@ public unsafe class Pointer<T>:
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator IntPtr (in Pointer<T> p) => p.ptr;
+
+
+
 }

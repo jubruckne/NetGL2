@@ -45,3 +45,17 @@ public struct Struct<A, B, C> where A: struct where B: struct where C: struct {
         return $"({a}, {b}, {c})";
     }
 }
+
+
+[StructLayout(LayoutKind.Sequential)]
+public readonly ref struct RefStruct<A, B, C> where A: struct where B: struct where C: struct {
+    public readonly ref A a;
+    public readonly ref B b;
+    public readonly ref C c;
+
+    public RefStruct(ref A a, ref B b, ref C c) {
+        this.a = a;
+        this.b = b;
+        this.c = c;
+    }
+}
