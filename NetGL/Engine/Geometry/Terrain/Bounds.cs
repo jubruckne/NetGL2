@@ -3,7 +3,14 @@ namespace NetGL;
 using OpenTK.Mathematics;
 
 public class Bounds {
-    public enum Tile { center = 0, top_left = 1, bottom_left = 2, top_right = 3, bottom_right = 4 }
+    public enum Tile {
+        unknown = -1,
+        parent = 0,
+        top_left = 1,
+        bottom_left = 2,
+        top_right = 3,
+        bottom_right = 4
+    }
 
     public readonly Tile tile;
     public readonly Vector2 center;
@@ -18,11 +25,11 @@ public class Bounds {
     public float size => (height + width) / 2;
 
     public Bounds(Tile tile, float left, float right, float bottom, float top) {
-        this.tile = tile;
-        this.left   = left;
-        this.right  = right;
-        this.bottom = bottom;
-        this.top    = top;
+        this.tile            = tile;
+        this.left            = left;
+        this.right           = right;
+        this.bottom          = bottom;
+        this.top             = top;
         (center.X, center.Y) = ((left + right) * 0.5f, (top + bottom) * 0.5f);
     }
 
@@ -38,9 +45,21 @@ public class Bounds {
         bottom = y - half_size;
     }
 
-    public Bounds(float x, float y, float size): this(Tile.center, x, y, size) {}
+    public Bounds(float size): this(Tile.unknown, 0, 0, size) {}
 
     public Bounds[] tiles => [top_right, bottom_right, bottom_left, top_left];
+
+    public Bounds parent {
+        get {
+            switch (tile) {
+                case Tile.bottom_left:  return new(Tile.top_right, left - width, right, bottom - height, top);
+                case Tile.bottom_right: return new(Tile.top_left, left, right + width, bottom - height, top);
+                case Tile.top_left:     return new(Tile.bottom_right, left, right + width, bottom, top + height);
+                case Tile.top_right:    return new(Tile.bottom_left, left - width, right, bottom, top + height);
+                default: throw new ArgumentOutOfRangeException();
+            }
+        }
+    }
 
     public Bounds top_right => new Bounds(Tile.top_right, center.X, right, center.Y, top);
     public Bounds bottom_right => new Bounds(Tile.bottom_right, center.X, right, bottom, center.Y);

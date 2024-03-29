@@ -8,7 +8,15 @@ using System.Runtime.CompilerServices;
 using System.Numerics;
 
 public static class Numbers {
-    public static bool between<T>(this T t, in T lower, in T upper)
+    public static T at_most<T>(this T n, T maximum)
+        where T: INumber<T>
+        => T.Min(n, maximum);
+
+    public static T at_least<T>(this T n, T minimum)
+        where T: INumber<T>
+        => T.Min(n, minimum);
+
+    public static bool is_between<T>(this T t, in T lower, in T upper)
         where T: INumber<T> => t > lower && t < upper;
 
     public static T sqrt<T>(this T number)

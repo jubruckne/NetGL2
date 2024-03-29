@@ -3,27 +3,37 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NetGL;
 
-public class Quadtree<T>: IEnumerable<Quadtree<T>> where T: notnull {
+public class Quadtree<T>: IEnumerable<Quadtree<T>>
+    where T: notnull {
     public delegate T AllocateDelegate(float x, float y, float size, int level);
-    public delegate int DistanceToLevelDelegate(float distance);
 
     private struct Nodes {
-        public readonly Quadtree<T>? parent;
+        public Quadtree<T>? parent;
         public Quadtree<T>? top_right;
         public Quadtree<T>? bottom_right;
         public Quadtree<T>? bottom_left;
         public Quadtree<T>? top_left;
 
-        public Nodes(Quadtree<T>? parent, Quadtree<T>? top_right, Quadtree<T>? bottom_right, Quadtree<T>? bottom_left, Quadtree<T>? top_left) {
+        public Nodes(Quadtree<T>? parent) {
             this.parent = parent;
-            this.top_right = top_right;
+        }
+
+        public Nodes(Quadtree<T>? parent,
+                     Quadtree<T>? top_right,
+                     Quadtree<T>? bottom_right,
+                     Quadtree<T>? bottom_left,
+                     Quadtree<T>? top_left
+        ) {
+            this.parent       = parent;
+            this.top_right    = top_right;
             this.bottom_right = bottom_right;
-            this.bottom_left = bottom_left;
-            this.top_left = top_left;
+            this.bottom_left  = bottom_left;
+            this.top_left     = top_left;
         }
 
         public Quadtree<T>? this[Bounds.Tile tile] {
             get => tile switch {
+                Bounds.Tile.parent       => parent,
                 Bounds.Tile.top_right    => top_right,
                 Bounds.Tile.bottom_right => bottom_right,
                 Bounds.Tile.bottom_left  => bottom_left,
@@ -32,6 +42,9 @@ public class Quadtree<T>: IEnumerable<Quadtree<T>> where T: notnull {
             };
             set {
                 switch (tile) {
+                    case Bounds.Tile.parent:
+                        parent = value;
+                        break;
                     case Bounds.Tile.bottom_left:
                         bottom_left = value;
                         break;
@@ -58,23 +71,40 @@ public class Quadtree<T>: IEnumerable<Quadtree<T>> where T: notnull {
 
     public readonly Bounds bounds;
 
-    private Nodes nodes;
-    private readonly AllocateDelegate allocate;
-    private readonly DistanceToLevelDelegate distance_to_level;
+    public Quadtree<T> root {
+        get {
+            var q = this;
+            while (q.nodes.parent != null)
+                q = q.nodes.parent;
 
-    public Quadtree(float most_detailed_tile_size, int max_level, AllocateDelegate allocate): this(
-         new Bounds(0, 0, most_detailed_tile_size * MathF.Pow(max_level, 2)), -1, max_level, allocate) {
+            return q;
+        }
     }
 
-    private Quadtree(Bounds bounds, int level, int max_level, AllocateDelegate allocate) {
+    private Nodes nodes;
+    private readonly AllocateDelegate allocate;
+
+    public Quadtree(float tile_size, int max_level, AllocateDelegate allocate) {
+        Debug.println($"new Quadtree (root): level={max_level}, max_level={max_level}, bound={bounds}");
+
+        this.allocate  = allocate;
+        this.bounds    = new Bounds(tile_size);
+        this.level     = max_level;
+        this.max_level = max_level;
+        nodes = new();
+        data  = allocate(0, 0, bounds.size, level);
+    }
+
+    private Quadtree(Quadtree<T>? parent, Bounds bounds, int level, int max_level, AllocateDelegate allocate) {
+        Debug.println($"new Quadtree: level={level}, max_level={max_level}, bound={bounds}");
+        Debug.assert(level.is_between(0, max_level));
+
         this.allocate = allocate;
         this.bounds = bounds;
         this.level = level;
         this.max_level = max_level;
-        Debug.println($"new Quadtree: level={level}, max_level={max_level}, bound={bounds}");
-        nodes = new();
+        nodes = new(parent);
         data = allocate(0, 0, bounds.size, level);
-        distance_to_level = new DistanceToLevelDelegate(distance => (int)(distance / bounds.size).round());
     }
 
     public T this[float x, float y, int level] => get_node(x, y, level).data;
@@ -84,7 +114,21 @@ public class Quadtree<T>: IEnumerable<Quadtree<T>> where T: notnull {
     public bool try_get_node(float x, float y, int level, [NotNullWhen(true)] out Quadtree<T>? node) => try_get_node(x, y, level, out node, false);
 
     private bool try_get_node(float x, float y, int level, [NotNullWhen(true)] out Quadtree<T>? node, bool allocate_as_needed) {
-        Debug.assert(bounds.intersects(x, y));
+        if (!bounds.intersects(x, y)) {
+            if (level > 0) {
+                if (nodes[Bounds.Tile.parent] is null && allocate_as_needed) {
+                    nodes[Bounds.Tile.parent] = new(null, bounds.new_bounds, (this.level - 1).at_least(0), max_level, allocate);
+                    nodes[Bounds.Tile.parent]!.nodes.bottom_right = this;
+                }
+
+                if (nodes[Bounds.Tile.parent] is not null) {
+                    node = nodes[Bounds.Tile.parent]!.get_node(x, y, level, allocate_as_needed);
+                    return true;
+                }
+
+            }
+        }
+
         Debug.assert(this.level <= level);
 
         // we found the requested level of detail
@@ -105,7 +149,7 @@ public class Quadtree<T>: IEnumerable<Quadtree<T>> where T: notnull {
         Debug.assert(new_bounds != null);
 
         if (nodes[new_bounds.tile] is null && allocate_as_needed) {
-            nodes[new_bounds.tile] = new(new_bounds, this.level + 1, max_level, allocate);
+            nodes[new_bounds.tile] = new(this, new_bounds, (this.level + 1).at_most(max_level), max_level, allocate);
             node = nodes[new_bounds.tile]!.get_node(x, y, level, true);
             return true;
         }
