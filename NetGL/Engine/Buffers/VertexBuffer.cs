@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace NetGL;
 
 using System.Runtime.CompilerServices;

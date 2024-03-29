@@ -1,3 +1,4 @@
+global using float2 = NetGL.Vectors.vec2<float>;
 global using float3 = NetGL.Vectors.vec3<float>;
 global using double3 = NetGL.Vectors.vec3<double>;
 global using int3 = NetGL.Vectors.vec3<int>;
@@ -37,9 +38,9 @@ public static partial class vec {
 }
 
 public static partial class vec {
-    public static double3 normalize(this double3 vector) => vector /= vector.length();
-    public static float3 normalize(this float3 vector) => vector /= vector.length();
-    public static half3 normalize(this half3 vector) => vector /= vector.length();
+    public static double3 normalize(in double3 vector) => vector / vector.length();
+    public static float3 normalize(in float3 vector) => vector / vector.length();
+    public static half3 normalize(in half3 vector) => vector / vector.length();
 
     public static double length(this double3 vector)
         => Math.Sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
@@ -49,4 +50,42 @@ public static partial class vec {
 
     public static half length(this half3 vector)
         => half.Sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+}
+
+public static partial class vec {
+    public static half dot(in half3 left, in half3 right) {
+        return (half)((float)left.x * (float)right.x + (float)left.y * (float)right.y + (float)left.z * (float)right.z);
+    }
+
+    public static float dot(in float3 left, in float3 right) {
+        return left.x * right.x + left.y * right.y + left.z * right.z;
+    }
+
+    public static double dot(in double3 left, in double3 right) {
+        return left.x * right.x + left.y * right.y + left.z * right.z;
+    }
+
+    public static half3 cross(in half3 left, in half3 right) {
+        return new half3(
+                          (half)((float)left.y * (float)right.z - (float)left.z * (float)right.y),
+                          (half)((float)left.z * (float)right.x - (float)left.x * (float)right.z),
+                          (half)((float)left.x * (float)right.y - (float)left.y * (float)right.x)
+                         );
+    }
+
+    public static float3 cross(in float3 left, in float3 right) {
+        return new float3(
+                          left.y * right.z - left.z * right.y,
+                          left.z * right.x - left.x * right.z,
+                          left.x * right.y - left.y * right.x
+                         );
+    }
+
+    public static double3 cross(in double3 left, in double3 right) {
+        return new double3(
+                          left.y * right.z - left.z * right.y,
+                          left.z * right.x - left.x * right.z,
+                          left.x * right.y - left.y * right.x
+                         );
+    }
 }

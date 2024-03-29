@@ -1,11 +1,10 @@
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
 
 public abstract class VertexAttribute {
-    public IVertexBuffer buffer { get; internal set; }
+    public IVertexBuffer? buffer { get; internal set; }
     public abstract Type type_of { get; }
     public abstract int size_of { get; }
     public string name {get; }
@@ -14,16 +13,17 @@ public abstract class VertexAttribute {
     public int count { get; }
     public VertexAttribPointerType pointer_type { get; }
     public bool normalized { get; }
+    public int divisor { get; }
+    public bool is_instanced => divisor >= 0;
 
-#pragma warning disable CS8618
     protected VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false) {
-#pragma warning restore CS8618
         this.name = name;
         this.offset = -1;
         this.location = -1;
         this.count = count;
         this.pointer_type = pointer_type;
         this.normalized = normalized;
+        this.divisor = 0;
     }
 
     public string glsl_type {

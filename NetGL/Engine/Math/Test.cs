@@ -11,6 +11,6 @@ public class Test {
 
         vec3<int> vi = new vec3<int>();
 
-        Console.WriteLine($"v3 length = {v3.normalize()}");
+        Console.WriteLine($"v3 length = {vec.normalize(v3)}");
     }
 }

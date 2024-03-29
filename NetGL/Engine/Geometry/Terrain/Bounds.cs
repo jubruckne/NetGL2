@@ -45,7 +45,7 @@ public class Bounds {
         bottom = y - half_size;
     }
 
-    public Bounds(float size): this(Tile.unknown, 0, 0, size) {}
+    public Bounds(float size): this(Tile.top_right, 0, 0, size) {}
 
     public Bounds[] tiles => [top_right, bottom_right, bottom_left, top_left];
 

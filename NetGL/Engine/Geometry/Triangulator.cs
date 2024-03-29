@@ -1,37 +1,37 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using Vector3 = OpenTK.Mathematics.Vector3;
+using NetGL.Vectors;
 
 namespace NetGL;
 
 public static class Triangulator {
-    public static void calculate_normals(this VertexBuffer<Vector3, Vector3> vb, in ArrayView<Index<ushort>> indices) {
-        var positions = vb.positions;
-        var normals = vb.normals;
-
-        foreach (var tri in indices) {
-            var edge1  = positions[tri.p1] - positions[tri.p0];
-            var edge2  = positions[tri.p2] - positions[tri.p0];
-            var normal = Vector3.Cross(edge1,edge2);
-
-            normals[tri.p0] += normal;
-            normals[tri.p1] += normal;
-            normals[tri.p2] += normal;
-        }
-
-        for (var i = 0; i < normals.length; i++) {
-            normals[i].Normalize();
-        }
-    }
-
-    public static void calculate_normals(this VertexBuffer<Vector3, Vector3> vb, in ArrayView<Index<int>> indices) {
+    public static void calculate_normals(this VertexBuffer<float3, half3> vb, in ArrayView<Index<ushort>> indices) {
         var positions = vb.positions;
         var normals   = vb.normals;
 
         foreach (var tri in indices) {
             var edge1  = positions[tri.p1] - positions[tri.p0];
             var edge2  = positions[tri.p2] - positions[tri.p0];
-            var normal = Vector3.Cross(edge1,edge2);
+            var normal = vec.cross(edge1,edge2);
+
+            normals[tri.p0] += (half3)normal;
+            normals[tri.p1] += (half3)normal;
+            normals[tri.p2] += (half3)normal;
+        }
+
+        for (var i = 0; i < normals.length; i++) {
+            normals[i].normalize();
+        }
+    }
+
+    public static void calculate_normals(this VertexBuffer<float3, float3> vb, in ArrayView<Index<ushort>> indices) {
+        var positions = vb.positions;
+        var normals = vb.normals;
+
+        foreach (var tri in indices) {
+            var edge1  = positions[tri.p1] - positions[tri.p0];
+            var edge2  = positions[tri.p2] - positions[tri.p0];
+            var normal = vec.cross(edge1,edge2);
 
             normals[tri.p0] += normal;
             normals[tri.p1] += normal;
@@ -39,7 +39,26 @@ public static class Triangulator {
         }
 
         for (var i = 0; i < normals.length; i++) {
-            normals[i].Normalize();
+            normals[i].normalize();
+        }
+    }
+
+    public static void calculate_normals(this VertexBuffer<float3, float3> vb, in ArrayView<Index<int>> indices) {
+        var positions = vb.positions;
+        var normals   = vb.normals;
+
+        foreach (var tri in indices) {
+            var edge1  = positions[tri.p1] - positions[tri.p0];
+            var edge2  = positions[tri.p2] - positions[tri.p0];
+            var normal = vec.cross(edge1,edge2);
+
+            normals[tri.p0] += normal;
+            normals[tri.p1] += normal;
+            normals[tri.p2] += normal;
+        }
+
+        for (var i = 0; i < normals.length; i++) {
+            normals[i].normalize();
         }
     }
 }
@@ -100,7 +119,10 @@ public sealed class Triangulator<TPosition, TIndex>
     }
 
     public VertexArrayIndexed.DrawRanges finish() {
-        draw_ranges.add(start_index, index_writer.position - 1, base_vertex);
+        if (index_writer.position != start_index) {
+            // append final draw range
+            draw_ranges.add(start_index, index_writer.position - 1, base_vertex);
+        }
 
         Debug.assert(index_writer, index_writer.eof);
         Debug.assert(position_writer, position_writer.eof);

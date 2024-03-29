@@ -162,6 +162,38 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         set_uniform("cam_position", pos);
     }
 
+    private static class Uniforms {
+        public static class DirectionalLight {
+            public static readonly string[] Direction = [
+                "directional_light[0].direction",
+                "directional_light[1].direction",
+                "directional_light[2].direction",
+                "directional_light[3].direction"
+            ];
+
+            public static readonly string[] Ambient = [
+                "directional_light[0].ambient",
+                "directional_light[1].ambient",
+                "directional_light[2].ambient",
+                "directional_light[3].ambient"
+            ];
+
+            public static readonly string[] Specular = [
+                "directional_light[0].specular",
+                "directional_light[1].specular",
+                "directional_light[2].specular",
+                "directional_light[3].specular"
+            ];
+
+            public static readonly string[] Diffuse = [
+                "directional_light[0].diffuse",
+                "directional_light[1].diffuse",
+                "directional_light[2].diffuse",
+                "directional_light[3].diffuse"
+            ];
+        }
+    }
+
     public void set_light(IEnumerable<Light> lights) {
         int num_directional_lights = 0;
         //int num_point_lights = 0;
@@ -172,11 +204,10 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
                     set_uniform("ambient_light", ambient.data.color.reinterpret_ref<Color,Vector3>());
                     break;
                 case DirectionalLight directional:
-                    // if(directional.data.direction.LengthSquared != 0) directional.data.direction.Normalize();
-                    set_uniform($"directional_light[{num_directional_lights.ToString()}].direction", directional.data.direction);
-                    set_uniform($"directional_light[{num_directional_lights.ToString()}].ambient", directional.data.ambient.reinterpret_ref<Color, Vector3>());
-                    set_uniform($"directional_light[{num_directional_lights.ToString()}].specular", directional.data.specular.reinterpret_ref<Color, Vector3>());
-                    set_uniform($"directional_light[{num_directional_lights.ToString()}].diffuse", directional.data.diffuse.reinterpret_ref<Color, Vector3>());
+                    set_uniform(Uniforms.DirectionalLight.Direction[num_directional_lights], directional.data.direction);
+                    set_uniform(Uniforms.DirectionalLight.Ambient[num_directional_lights], directional.data.ambient.reinterpret_ref<Color, Vector3>());
+                    set_uniform(Uniforms.DirectionalLight.Specular[num_directional_lights], directional.data.specular.reinterpret_ref<Color, Vector3>());
+                    set_uniform(Uniforms.DirectionalLight.Diffuse[num_directional_lights], directional.data.diffuse.reinterpret_ref<Color, Vector3>());
                     num_directional_lights++;
                     break;
                 //case PointLight pointlight:

@@ -84,6 +84,14 @@ public static class Debug {
     }
 
     [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
+    public static void assert_not_null<T>(
+        T? value,
+        [CallerArgumentExpression("value")] string? name = default) where T: class {
+        if (value == null)
+            throw new Exception($"Assertion failed: {typeof(T).Name} {name}==null!");
+    }
+
+    [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void assert_not_equal<T>(
         T value1,
         T value2,

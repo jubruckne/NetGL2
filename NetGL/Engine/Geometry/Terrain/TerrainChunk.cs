@@ -1,9 +1,7 @@
 namespace NetGL;
 
-using OpenTK.Mathematics;
-
 internal sealed class TerrainChunk {
-    private const int chunk_size = 96;
+    private const int chunk_quad_count = 255;
 /*
     internal readonly record struct Key(short x, short y) {
         public IEnumerable<Key> neighbors(byte distance = 1) {
@@ -47,8 +45,6 @@ internal sealed class TerrainChunk {
     public bool ready { get; private set; }
     public VertexArrayIndexed? vertex_array { get; private set; }
 
-    private static readonly IndexBuffer<ushort>? common_index_buffer = null;
-
     public TerrainChunk(in Terrain terrain, float x, float y, float size) {
         this.x = x;
         this.y = y;
@@ -85,16 +81,15 @@ internal sealed class TerrainChunk {
     private VertexArrayIndexed create() {
         Garbage.measure_begin();
 
-        int vertex_count = (chunk_size + 1) * (chunk_size + 1);
-        int index_count = chunk_size * chunk_size * 2;
+        int vertex_count = (chunk_quad_count + 1) * (chunk_quad_count + 1);
+        int index_count  = chunk_quad_count * chunk_quad_count * 2;
 
-        Plane     plane          = terrain.plane;
-        Noise     noise          = terrain.noise;
-        Vector2   center         = (x, y);
+        Plane plane = terrain.plane;
+        Noise noise = terrain.noise;
 
-        var vb           = new VertexBuffer<Vector3, Vector3>(vertex_count);
+        var vb           = new VertexBuffer<float3, half3>(vertex_count);
         var ib           = new IndexBuffer<ushort>(index_count);
-        var triangulator = new Triangulator<Vector3, ushort>(vb.positions, ib.indices);
+        var triangulator = new Triangulator<float3, ushort>(vb.positions, ib.indices);
 
         Debug.println(
                       $"Creating chunk {size} x {size}, vtx={vertex_count:N0}, idx<{ib[0].p0.GetType().Name}>={index_count:N0}",
@@ -104,44 +99,46 @@ internal sealed class TerrainChunk {
         float px;
         float py;
 
-        for (var y = 0; y <= chunk_size; ++y) {
-            //Console.WriteLine($"y = {y}");
-            py = center.Y + chunk_size * (float)y / chunk_size;
+        int vx;
+        int vy;
 
-            for (var x = 0; x <= chunk_size; ++x) {
-                px = center.X + chunk_size * (float)x / chunk_size;
-                triangulator.vertex(
-                                    plane.to_world(
-                                                   px,
-                                                   py,
-                                                   noise.sample(px, py)
-                                                  )
-                                   );
-                if (x > 0 && y > 0) {
-                    var top_right    = y * chunk_size + x;
-                    var bottom_right = (y - 1) * chunk_size + x;
-                    var bottom_left  = (y - 1) * chunk_size + (x - 1);
-                    var top_left     = y * chunk_size + (x - 1);
-//
-//                    const VERTICES: [Vertex; 4] =
-//                        [[0.5, 0.5, 0.0], [0.5, -0.5, 0.0], [-0.5, -0.5, 0.0], [-0.5, 0.5, 0.0]];
+        int index = 0;
+        for (var i = 0; i < vertex_count; ++i) {
+            vx = i % (chunk_quad_count + 1);
+            vy = i / (chunk_quad_count + 1);
 
+            Console.WriteLine($"{vx}, {vy}");
 
-                    triangulator.quad(top_right, bottom_right, bottom_left, top_left);
-                    //triangulator.triangle(bottom_left, bottom_right, top_left);
-                    //triangulator.triangle(top_left, bottom_right, top_right);
-                }
+            px = this.x + size * vx / chunk_quad_count;
+            py = this.y + size * vy / chunk_quad_count;
+
+            vb[i].position = plane.to_world(
+                                            px,
+                                            py,
+                                            noise.sample(px, py)
+                                           );
+
+            if (vx < chunk_quad_count && vy < chunk_quad_count) {
+                var top_right    = (vy + 1) * (chunk_quad_count + 1) + vx + 1;
+                var bottom_right = vy * (chunk_quad_count + 1) + vx + 1;
+                var bottom_left  = vy * (chunk_quad_count + 1) + vx;
+                var top_left     = (vy + 1) * (chunk_quad_count + 1) + vx;
+
+                ib[index].p0 = (ushort)bottom_left;
+                ib[index].p1 = (ushort)bottom_right;
+                ib[index].p2 = (ushort)top_right;
+                ++index;
+
+                ib[index].p0 =  (ushort)top_right;
+                ib[index].p1 =  (ushort)top_left;
+                ib[index].p2 =  (ushort)bottom_left;
+                ++index;
             }
         }
 
         vb.calculate_normals(ib.indices);
 
-        var va = new VertexArrayIndexed(vb, ib, triangulator.finish());
-        Debug.println(
-                      va.draw_ranges,
-                      ConsoleColor.Magenta
-                     );
-
+        var va = new VertexArrayIndexed(vb, ib);
 
         Garbage.measure("TerrainChunk.create");
 

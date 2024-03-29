@@ -68,18 +68,12 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
 
     public override Type item_type => typeof(T);
 
-    public T this[int index] {
+    public ref T this[int index] {
         get {
             if (index < 0 || index >= buffer.length)
                 throw new IndexOutOfRangeException($"Index out of range: {index}!");
 
-            return buffer[index];
-        }
-        set {
-            if (index < 0 || index >= buffer.length)
-                throw new IndexOutOfRangeException($"Index out of range: {index}!");
-
-            buffer[index] = value;
+            return ref buffer.by_ref(index);
         }
     }
 

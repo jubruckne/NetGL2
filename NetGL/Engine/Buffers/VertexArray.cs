@@ -51,7 +51,8 @@ public class VertexArray: IBindable {
 
     protected void upload_attribute_pointers() {
         foreach (var attribute in vertex_attributes) {
-            attribute.buffer.bind();
+            Debug.assert_not_null(attribute.buffer);
+            attribute.buffer!.bind();
 /*
             Console.WriteLine("Vertex attributes: ");
             Console.WriteLine($"  stride = {attribute.buffer.item_size}");
@@ -61,6 +62,9 @@ public class VertexArray: IBindable {
            */
             GL.VertexAttribPointer(attribute.location, attribute.count, attribute.pointer_type, attribute.normalized, attribute.buffer.item_size, attribute.offset);
             GL.EnableVertexAttribArray(attribute.location);
+            if(attribute.is_instanced)
+                GL.VertexAttribDivisor(attribute.location, attribute.divisor);
+
         }
 
         Debug.assert_opengl();

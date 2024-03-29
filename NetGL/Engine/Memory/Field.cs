@@ -5,11 +5,14 @@ using System.Runtime.InteropServices;
 namespace NetGL;
 
 public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmanaged {
-    public int width { get; private set; }
-    public int height { get; private set; }
-    private nint data;
+    public int width => field_width;
+    public int height => field_height;
 
-    public int total_size => width * height * sizeof(T);
+    private nint data;
+    private int field_width;
+    private int field_height;
+
+    public int total_size => field_width * field_height * sizeof(T);
 
     public Field(int width, int height, bool zero_out = true) {
         if (width < 0) Error.index_out_of_range(nameof(width), width);
@@ -21,8 +24,8 @@ public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmana
         }
 
         this.data = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes, 64);
-        this.width = width;
-        this.height = height;
+        this.field_width = width;
+        this.field_height = height;
 
         if(zero_out) zero();
     }
@@ -30,8 +33,8 @@ public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmana
     IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator() {
-        for (var x = 0; x < height; ++x) {
-            for (var y = 0; y < width; ++y) {
+        for (var x = 0; x < field_height; ++x) {
+            for (var y = 0; y < field_width; ++y) {
                 yield return this[x, y];
             }
         }
@@ -56,8 +59,8 @@ public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmana
 
     public IEnumerable<(int x, int y, T data)> this[Range rows, Range columns] {
         get {
-            var row_range = rows.GetOffsetAndLength(height);
-            var col_range = columns.GetOffsetAndLength(width);
+            var row_range = rows.GetOffsetAndLength(field_height);
+            var col_range = columns.GetOffsetAndLength(field_width);
 
             for (var row = row_range.Offset; row < row_range.Offset + row_range.Length; ++row) {
                 for (var col = col_range.Offset; col < col_range.Offset + col_range.Length; ++col) {
@@ -71,35 +74,35 @@ public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmana
         [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
-            if (x < 0 || x >= width) Error.index_out_of_range(x, width);
-            if (y < 0 || y >= height) Error.index_out_of_range(y, height);
-            return ((T*)data)[x + y * width];
+            if (x < 0 || x >= field_width) Error.index_out_of_range(x, field_width);
+            if (y < 0 || y >= field_height) Error.index_out_of_range(y, field_height);
+            return ((T*)data)[x + y * field_width];
         }
 
         [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
-            if (x < 0 || x >= width) Error.index_out_of_range(x, width);
-            if (y < 0 || y >= height) Error.index_out_of_range(y, height);
-            ((T*)data)[x + y * width] = value;
+            if (x < 0 || x >= field_width) Error.index_out_of_range(x, field_width);
+            if (y < 0 || y >= field_height) Error.index_out_of_range(y, field_height);
+            ((T*)data)[x + y * field_width] = value;
         }
     }
 
     [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T by_ref(int x, int y) {
-        if (x < 0 || x >= width) Error.index_out_of_range(x, width);
-        if (y < 0 || y >= height) Error.index_out_of_range(y, height);
-        return ref ((T*)data)[x + y * width];
+        if (x < 0 || x >= field_width) Error.index_out_of_range(x, field_width);
+        if (y < 0 || y >= field_height) Error.index_out_of_range(y, field_height);
+        return ref ((T*)data)[x + y * field_width];
     }
 
     [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref C by_ref<C>(int x, int y) where C: unmanaged {
-        if (x < 0 || x >= width) Error.index_out_of_range(x, width);
-        if (y < 0 || y >= height) Error.index_out_of_range(y, height);
+        if (x < 0 || x >= field_width) Error.index_out_of_range(x, field_width);
+        if (y < 0 || y >= field_height) Error.index_out_of_range(y, field_height);
         if (sizeof(T) != sizeof(C)) Error.type_conversion_error<T, C>(this[x, y]);
-        return ref *(C*)&((T*)data)[x + y * width];
+        return ref *(C*)&((T*)data)[x + y * field_width];
     }
 
     public void zero() => as_span().Clear();
@@ -110,10 +113,10 @@ public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmana
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public nint get_address(int x, int y) {
-        if (x < 0 || x >= width) Error.index_out_of_range(x, width);
-        if (y < 0 || y >= height) Error.index_out_of_range(y, height);
+        if (x < 0 || x >= field_width) Error.index_out_of_range(x, field_width);
+        if (y < 0 || y >= field_height) Error.index_out_of_range(y, field_height);
 
-        if (!is_disposed()) return data + (x + y * width) * sizeof(T);
+        if (!is_disposed()) return data + (x + y * field_width) * sizeof(T);
 
         Error.already_disposed(this);
         return 0;
@@ -121,7 +124,7 @@ public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmana
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public nint get_address() {
-        if (width == 0 || height == 0) Error.index_out_of_range(0);
+        if (field_width == 0 || field_height == 0) Error.index_out_of_range(0);
 
         if (!is_disposed()) return data;
 
@@ -130,24 +133,24 @@ public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmana
     }
 
     public Span<T> as_span() {
-        if (width == 0 || height == 0) Error.index_out_of_range(0);
-        return new ((T*)data, width * height);
+        if (field_width == 0 || field_height == 0) Error.index_out_of_range(0);
+        return new ((T*)data, field_width * field_height);
     }
 
     public Span<T> as_span(int row) {
-        if (width == 0 || height == 0) Error.index_out_of_range(0);
-        return new ((T*)(data + row * width * sizeof(T)), width * sizeof(T));
+        if (field_width == 0 || field_height == 0) Error.index_out_of_range(0);
+        return new ((T*)(data + row * field_width * sizeof(T)), field_width * sizeof(T));
     }
 
 
     public Span<V> as_span<V>() where V : unmanaged {
-        if (width == 0 || height == 0) Error.index_out_of_range(0);
-        return new((T*)data, (width * height) * sizeof(T) / sizeof(V));
+        if (field_width == 0 || field_height == 0) Error.index_out_of_range(0);
+        return new((T*)data, (field_width * field_height) * sizeof(T) / sizeof(V));
     }
 
     public ReadOnlySpan<V> as_readonly_span<V>() where V : unmanaged {
-        if (width == 0 || height == 0) Error.index_out_of_range(0);
-        return new((T*)data, (width * height) * sizeof(T) / sizeof(V));
+        if (field_width == 0 || field_height == 0) Error.index_out_of_range(0);
+        return new((T*)data, (field_width * field_height) * sizeof(T) / sizeof(V));
     }
 
     public void Dispose() {
@@ -169,9 +172,9 @@ public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmana
         NativeMemory.AlignedFree((void*)data);
 
         data = 0;
-        width = 0;
-        height = 0;
+        field_width = 0;
+        field_height = 0;
     }
 
-    public override string ToString() => $"{this.get_type_name()}[{width}, {height}]";
+    public override string ToString() => $"{this.get_type_name()}[{field_width}, {field_height}]";
 }

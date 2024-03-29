@@ -18,17 +18,17 @@ public readonly struct Plane {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Vector3 to_world(float x, float y, float height) => new Vector3(x, height, -y);
+    public float3 to_world(float x, float y, float height) => new float3(x, height, -y);
 
-    public Vector3 to_world(in Vector2 position, float height) => new Vector3(position.X, height, -position.Y);
+    public float3 to_world(in float2 position, float height) => new float3(position.x, height, -position.y);
 
     [SkipLocalsInit]
-    public (Vector2 position, float height) world_to_point_on_plane_3d(in Vector3 world_pos) {
-        float x = world_pos.X;
-        float y = -world_pos.Z;
-        float height = world_pos.Y;
+    public (float2 position, float height) world_to_point_on_plane_3d(in float3 world_pos) {
+        float x = world_pos.x;
+        float y = -world_pos.z;
+        float height = world_pos.y;
 
-        return (new Vector2(x, y), height);
+        return (new float2(x, y), height);
     }
 
     [SkipLocalsInit]

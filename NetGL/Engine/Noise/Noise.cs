@@ -88,9 +88,9 @@ public class Noise {
         return sample;
     }
 
-    public Field<half> sample(int width, int height, float offset_x, float offset_y, float stride_x, float stride_y) {
+    public Field<T> sample<T>(int width, int height, float offset_x, float offset_y, float stride_x, float stride_y, float scale = 1f) where T: unmanaged, ISignedNumber<T> {
         // Console.WriteLine("------>> sampling noise: " + width * height);
-        var samples = new Field<half>(width, height);
+        var samples = new Field<T>(width, height);
         int x, y;
         float nx, ny;
 
@@ -106,7 +106,7 @@ public class Noise {
                 nx = (offset_x + x * stride_x) * frequency;
                 ny = (offset_y + y * stride_y) * frequency;
 
-                samples.by_ref(x, y) += (half)(gen(nx, ny) * amplitude);
+                samples.by_ref(x, y) += T.CreateSaturating(gen(nx, ny) * amplitude * scale);
             }
         }
 

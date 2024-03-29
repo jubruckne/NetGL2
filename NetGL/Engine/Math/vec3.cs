@@ -61,6 +61,15 @@ public partial struct vec3<T>:
     public static implicit operator vec3<T>(OpenTK.Mathematics.Vector3 other) =>
         new vec3<T>().set(other.X, other.Y, other.Z);
 
+    public static explicit operator half3(vec3<T> other) =>
+        new half3().set(other);
+
+    public static explicit operator float3(vec3<T> other) =>
+        new float3().set(other);
+
+    public static explicit operator double3(vec3<T> other) =>
+        new double3().set(other);
+
     public static explicit operator OpenTK.Mathematics.Vector3(vec3<T> vector) {
         return new(
                    float.CreateSaturating(vector.x),
@@ -141,6 +150,13 @@ public partial struct vec3<T> {
     public static bool operator!=(vec3<T> left, vec3<T> right) {
         return left.x != right.x || left.y != right.y || left.z != right.z;
     }
+
+    public T length() {
+        var v = (float3)this;
+        return T.CreateSaturating(MathF.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z));
+    }
+
+    public void normalize() => this /= length();
 }
 
 public partial struct vec3<T> {

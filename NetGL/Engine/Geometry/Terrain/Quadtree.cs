@@ -117,8 +117,9 @@ public class Quadtree<T>: IEnumerable<Quadtree<T>>
         if (!bounds.intersects(x, y)) {
             if (level > 0) {
                 if (nodes[Bounds.Tile.parent] is null && allocate_as_needed) {
-                    nodes[Bounds.Tile.parent] = new(null, bounds.new_bounds, (this.level - 1).at_least(0), max_level, allocate);
-                    nodes[Bounds.Tile.parent]!.nodes.bottom_right = this;
+                    Debug.assert(false);
+                    //nodes[Bounds.Tile.parent] = new(null, bounds.new_bounds, (this.level - 1).at_least(0), max_level, allocate);
+                    //nodes[Bounds.Tile.parent]!.nodes.bottom_right = this;
                 }
 
                 if (nodes[Bounds.Tile.parent] is not null) {
