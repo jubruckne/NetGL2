@@ -52,10 +52,18 @@ public class ReadOnlyEntityList: IReadOnlyList<Entity> {
     }
 
 
-    public IEnumerator<Entity> GetEnumerator() => list.GetEnumerator();
-    IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
     int IReadOnlyCollection<Entity>.Count => list.Count;
     public Entity this[int index] => list[index];
+
+    IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() {
+        for (var i = 0; i < list.Count; ++i)
+            yield return list[i];
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() {
+        for (var i = 0; i < list.Count; ++i)
+            yield return list[i];
+    }
 }
 
 public class EntityList: ReadOnlyEntityList, ICollection<Entity> {

@@ -42,21 +42,6 @@ public sealed unsafe class Field<T>: IEnumerable<T>, IDisposable where T: unmana
 
     ~Field() => clear();
 
-    /*
-    IEnumerator<string> IEnumerable<string>.GetEnumerator() {
-        for (var row = 0; row < height; ++row) {
-            var list = new List<T>();
-
-            for (var col = 0; col < width; ++col) {
-                list.Add(this[col, row]);
-            }
-
-            yield return list.array_to_string();
-        }
-    }
-*/
-    // IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<string>)this).GetEnumerator();
-
     public IEnumerable<(int x, int y, T data)> this[Range rows, Range columns] {
         get {
             var row_range = rows.GetOffsetAndLength(field_height);

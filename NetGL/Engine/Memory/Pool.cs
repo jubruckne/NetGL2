@@ -3,7 +3,7 @@
 namespace NetGL;
 
 public static class Pool<T> where T: unmanaged {
-    private static int first_free = 0;
+    private static int first_free;
     private static readonly NativeArray<T> array = new NativeArray<T>(100);
     private static readonly NativeArray<bool> used_list = new NativeArray<bool>(100);
 

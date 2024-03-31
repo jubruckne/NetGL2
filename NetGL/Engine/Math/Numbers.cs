@@ -8,6 +8,77 @@ using System.Runtime.CompilerServices;
 using System.Numerics;
 
 public static class Numbers {
+    public static T median<T>(this IEnumerable<T> values)
+        where T: unmanaged, INumber<T> {
+        // Convert the IEnumerable<T> to a sortable list and sort it.
+        var sorted = values.OrderBy(static x => x).ToList();
+        var count  = sorted.Count;
+
+        if (count == 0) {
+            throw new InvalidOperationException("Cannot compute median of an empty set.");
+        }
+
+        // For odd count, return the middle element.
+        if (count % 2 != 0) {
+            return sorted[count / 2];
+        }
+
+        var a = sorted[count / 2 - 1];
+        var b = sorted[count / 2];
+        return (a + b) / T.CreateChecked(2);
+    }
+
+    public static T average<T>(this IEnumerable<T> values)
+        where T: INumber<T> {
+        var  sum   = T.Zero; // Initialize sum to zero of type T
+        long count = 0;
+
+        foreach (var value in values) {
+            sum += value; // Add each value to sum
+            ++count;      // Increment count for each element
+        }
+
+        if (count == 0) {
+            throw new InvalidOperationException("Cannot compute average of an empty set.");
+        }
+
+        return sum / T.CreateChecked(count); // Calculate mean
+    }
+
+    public static T minimum<T>(this IEnumerable<T> values)
+        where T: INumber<T>, IMinMaxValue<T> {
+        var min = T.MaxValue;
+
+        if (!values.Any()) {
+            throw new InvalidOperationException("Cannot compute min of an empty set.");
+        }
+
+        foreach (var value in values)
+            if (value < min)
+                min = value;
+
+        return min;
+    }
+
+    public static T maximum<T>(this IEnumerable<T> values)
+        where T: INumber<T>, IMinMaxValue<T> {
+        var max = T.MinValue;
+
+        if (!values.Any()) {
+            throw new InvalidOperationException("Cannot compute max of an empty set.");
+        }
+
+        foreach (var value in values) {
+            if (value > max)
+                max = value;
+        }
+
+        return max;
+    }
+
+    public static T nearest_multiple<T>(this T number, T multiple) where T: IFloatingPoint<T>
+        => T.Round(number / multiple) * multiple;
+
     public static T at_most<T>(this T n, T maximum)
         where T: INumber<T>
         => T.Min(n, maximum);

@@ -81,7 +81,7 @@ public static class Selftest {
         }
 
         var pathfinder = new Pathfinder<Vector2i>(
-            heuristic:  (from, to) => (from - to).ManhattanLength,
+            heuristic: static (from, to) => (from - to).ManhattanLength,
             neighbors:  get_neighbors
         );
 

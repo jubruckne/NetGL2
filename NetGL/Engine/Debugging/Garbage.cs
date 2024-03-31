@@ -1,12 +1,29 @@
+using System.Diagnostics;
+
 namespace NetGL;
 
-internal static class Garbage {
-    private static readonly ThreadLocal<long> allocations_before = new();
+internal readonly ref struct Garbage {
+    private readonly long allocations_before = new();
+    private readonly string name;
+    private readonly Stopwatch stopwatch;
 
-    public static void measure_begin() => allocations_before.Value = GC.GetAllocatedBytesForCurrentThread();
+    public Garbage() {
+        name = Thread.CurrentThread.Name!;
+        allocations_before = GC.GetAllocatedBytesForCurrentThread();
+        stopwatch          = new();
+        stopwatch.Start();
+    }
 
-    public static void measure(string name) {
-        var allocations = GC.GetAllocatedBytesForCurrentThread() - allocations_before.Value;
-        Debug.println($"{Thread.CurrentThread.Name} {name}: allocated {allocations:N0} bytes");
+    public Garbage(string caller) {
+        name = caller;
+        allocations_before = GC.GetAllocatedBytesForCurrentThread();
+        stopwatch          = new();
+        stopwatch.Start();
+    }
+
+    public void Dispose() {
+        stopwatch.Stop();
+        var allocations = GC.GetAllocatedBytesForCurrentThread() - allocations_before;
+        Debug.println($"{name}: duration={stopwatch.ElapsedMilliseconds:N0} ms, allocated={allocations:N0} bytes");
     }
 }

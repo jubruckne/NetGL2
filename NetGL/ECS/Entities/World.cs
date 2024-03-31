@@ -82,7 +82,7 @@ public class World: Entity {
             component => lights.Add((ILight)component)
         );*/
 
-        foreach (var renderable in entity.components.get_all<IRenderableComponent>())
+        foreach (var renderable in entity.get_renderable_components())
             renderable.render(projection_matrix, camera_matrix, camera_pos, model_matrix);
 
         foreach (var child in entity.children)
@@ -90,24 +90,15 @@ public class World: Entity {
     }
 
     public void update(float game_time, float delta_time) {
-        /*if (parallel) {
-            Parallel.ForEach(children, entity => update_entity_pre_physics(entity));
+        foreach (var entity in children) {
+            update_entity_pre_physics(entity);
+        }
 
-            physics.World.StepSimulation(delta_time);
+        physics.World.StepSimulation(delta_time);
 
-            Parallel.ForEach(children, entity => update_entity(game_time, delta_time, entity));
-        } else {
-        */
-            foreach (var entity in children) {
-                update_entity_pre_physics(entity);
-            }
-
-            physics.World.StepSimulation(delta_time);
-
-            foreach (var entity in children) {
-                update_entity(game_time, delta_time, entity);
-            }
-      //  }
+        foreach (var entity in children) {
+            update_entity(game_time, delta_time, entity);
+        }
     }
 
     private void update_entity_pre_physics(in Entity entity) {
@@ -116,7 +107,7 @@ public class World: Entity {
                 entity.transform.position.Y, entity.transform.position.Z);
         }
 
-        foreach (Entity child in entity.children) {
+        foreach (var child in entity.children) {
             update_entity_pre_physics(child);
         }
     }
@@ -134,7 +125,7 @@ public class World: Entity {
                 updateable.update(game_time, delta_time);
         }
 
-        foreach (Entity child in entity.children) {
+        foreach (var child in entity.children) {
             update_entity(game_time, delta_time, child);
         }
     }

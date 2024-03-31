@@ -1,14 +1,15 @@
-using System.Numerics;
 using BulletSharp;
 using ImGuiNET;
 using NetGL;
 using NetGL.ECS;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Plane = NetGL.Plane;
 using Vector2 = System.Numerics.Vector2;
+using Vector3 = System.Numerics.Vector3;
 
 public class Engine: GameWindow {
     public readonly World world;
@@ -23,15 +24,15 @@ public class Engine: GameWindow {
     private bool debugging;
     public static int frame;
 
-    public Engine(string title, Size2<int> window_size, WindowState window_state = WindowState.Normal, bool debugging = false) :
+    public Engine(string title, int2 window_size, WindowState window_state = WindowState.Normal, bool debugging = false) :
         base(
             new() {
-                UpdateFrequency = 10,
+                UpdateFrequency = 30,
             }, new() {
                 APIVersion = new Version("4.1"),
                 AlphaBits = 8,
                 NumberOfSamples = 16,
-                ClientSize = window_size,
+                ClientSize = (Vector2i)window_size,
                 Title = title,
                 WindowState = window_state,
                 Vsync = VSyncMode.On,
@@ -93,23 +94,22 @@ public class Engine: GameWindow {
             Texture.load_from_file("test.png")
         );*/
 
+        Bag<Entity> g = new();
+        foreach (var e in g) {
+            Console.WriteLine(e);
+        }
+
+
+
         TextureCubemapBuffer cubemap = new(
-            AssetManager.load_from_file<Texture>("right.jpg"),
-            AssetManager.load_from_file<Texture>("left.jpg"),
-            AssetManager.load_from_file<Texture>("top.jpg"),
-            AssetManager.load_from_file<Texture>("bottom.jpg"),
-            AssetManager.load_from_file<Texture>("front.jpg"),
-            AssetManager.load_from_file<Texture>("back.jpg")
-        );
+                                           AssetManager.load_from_file<Texture>("right.jpg"),
+                                           AssetManager.load_from_file<Texture>("left.jpg"),
+                                           AssetManager.load_from_file<Texture>("top.jpg"),
+                                           AssetManager.load_from_file<Texture>("bottom.jpg"),
+                                           AssetManager.load_from_file<Texture>("front.jpg"),
+                                           AssetManager.load_from_file<Texture>("back.jpg")
+                                          );
         cubemap.upload();
-
-/*
-        var desc = VertexDescriptor.make(NetGL.dev.VertexAttribute.Position, NetGL.dev.VertexAttribute.Normal);
-        desc.allocate(100);
-        Console.WriteLine(desc);
-        desc.buffer.
-
-        return;*/
 
         var mat = Material.Chrome;
         mat.ambient_texture = cubemap;
@@ -182,22 +182,6 @@ public class Engine: GameWindow {
        // Entity entd = world.create_model("74656", Model.from_file("1701d.fbx")); //"74656.glb")); // "1701d.fbx"));
        /*var arrow = Model.from_file("ArrowPointer.obj", 0.75f);
 
-       Entity arrow_x = world.create_model("ArrowX", arrow, material:Material.Red);
-       arrow_x.transform.position = new OpenTK.Mathematics.Vector3(1, 0, 0);
-       arrow_x.transform.rotation = Rotation.Right;
-
-       Entity arrow_y = world.create_model("ArrowY", arrow, material:Material.Green);
-       arrow_y.transform.position = new OpenTK.Mathematics.Vector3(2, 0, 0);
-       arrow_y.transform.rotation = Rotation.Up;
-
-       Entity arrow_z = world.create_model("ArrowZ", arrow, material:Material.Blue);
-       arrow_z.transform.position = new OpenTK.Mathematics.Vector3(3, 0, 0);
-       arrow_z.transform.rotation = Rotation.Forward;
-
-       Console.WriteLine($"x: {arrow_x.transform}, fw:{arrow_x.transform.rotation.forward}, rt:{arrow_x.transform.rotation.right}, up:{arrow_x.transform.rotation.up}");
-       Console.WriteLine($"y: {arrow_y.transform}, fw:{arrow_y.transform.rotation.forward}, rt:{arrow_y.transform.rotation.right}, up:{arrow_y.transform.rotation.up}");
-       Console.WriteLine($"z: {arrow_z.transform}, fw:{arrow_z.transform.rotation.forward}, rt:{arrow_z.transform.rotation.right}, up:{arrow_z.transform.rotation.up}");
-
 */
 
        Entity terrain1 = world.create_terrain(Plane.XZ);
@@ -209,8 +193,9 @@ public class Engine: GameWindow {
         entd.transform.position = (-4, -4, 0);
         entd.transform.rotation.yaw_pitch_roll = (-120, -5f, 2.5f);
 */
-        var con = new Predicate<Entity>(entity => entity.transform.position.Y < -2.75f);
-        var beh = new Action<Entity>(entity => {
+        var con = new Predicate<Entity>(static entity => entity.transform.position.Y < -2.75f);
+        var beh = new Action<Entity>(
+                                     static entity => {
             entity.transform.position.randomize(-2.5f, 2.5f).add(x: 0, y: 16, -15);
             entity.get<Component<RigidBody>>().data.LinearVelocity = Vector3.Zero;
         });
@@ -236,7 +221,7 @@ public class Engine: GameWindow {
     }
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
-        Garbage.measure_begin();
+        using Garbage g = new();
 
         base.OnUpdateFrame(e);
 
@@ -250,7 +235,7 @@ public class Engine: GameWindow {
         game_time += delta_time;
 
         if (KeyboardState.IsKeyDown(Keys.Space)) {
-            world.for_all_components_with<Camera>(camera => camera.viewport.resize(1000, 800, 800, 600));
+            world.for_all_components_with<Camera>(static camera => camera.viewport.resize(1000, 800, 800, 600));
         }
 
         if (cursor_state_last_switch >= 1f) {
@@ -275,7 +260,7 @@ public class Engine: GameWindow {
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
-        //Garbage.measure_begin();
+        using Garbage g = new();
         base.OnRenderFrame(e);
 
         // Console.WriteLine($"starting frame:{frame}...");
@@ -308,7 +293,6 @@ public class Engine: GameWindow {
         //GC.Collect(0, GCCollectionMode.Default, false);
 
         SwapBuffers();
-        Garbage.measure($"Engine.render - frame: {frame}");
     }
 
     private void render_ui() {
@@ -389,7 +373,7 @@ public class Engine: GameWindow {
                         ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0.05f, -100, 100, "%.1f");
 
                         var rotationYawPitchRoll = t.rotation.yaw_pitch_roll;
-                            new System.Numerics.Vector3(t.rotation.yaw, t.rotation.yaw, t.rotation.roll);
+                            //new System.Numerics.Vector3(t.rotation.yaw, t.rotation.yaw, t.rotation.roll);
                         if(ImGui.DragFloat3($"Rotation##{entity.name}.rot",
                                 ref rotationYawPitchRoll.reinterpret_ref<OpenTK.Mathematics.Vector3, Vector3>(), 1f, -180,
                                 180, "%.0f")) {
@@ -438,10 +422,30 @@ public class Engine: GameWindow {
                     if (ImGui.TreeNodeEx($"{var.name}##{entity.name}_{var.name}_node", ImGuiTreeNodeFlags.None)) {
                         ImGui.Unindent();
 
-                        foreach (var va in var.vertex_arrays) {
-                            ImGui.Text($"{va.primitive_type} ({va.vertex_buffers.Length})");
-                            va.vertex_buffers.for_each(buffer => ImGui.TextWrapped(buffer.ToString() ?? string.Empty));
-                            ImGui.Text(va.ToString());
+                        ImGui.Checkbox("Cull Face", ref var.cull_face);
+                        ImGui.Checkbox("Depth Test", ref var.depth_test);
+                        ImGui.Checkbox("Wireframe", ref var.wireframe);
+                        ImGui.Checkbox("Front Facing", ref var.front_facing);
+
+                        ImGui.Separator();
+
+                        ImGui.Text("Vertex arrays:");
+                        foreach (var (va, enabled) in var.vertex_arrays) {
+                            var ref_enable = enabled;
+                            if (ImGui.Checkbox(
+                                               $"{va.handle}##{entity.name}_{var.name}_node_{va.handle}",
+                                               ref ref_enable
+                                              )) {
+                                var.vertex_arrays[va] = ref_enable;
+                            }
+
+                            foreach (var vb in va.vertex_buffers)
+                                ImGui.Text($"Length: {vb.length:N0}, Size: {vb.total_size:N0}");
+
+                            if(va is VertexArrayIndexed vai)
+                                ImGui.Text($"Length: {vai.index_buffer.length:N0}, Size: {vai.index_buffer.total_size:N0}");
+
+
                             ImGui.Spacing();
                         }
 
@@ -560,16 +564,12 @@ public class Engine: GameWindow {
             if (value) {
                 CursorState = CursorState.Grabbed;
                 UpdateFrequency = 0;
-                world.for_all_components_with<Camera>(c1 => c1.enable_input = true);
+                world.for_all_components_with<Camera>(static c1 => c1.enable_input = true);
             } else {
                 CursorState = CursorState.Normal;
                 UpdateFrequency = 30;
-                world.for_all_components_with<Camera>(c1 => c1.enable_input = false);
+                world.for_all_components_with<Camera>(static c1 => c1.enable_input = false);
             }
         }
-    }
-
-    protected override void OnUnload() {
-        base.OnUnload();
     }
 }

@@ -53,9 +53,10 @@
       <None Remove="Assets\Temp\**" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\SourceGenerators\SourceGenerators\SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ItemGroup> 
+        <ProjectReference Include="..\SourceGenerators\SourceGenerators\SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
+    
 
     <ItemGroup>
       <Compile Remove="generated\**" />

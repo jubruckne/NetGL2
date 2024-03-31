@@ -9,11 +9,12 @@ public class Bounds {
         top_left = 1,
         bottom_left = 2,
         top_right = 3,
-        bottom_right = 4
+        bottom_right = 4,
+        full = 99,
     }
 
     public readonly Tile tile;
-    public readonly Vector2 center;
+    public readonly float2 center;
 
     public readonly float left;
     public readonly float right;
@@ -30,14 +31,14 @@ public class Bounds {
         this.right           = right;
         this.bottom          = bottom;
         this.top             = top;
-        (center.X, center.Y) = ((left + right) * 0.5f, (top + bottom) * 0.5f);
+        (center.x, center.y) = ((left + right) * 0.5f, (top + bottom) * 0.5f);
     }
 
     public Bounds(Tile tile, float x, float y, float size) {
         this.tile = tile;
         var half_size = size * 0.5f;
 
-        (center.X, center.Y) = (x, y);
+        (center.x, center.y) = (x, y);
 
         left   = x - half_size;
         right  = x + half_size;
@@ -61,10 +62,10 @@ public class Bounds {
         }
     }
 
-    public Bounds top_right => new Bounds(Tile.top_right, center.X, right, center.Y, top);
-    public Bounds bottom_right => new Bounds(Tile.bottom_right, center.X, right, bottom, center.Y);
-    public Bounds bottom_left => new Bounds(Tile.bottom_left, left, center.X, bottom, center.Y);
-    public Bounds top_left => new Bounds(Tile.top_left, left, center.X, center.Y, top);
+    public Bounds top_right => new Bounds(Tile.top_right, center.x, right, center.y, top);
+    public Bounds bottom_right => new Bounds(Tile.bottom_right, center.x, right, bottom, center.y);
+    public Bounds bottom_left => new Bounds(Tile.bottom_left, left, center.x, bottom, center.y);
+    public Bounds top_left => new Bounds(Tile.top_left, left, center.x, center.y, top);
 
     public static Bounds? intersects(Vector2 point, in Bounds[] bounds) {
         foreach (var b in bounds)
@@ -96,5 +97,5 @@ public class Bounds {
         return true;
     }
 
-    public override string ToString() => $"<{tile} x:{center.X}, y:{center.Y}, size:{size} | left:{left} right:{right} bottom:{bottom} top:{top}>";
+    public override string ToString() => $"<{tile} x:{center.x}, y:{center.y}, size:{size} | left:{left} right:{right} bottom:{bottom} top:{top}>";
 }

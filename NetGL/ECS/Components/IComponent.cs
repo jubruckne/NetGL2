@@ -17,7 +17,6 @@ public interface IComponent: INamed {
 }
 
 public interface IComponent<T>: IComponent {
-
 //    Type type_of() => typeof(T);
 //    int size_of() => Marshal.SizeOf<T>();
 }

@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis.Scripting;
-
 namespace NetGL;
 
 using System.Diagnostics;

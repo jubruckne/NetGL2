@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Numerics;
-
 namespace NetGL;
 
 using System.Runtime.CompilerServices;
@@ -18,14 +15,14 @@ public static class Pointer {
     public static event Action<IPointer>? on_allocate;
     public static event Action<IPointer>? on_release;
 
-    public static int alive_count { get; private set; } = 0;
+    public static int alive_count { get; private set; }
 
-    internal static void raise_allocate(IPointer pointer) {
+    internal static void raise_allocate(in IPointer pointer) {
         ++alive_count;
         on_allocate?.Invoke(pointer);
     }
 
-    internal static void raise_release(IPointer pointer) {
+    internal static void raise_release(in IPointer pointer) {
         --alive_count;
         on_release?.Invoke(pointer);
     }
@@ -86,7 +83,7 @@ public unsafe struct Pointer<T>:
         owner = null;
         ptr             = (nint)data;
         this.on_dispose = on_dispose;
-        Pointer.raise_allocate(this);
+        Pointer.raise_allocate( this);
     }
 
     public Pointer(in Pointer<T> pointer) {
@@ -117,8 +114,6 @@ public unsafe struct Pointer<T>:
             owner = null;
             on_dispose(temp_ptr, temp_owner);
         }
-
-        GC.SuppressFinalize(this);
     }
 
     public ref T value {
@@ -179,7 +174,4 @@ public unsafe struct Pointer<T>:
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator IntPtr (in Pointer<T> p) => p.ptr;
-
-
-
 }

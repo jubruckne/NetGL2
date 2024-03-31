@@ -13,7 +13,7 @@ public class Cube: IShape<CubeShapeGenerator.Options> {
         this.depth = depth;
     }
 
-    public Size3<float> size => new(width, height, depth);
+    public float3 size => new(width, height, depth);
 
     public Cube(float radius): this(radius * 2f, radius * 2f, radius * 2f) { }
     public Cube(): this(1f, 1f, 1f) { }
@@ -38,9 +38,9 @@ public class CubeShapeGenerator: IShapeGenerator {
     public override string ToString() => "Cube";
 
     public ReadOnlySpan<Vector3> get_vertices() {
-        var half_width = cube.size.width * 0.5f;
-        var half_height = cube.size.height * 0.5f;
-        var half_depth = cube.size.depth * 0.5f;
+        var half_width = cube.size.x * 0.5f;
+        var half_height = cube.size.y * 0.5f;
+        var half_depth = cube.size.z * 0.5f;
 
         return new[] {
             new Vector3(options.position.X - half_width, options.position.Y - half_height,

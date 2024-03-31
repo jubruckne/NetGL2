@@ -26,45 +26,56 @@ public class Terrain: Entity {
 
         this.material = this.add_material(Material.random).material;
         this.renderer = this.add_vertex_array_renderer();
-        this.chunks = new(25f, 6, allocate_chunk);
+        this.chunks = new(32f, 2, allocate_chunk);
 
-        Console.WriteLine($"Terrain max size: {chunks.bounds}");
-        using var heightmap = noise.sample<half>((int)chunks.bounds.width * 96, (int)chunks.bounds.height * 96, 0, 0, 0.1f, 0.1f, 10);
+        Console.WriteLine($"Terrain: {chunks}");
+        using var heightmap = noise.sample<half>(256, 256, 0, 0, 0.1f, 0.1f, 10);
+
+
+        Garbage g = new("heighmap average");
+        Console.WriteLine(heightmap.average());
+        g.Dispose();
+
+        g = new("heighmap median");
+        Console.WriteLine(heightmap.median());
+        g.Dispose();
+
+        g = new("heighmap minimum");
+        Console.WriteLine(heightmap.minimum());
+        g.Dispose();
+
+        g = new("heighmap maximum");
+        Console.WriteLine(heightmap.maximum());
+        g.Dispose();
 
         //heightmap.save_to_file("heightmap.json");
         //Console.WriteLine(heightmap);
         Console.WriteLine();
         Console.WriteLine("Existing terrain chunks:");
 
-        foreach (var q in chunks) {
+        foreach (var q in chunks)
             Console.WriteLine(q);
-        }
 
 
-        chunks.request_node(0, 0, chunks.max_level);
-
-        Console.WriteLine(chunks.has_node(1, 1, chunks.max_level));
-        var chunk = chunks.get_node(1, 1, chunks.max_level);
+        var chunk = chunks.request_node(0, 0, 0);
+        chunks.request_node(20, 0, 0);
+        chunks.request_node(20, -127.3f, 0);
 
         Console.WriteLine();
         Console.WriteLine("Existing terrain chunks:");
-        foreach (var q in chunks) {
+        foreach (var q in chunks)
             Console.WriteLine(q);
-        }
 
-        var best = chunks.get_best_node(0, 0);
-        Console.WriteLine(best);
-
-        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!, material));
+        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array, material));
         renderer.wireframe = true;
         this.add_behavior(_ => update());
     }
 
-    private TerrainChunk allocate_chunk(float x, float y, float size, int level) {
-        var distance = world_to_terrain_distance(x, y);
+    private TerrainChunk allocate_chunk(in Bounds bounds, int level) {
+        var distance = world_to_terrain_distance(bounds.center.x, bounds.center.y);
 
-        var chunk = new TerrainChunk(this, x, y, size);
-        chunk.create(priority: (int)distance);
+        var chunk = new TerrainChunk(this, bounds);
+        chunk.create(priority: 0);
         return chunk;
     }
 

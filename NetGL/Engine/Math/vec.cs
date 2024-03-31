@@ -1,10 +1,14 @@
 global using float2 = NetGL.Vectors.vec2<float>;
 global using float3 = NetGL.Vectors.vec3<float>;
+global using double2 = NetGL.Vectors.vec2<double>;
 global using double3 = NetGL.Vectors.vec3<double>;
+global using int2 = NetGL.Vectors.vec2<int>;
 global using int3 = NetGL.Vectors.vec3<int>;
 global using ushort3 = NetGL.Vectors.vec3<ushort>;
+global using short2 = NetGL.Vectors.vec2<short>;
 global using short3 = NetGL.Vectors.vec3<short>;
 global using byte3 = NetGL.Vectors.vec3<byte>;
+global using half2 = NetGL.Vectors.vec2<System.Half>;
 global using half3 = NetGL.Vectors.vec3<System.Half>;
 
 namespace NetGL.Vectors;
@@ -15,6 +19,28 @@ using System.Numerics;
                                // Such names may become reserved for the language.
 
 public static partial class vec {
+    public static vec2<T> create<T>(in vec2<T> other) where T: unmanaged, INumber<T>
+        => new vec2<T>(other);
+
+    public static vec2<T> create<T>(T x, T y) where T: unmanaged, INumber<T>
+        => new vec2<T>(x, y);
+
+    public static vec2<T> create<T>(int2 other) where T: unmanaged, INumber<T>
+        => new vec2<T>().set(other);
+
+    public static vec2<T> create<T>(short2 other) where T: unmanaged, INumber<T>
+        => new vec2<T>().set(other);
+
+    public static vec2<T> create<T>(float2 other) where T: unmanaged, INumber<T>
+        => new vec2<T>().set(other);
+
+    public static vec2<T> create<T>(double2 other) where T: unmanaged, INumber<T>
+        => new vec2<T>().set(other);
+
+    public static vec2<T> create<T>(half2 other) where T: unmanaged, INumber<T>
+        => new vec2<T>().set(other);
+
+
     public static vec3<T> create<T>(in vec3<T> other) where T: unmanaged, INumber<T>
         => new vec3<T>(other);
 

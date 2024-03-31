@@ -7,13 +7,16 @@ public partial struct vec3<T>:
     IEquatable<vec3<T>>
     where T: unmanaged, INumber<T> {
 
+    private static readonly T t_one = T.One;
+    private static readonly T t_zero = T.Zero;
+
     public T x;
     public T y;
     public T z;
 
     public vec3() {}
 
-    public vec3(vec3<T> other) {
+    public vec3(in vec3<T> other) {
         this.x = other.x;
         this.y = other.y;
         this.z = other.z;
@@ -47,7 +50,7 @@ public partial struct vec3<T>:
         return this;
     }
 
-    public vec3<T> set<P>(vec3<P> other)
+    public vec3<T> set<P>(in vec3<P> other)
         where P: unmanaged, INumber<P> {
         x = T.CreateSaturating(other.x);
         y = T.CreateSaturating(other.y);
@@ -61,16 +64,16 @@ public partial struct vec3<T>:
     public static implicit operator vec3<T>(OpenTK.Mathematics.Vector3 other) =>
         new vec3<T>().set(other.X, other.Y, other.Z);
 
-    public static explicit operator half3(vec3<T> other) =>
+    public static explicit operator half3(in vec3<T> other) =>
         new half3().set(other);
 
-    public static explicit operator float3(vec3<T> other) =>
+    public static explicit operator float3(in vec3<T> other) =>
         new float3().set(other);
 
-    public static explicit operator double3(vec3<T> other) =>
+    public static explicit operator double3(in vec3<T> other) =>
         new double3().set(other);
 
-    public static explicit operator OpenTK.Mathematics.Vector3(vec3<T> vector) {
+    public static explicit operator OpenTK.Mathematics.Vector3(in vec3<T> vector) {
         return new(
                    float.CreateSaturating(vector.x),
                    float.CreateSaturating(vector.y),
@@ -78,13 +81,19 @@ public partial struct vec3<T>:
                   );
     }
 
-    public static explicit operator System.Numerics.Vector3(vec3<T> vector) {
+    public static explicit operator System.Numerics.Vector3(in vec3<T> vector) {
         return new(
                    float.CreateSaturating(vector.x),
                    float.CreateSaturating(vector.y),
                    float.CreateSaturating(vector.z)
                   );
     }
+
+    public static readonly vec3<T> zero = new(t_zero, t_zero, t_zero);
+
+    public static readonly vec3<T> unit_x = new(t_one, t_zero, t_zero);
+    public static readonly vec3<T> unit_y = new(t_zero, t_one, t_zero);
+    public static readonly vec3<T> unit_z = new(t_zero, t_zero, t_one);
 
     T[] ivec<T>.array => [x, y, z];
     T ivec2<T>.x => x;
@@ -94,29 +103,29 @@ public partial struct vec3<T>:
 }
 
 public partial struct vec3<T> {
-    public static vec3<T> operator+(vec3<T> value) {
+    public static vec3<T> operator+(in vec3<T> value) {
         return value;
     }
 
-    public static vec3<T> operator-(vec3<T> value) {
+    public static vec3<T> operator-(in vec3<T> value) {
         return new vec3<T>().set(-value.x, -value.y, -value.z);
     }
 
-    public static vec3<T> operator+(vec3<T> left, vec3<T> right) {
+    public static vec3<T> operator+(vec3<T> left, in vec3<T> right) {
         left.x += right.x;
         left.y += right.y;
         left.z += right.z;
         return left;
     }
 
-    public static vec3<T> operator-(vec3<T> left, vec3<T> right) {
+    public static vec3<T> operator-(vec3<T> left, in vec3<T> right) {
         left.x -= right.x;
         left.y -= right.y;
         left.z -= right.z;
         return left;
     }
 
-    public static vec3<T> operator*(vec3<T> left, vec3<T> right) {
+    public static vec3<T> operator*(vec3<T> left, in vec3<T> right) {
         left.x *= right.x;
         left.y *= right.y;
         left.z *= right.y;
@@ -129,7 +138,7 @@ public partial struct vec3<T> {
         return left;
     }
 
-    public static vec3<T> operator/(vec3<T> left, vec3<T> right) {
+    public static vec3<T> operator/(vec3<T> left, in vec3<T> right) {
         left.x /= right.x;
         left.y /= right.y;
         left.z /= right.z;
@@ -143,15 +152,15 @@ public partial struct vec3<T> {
         return left;
     }
 
-    public static bool operator==(vec3<T> left, vec3<T> right) {
+    public static bool operator==(in vec3<T> left, in vec3<T> right) {
         return left.x == right.x && left.y == right.y && left.z == right.z;
     }
 
-    public static bool operator!=(vec3<T> left, vec3<T> right) {
+    public static bool operator!=(in vec3<T> left, in vec3<T> right) {
         return left.x != right.x || left.y != right.y || left.z != right.z;
     }
 
-    public T length() {
+    public readonly T length() {
         var v = (float3)this;
         return T.CreateSaturating(MathF.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z));
     }
@@ -160,9 +169,8 @@ public partial struct vec3<T> {
 }
 
 public partial struct vec3<T> {
-    public bool Equals(vec3<T> other) {
-        return x.Equals(other.x) && y.Equals(other.y) && z.Equals(other.z);
-    }
+    public bool Equals(vec3<T> other) =>
+        x == other.x && y == other.y;
 
     public override bool Equals(object? obj) {
         return obj is vec3<T> other && Equals(other);

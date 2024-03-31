@@ -34,6 +34,7 @@ public static class DebugConsole {
     private static readonly ColorPalette consoleColorPalette = new();
     private static readonly string m_ConsoleName = "Console";
     private static bool m_consoleOpen;
+    private static DebugListener listener;
     private const int max_messages = 1024;
 
     public static void initialize(bool listen_to_console = true) {
@@ -41,11 +42,11 @@ public static class DebugConsole {
 
         //if(listen_to_console) listener = new DebugListener();
 
-        register_command("clear", _ => messages.Clear());
+        register_command("clear", static _ => messages.Clear());
     }
 
     private static void default_settings() {
-        m_WindowAlpha = 0.75f;
+        m_WindowAlpha = 1f;
         consoleColorPalette[Severity.Command] = new(1.0f, 1.0f, 1.0f, 1.0f);
         consoleColorPalette[Severity.Log] = new(1.0f, 1.0f, 1.0f, 0.5f);
         consoleColorPalette[Severity.Warning] = new(1.0f, 0.87f, 0.37f, 1.0f);

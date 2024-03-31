@@ -1,4 +1,3 @@
-using NetGL.ECS.Events;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -9,17 +8,21 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
     public string name { get; }
     public bool enable_updates { get; set; }
 
-    public IList<VertexArray> vertex_arrays { get; }
+    public readonly Dictionary<VertexArray, bool> vertex_arrays;
+
     public bool cull_face = true;
     public bool depth_test = true;
     public bool wireframe = false;
     public bool blending = false;
     public bool front_facing = true;
 
-    internal VertexArrayRenderer(in Entity entity, IList<VertexArray> vertex_arrays) {
+    internal VertexArrayRenderer(in Entity entity, List<VertexArray> vertex_arrays) {
         this.entity = entity;
         this.name = GetType().Name;
-        this.vertex_arrays = vertex_arrays;
+        this.vertex_arrays = [];
+
+        foreach (var va in vertex_arrays)
+            this.vertex_arrays.Add(va, true);
     }
 
     public override string ToString() {
@@ -66,9 +69,11 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
         GL.PolygonMode(MaterialFace.FrontAndBack, wireframe ? PolygonMode.Line : PolygonMode.Fill);
         GL.FrontFace(front_facing ? FrontFaceDirection.Ccw : FrontFaceDirection.Cw);
 
-        foreach (var va in vertex_arrays) {
-            va.bind();
-            va.draw();
+        foreach (var (va, enabled) in vertex_arrays) {
+            if (enabled) {
+                va.bind();
+                va.draw();
+            }
         }
 
         Debug.assert_opengl();
@@ -76,8 +81,8 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
 }
 
 public static class VertexArrayRendererExt {
-    public static VertexArrayRenderer add_vertex_array_renderer(this Entity entity, IList<VertexArray> vertex_arrays) {
-        var renderer = new VertexArrayRenderer(entity, vertex_arrays);
+    public static VertexArrayRenderer add_vertex_array_renderer(this Entity entity, IEnumerable<VertexArray> vertex_arrays) {
+        var renderer = new VertexArrayRenderer(entity, vertex_arrays.ToList());
         entity.add(renderer);
         return renderer;
     }

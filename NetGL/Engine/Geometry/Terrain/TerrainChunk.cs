@@ -2,41 +2,7 @@ namespace NetGL;
 
 internal sealed class TerrainChunk {
     private const int chunk_quad_count = 255;
-/*
-    internal readonly record struct Key(short x, short y) {
-        public IEnumerable<Key> neighbors(byte distance = 1) {
-            // Top and bottom horizontal lines
-            for (var dx = -distance; dx <= distance; dx++) {
-                yield return new Key((short)(x + dx), (short)(y + distance)); // Top
-                yield return new Key((short)(x + dx), (short)(y - distance)); // Bottom
-            }
 
-            // Left and right vertical lines, excluding corners which are already added
-            for (var dy = -distance + 1; dy <= distance - 1; dy++) {
-                yield return new Key((short)(x + distance), (short)(y + dy)); // Right
-                yield return new Key((short)(x - distance), (short)(y + dy)); // Left
-            }
-        }
-
-        public static Key from_world_position(in Terrain terrain, in Vector3 world_position) {
-            var position = terrain.plane.world_to_point_on_plane_2d(world_position);
-            var x = (short)Math.Floor(position.X / terrain.chunk_size);
-            var y = (short)Math.Floor(position.Y / terrain.chunk_size);
-            return new Key(x, y);
-        }
-
-        public static Vector3 to_world_position(in Terrain terrain, in Key key, float height = 0f) {
-            var p = to_terrain_position(terrain, key);
-            return terrain.plane.to_world(p.X, p.Y, height);
-        }
-
-        public static Vector2 to_terrain_position(in Terrain terrain, in Key key) {
-            return new Vector2(
-                (key.x - 0.5f) * terrain.chunk_size,
-                (key.y - 0.5f) * terrain.chunk_size);
-        }
-    }
-*/
     public readonly Terrain terrain;
     public readonly float x;
     public readonly float y;
@@ -45,10 +11,10 @@ internal sealed class TerrainChunk {
     public bool ready { get; private set; }
     public VertexArrayIndexed? vertex_array { get; private set; }
 
-    public TerrainChunk(in Terrain terrain, float x, float y, float size) {
-        this.x = x;
-        this.y = y;
-        this.size = size;
+    public TerrainChunk(in Terrain terrain, in Bounds bounds) {
+        this.x = bounds.center.x;
+        this.y = bounds.center.y;
+        this.size = bounds.size;
         this.terrain = terrain;
         this.ready = false;
     }
@@ -70,7 +36,7 @@ internal sealed class TerrainChunk {
             terrain.renderer.vertex_arrays.Remove(this.vertex_array!);
         }
 
-        terrain.renderer.vertex_arrays.Add(va);
+        terrain.renderer.vertex_arrays.Add(va, true);
 
         vertex_array = va;
         ready = true;
@@ -79,7 +45,7 @@ internal sealed class TerrainChunk {
     }
 
     private VertexArrayIndexed create() {
-        Garbage.measure_begin();
+        using Garbage g = new();
 
         int vertex_count = (chunk_quad_count + 1) * (chunk_quad_count + 1);
         int index_count  = chunk_quad_count * chunk_quad_count * 2;
@@ -89,12 +55,14 @@ internal sealed class TerrainChunk {
 
         var vb           = new VertexBuffer<float3, half3>(vertex_count);
         var ib           = new IndexBuffer<ushort>(index_count);
-        var triangulator = new Triangulator<float3, ushort>(vb.positions, ib.indices);
 
         Debug.println(
                       $"Creating chunk {size} x {size}, vtx={vertex_count:N0}, idx<{ib[0].p0.GetType().Name}>={index_count:N0}",
                       ConsoleColor.Magenta
                      );
+
+        var offset_x = this.x - this.size * 0.5f;
+        var offset_y = this.y - this.size * 0.5f;
 
         float px;
         float py;
@@ -102,15 +70,13 @@ internal sealed class TerrainChunk {
         int vx;
         int vy;
 
-        int index = 0;
+        var index = 0;
         for (var i = 0; i < vertex_count; ++i) {
             vx = i % (chunk_quad_count + 1);
             vy = i / (chunk_quad_count + 1);
 
-            Console.WriteLine($"{vx}, {vy}");
-
-            px = this.x + size * vx / chunk_quad_count;
-            py = this.y + size * vy / chunk_quad_count;
+            px = offset_x + size * vx / chunk_quad_count;
+            py = offset_y + size * vy / chunk_quad_count;
 
             vb[i].position = plane.to_world(
                                             px,
@@ -139,8 +105,6 @@ internal sealed class TerrainChunk {
         vb.calculate_normals(ib.indices);
 
         var va = new VertexArrayIndexed(vb, ib);
-
-        Garbage.measure("TerrainChunk.create");
 
         return va;
     }
