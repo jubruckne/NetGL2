@@ -1,11 +1,15 @@
 using System.Collections;
+using System.Runtime.CompilerServices;
 
 namespace NetGL.ECS;
 
 public class ReadOnlyEntityList: IReadOnlyList<Entity> {
     protected readonly List<Entity> list = [];
 
-    public int count => list.Count;
+    public int count {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => list.Count;
+    }
 
     public ReadOnlyEntityList recursive {
         get {
@@ -52,14 +56,23 @@ public class ReadOnlyEntityList: IReadOnlyList<Entity> {
     }
 
 
-    int IReadOnlyCollection<Entity>.Count => list.Count;
-    public Entity this[int index] => list[index];
+    int IReadOnlyCollection<Entity>.Count {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => list.Count;
+    }
 
-    IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() {
+    public Entity this[int index] {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => list[index];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public IEnumerator<Entity> GetEnumerator() {
         for (var i = 0; i < list.Count; ++i)
             yield return list[i];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     IEnumerator IEnumerable.GetEnumerator() {
         for (var i = 0; i < list.Count; ++i)
             yield return list[i];
@@ -76,5 +89,9 @@ public class EntityList: ReadOnlyEntityList, ICollection<Entity> {
     void ICollection<Entity>.CopyTo(Entity[] array, int arrayIndex) => list.CopyTo(array, arrayIndex);
     bool ICollection<Entity>.Remove(Entity entity) => list.Remove(entity);
     bool ICollection<Entity>.IsReadOnly => false;
-    int ICollection<Entity>.Count => list.Count;
+
+    int ICollection<Entity>.Count {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => list.Count;
+    }
 }

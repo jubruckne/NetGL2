@@ -1,4 +1,4 @@
-namespace NetGL.ECS;
+/*namespace NetGL.ECS;
 
 public class MaterialComponent: IComponent<MaterialComponent> {
     public Entity entity { get; }
@@ -25,3 +25,4 @@ public static class MaterialComponentExt {
         return mat;
     }
 }
+*/

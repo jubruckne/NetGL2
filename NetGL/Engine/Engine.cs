@@ -134,7 +134,11 @@ public class Engine: GameWindow {
         player.transform.rotation = Rotation.Forward;
 
         player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:15f, sensitivity:0.75f);
-/*
+
+
+        Entity terrain1 = world.create_terrain(Plane.XZ);
+
+        /*
         var oc1 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:325, y:200), field_of_view:60f, enable_input:false);
         var oc2 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:125, y:25), field_of_view:60f, enable_input:false);
         var oc3 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:25, y:200), field_of_view:60f, enable_input:false);
@@ -184,9 +188,6 @@ public class Engine: GameWindow {
 
 */
 
-       Entity terrain1 = world.create_terrain(Plane.XZ);
-
-
 /*
        Entity entd = world.create_model("dragon", Model.from_file("DragonAttenuation.glb", 1f)); // ""));
 
@@ -200,7 +201,7 @@ public class Engine: GameWindow {
             entity.get<Component<RigidBody>>().data.LinearVelocity = Vector3.Zero;
         });
 
-        foreach (var b in Enumerable.Range(1, 35)) {
+        foreach (var b in Enumerable.Range(1, 30)) {
             Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.35f, material:Material.random);
             cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, -15f + Random.Shared.NextSingle() * 5.9f);
 
@@ -299,16 +300,21 @@ public class Engine: GameWindow {
         // ImGui.ShowMetricsWindow();
         // ImGui.DockSpaceOverViewport(ImGui.GetMainViewport());
 
-        Vector2 consolePos = new Vector2(ClientSize.X * 0.82f, 0);
+        Vector2 consolePos  = new Vector2(ClientSize.X * 0.82f, 0);
         Vector2 consoleSize = new Vector2(ClientSize.X * 0.18f, ClientSize.Y);
 
         ImGui.SetNextWindowPos(consolePos);
         ImGui.SetNextWindowSize(consoleSize);
 
-        ImGui.Begin("Entities",
-            CursorState == CursorState.Grabbed
-                ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
-                : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar);
+        ImGui.Begin(
+                    "Entities",
+                    CursorState == CursorState.Grabbed
+                        ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize
+                          | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoInputs
+                          | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoMouseInputs
+                        : ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize
+                          | ImGuiWindowFlags.NoScrollbar
+                   );
 
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 6f);
         ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 6f);
@@ -319,18 +325,17 @@ public class Engine: GameWindow {
 
         Debug.assert_opengl();
 
-        if (frame_times.count > 5) {
-            ImGui.Text("Frame Time (ms):");
-            ImGui.PlotHistogram(
-                $"##frame_time",
-                ref frame_times.as_span()[0],
-                frame_times.count,
-                0,
-                $"avg:{frame_times.average() * 1000:F1}, min:{frame_times.minimum() * 1000:F1}, max:{frame_times.maximum() * 1000:F1}",
-                scale_min:frame_times.minimum(),
-                scale_max:frame_times.maximum(),
-                new Vector2(240, 80));
-        }
+        ImGui.Text("Frame Time (ms):");
+        ImGui.PlotHistogram(
+                            $"##frame_time",
+                            ref frame_times.as_span()[0],
+                            frame_times.count,
+                            0,
+                            $"avg:{frame_times.average() * 1000:F1}, min:{frame_times.minimum() * 1000:F1}, max:{frame_times.maximum() * 1000:F1}",
+                            scale_min: frame_times.minimum(),
+                            scale_max: frame_times.maximum(),
+                            new Vector2(240, 80)
+                           );
 
         DebugConsole.draw();
 
@@ -349,7 +354,7 @@ public class Engine: GameWindow {
         ImGui.PushStyleColor(ImGuiCol.Header, Color.random_for(entity.name).to_int());
         if (ImGui.TreeNodeEx(
                 $"{entity.name}##{entity.path}",
-                entity.name == "World" | entity.name == "Player"
+                entity.name == "World" | entity.name == "Terrain"
                     ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
                     : ImGuiTreeNodeFlags.Framed, entity.name)) {
             ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Color.make(55, 65, 255).to_int());
@@ -459,7 +464,7 @@ public class Engine: GameWindow {
                         ImGui.Indent();
                         ImGui.TreePop();
                     }
-                } else if (comp is MaterialComponent mat) {
+        /*        } else if (comp is MaterialComponent mat) {
                     if (ImGui.TreeNodeEx($"{mat.name}##{entity.name}_{mat.name}_node", ImGuiTreeNodeFlags.None, $"{mat.name.Replace("Component", "")}: {mat.material.name}")) {
                         ImGui.Unindent();
 
@@ -473,7 +478,7 @@ public class Engine: GameWindow {
 
                         ImGui.Indent();
                         ImGui.TreePop();
-                    }
+                    }*/
                 } else if (comp is AmbientLight amb) {
                     if (ImGui.TreeNodeEx($"{amb.name}##{entity.name}_{amb.name}_node", ImGuiTreeNodeFlags.DefaultOpen)) {
                         ImGui.Unindent();

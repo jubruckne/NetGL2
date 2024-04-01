@@ -15,12 +15,12 @@ public static class ArrowPrefab {
         if(from == null)
             from = Vector3.Zero;
 
-        var model = Model.from_shape(new Arrow(from.Value, to.Value).generate());
-
         if(material == null) material = Material.Chrome;
 
-        entity.add_material(material);
-        entity.add_shader(AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], material, is_sky_box:name == "Environment"));
+        var model = Model.from_shape(new Arrow(from.Value, to.Value).generate(), material);
+
+
+        entity.add_shader(AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], is_sky_box:name == "Environment"));
 
         entity.add_vertex_array_renderer(model.vertex_arrays[0]);
 

@@ -8,6 +8,7 @@ public interface IUpdatableComponent {
 }
 
 public interface IRenderableComponent {
+    Light[] lights { get; internal set; }
     void render(in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Vector3 camera_pos, in Matrix4 model_matrix);
 }
 

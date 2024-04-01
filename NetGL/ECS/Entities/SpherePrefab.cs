@@ -17,13 +17,12 @@ public static class SpherePrefab {
         } else {
             Console.WriteLine("creating uv sphere");
             Sphere sphere = new(radius);
-            model = Model.from_shape(sphere.generate());
-            shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], material);
+            model = Model.from_shape(sphere.generate(), material);
+            shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0]);
             //shader = new Shader("auto", "vert.glsl", "frag.glsl");
             last = (sphere, model, shader);
         }
 
-        entity.add_material(material);
         entity.add_shader(shader);
         entity.add_vertex_array_renderer(model.vertex_arrays[0]);
 
@@ -43,12 +42,11 @@ public static class SpherePrefab {
             shader = last.Value.shader;
         } else {
             Sphere sphere = new Sphere(radius);
-            model = Model.from_shape(sphere.generate(new CubeSphereGenerator.CubeSphere(16)));
-            shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], material, is_sky_box:name == "Environment");
+            model = Model.from_shape(sphere.generate(new CubeSphereGenerator.CubeSphere(16)), material);
+            shader = AutoShader.for_vertex_type($"{name}.auto", model.vertex_arrays[0], is_sky_box:name == "Environment");
             last = (sphere, model, shader);
         }
 
-        entity.add_material(material);
         entity.add_shader(shader);
         entity.add_vertex_array_renderer(model.vertex_arrays[0]);
 

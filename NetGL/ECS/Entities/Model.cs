@@ -20,15 +20,14 @@ public class Model {
     }
 
     private void add_vertex_array(in VertexArray va) => ((List<VertexArray>)vertex_arrays).Add(va);
-    private void add_material(in Material mat) => ((List<Material>)materials).Add(mat);
 
-    public static Model from_shape(IShapeGenerator shape_generator) {
+    public static Model from_shape(IShapeGenerator shape_generator, in Material material) {
         VertexBuffer<Vector3, Vector3> vb = new(shape_generator.get_vertices_and_normals());
         var ib = IndexBuffer.create(shape_generator.get_indices(), vb.length);
         vb.upload();
         ib.upload();
 
-        var va = new VertexArrayIndexed(vb, ib);
+        var va = new VertexArrayIndexed(vb, ib, material);
 
         va.upload();
 
@@ -58,10 +57,11 @@ public class Model {
 
         var result = new Model(Path.GetFileName(filename));
 
+        List<Material> materials = new();
         Console.WriteLine("Materials:");
         foreach (var mat in assimp.Materials) {
             Console.WriteLine($"{mat.Name}: shininess:{mat.Shininess}, strength: {mat.ShininessStrength}");
-            result.add_material(new(
+            materials.Add(new(
                 mat.Name,
                 ambient_color: (mat.ColorAmbient.R, mat.ColorAmbient.G, mat.ColorAmbient.B),
                 specular_color: (mat.ColorSpecular.R, mat.ColorSpecular.G, mat.ColorSpecular.B),
@@ -80,7 +80,7 @@ public class Model {
             var ib = new IndexBuffer<int>(mesh.GetIndices());
             ib.upload();
 
-            var va = new VertexArrayIndexed(vb, ib);
+            var va = new VertexArrayIndexed(vb, ib, materials[mesh.MaterialIndex]);
             va.upload();
 
             result.add_vertex_array(va);

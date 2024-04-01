@@ -5,6 +5,7 @@ namespace NetGL.ECS;
 
 public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableComponent {
     public Entity entity { get; }
+
     public string name { get; }
     public bool enable_updates { get; set; }
 
@@ -16,6 +17,8 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
     public bool blending = false;
     public bool front_facing = true;
 
+    public Light[] lights { get; set; }
+
     internal VertexArrayRenderer(in Entity entity, List<VertexArray> vertex_arrays) {
         this.entity = entity;
         this.name = GetType().Name;
@@ -23,6 +26,8 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
 
         foreach (var va in vertex_arrays)
             this.vertex_arrays.Add(va, true);
+
+        lights = entity.get_all<Light>(Entity.EntityRelationship.ParentsRecursive).ToArray();
     }
 
     public override string ToString() {
@@ -37,12 +42,7 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
         shader.set_model_matrix(model_matrix);
         shader.set_camera_position(camera_pos);
 
-        if (entity.try_get<MaterialComponent>(out var mat)) {
-            mat.material.ambient_texture?.bind();
-            shader.set_material(mat.material);
-        }
 
-        var lights = entity.get_all<Light>(Entity.EntityRelationship.ParentsRecursive);
         shader.set_light(lights);
 
         // Console.WriteLine($"projection:\n{projection_matrix}");
@@ -72,6 +72,9 @@ public class VertexArrayRenderer : IComponent<VertexArrayRenderer>, IRenderableC
         foreach (var (va, enabled) in vertex_arrays) {
             if (enabled) {
                 va.bind();
+                va.material.ambient_texture?.bind();
+                shader.set_material(va.material);
+
                 va.draw();
             }
         }

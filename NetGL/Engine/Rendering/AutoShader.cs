@@ -10,7 +10,7 @@ public class AutoShader: Shader {
             File.Delete(file);
     }
 
-    public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array, in Material material, bool is_sky_box = false) {
+    public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array, bool is_sky_box = false) {
         // Console.WriteLine($"\nCreating shader {name} for {vertex_array}");
         var vertex_code = new StringBuilder();
         var shader = new AutoShader(name);
@@ -31,7 +31,7 @@ public class AutoShader: Shader {
         vertex_code.AppendLine("  vec3 world_position;");
         if(vertex_array.has_normals)
             vertex_code.AppendLine("  vec3 normal;");
-        if(material.ambient_texture != null)
+        if(vertex_array.material.ambient_texture != null)
             vertex_code.AppendLine("  vec3 texcoord;");
         vertex_code.AppendLine("  vec3 frag_position;");
         vertex_code.AppendLine("} vertex;\n");
@@ -43,8 +43,8 @@ public class AutoShader: Shader {
         if(vertex_array.has_normals)
             vertex_code.AppendLine("  vertex.normal = normal * mat3(transpose(inverse(model)));");
 
-        if (material.ambient_texture != null) {
-            if (material.ambient_texture is TextureCubemapBuffer) {
+        if (vertex_array.material.ambient_texture != null) {
+            if (vertex_array.material.ambient_texture is TextureCubemapBuffer) {
                 vertex_code.AppendLine("  // flip y because skybox is rendered inside out");
                 vertex_code.AppendLine("  vertex.texcoord = position;");
                 vertex_code.AppendLine("  vertex.texcoord.y = 1.0 - vertex.texcoord.y;");
@@ -55,7 +55,7 @@ public class AutoShader: Shader {
         }
 
         vertex_code.AppendLine("  vertex.frag_position = vec3(vec4(position, 1.0) * model);");
-        if(is_sky_box && material.ambient_texture != null)
+        if(is_sky_box && vertex_array.material.ambient_texture != null)
             vertex_code.AppendLine("  gl_Position = vec4(position, 1) * mat4(mat3(camera)) * projection; gl_Position = gl_Position.xyww;\n");
         else
             vertex_code.AppendLine("  gl_Position = vec4(vertex.world_position, 1) * camera * projection;");
@@ -71,7 +71,7 @@ public class AutoShader: Shader {
         fragment_code.AppendLine("  vec3 world_position;");
         if(vertex_array.has_normals)
             fragment_code.AppendLine("  vec3 normal;");
-        if(material.ambient_texture != null)
+        if(vertex_array.material.ambient_texture != null)
             fragment_code.AppendLine("  vec3 texcoord;");
         fragment_code.AppendLine("  vec3 frag_position;");
         fragment_code.AppendLine("} vertex;\n");
@@ -89,8 +89,8 @@ public class AutoShader: Shader {
         fragment_code.AppendLine("uniform DirectionalLight[2] directional_light;\n");
 
         fragment_code.AppendLine("struct Material {");
-        if(material.ambient_texture != null)
-            fragment_code.AppendLine($"  {material.ambient_texture.glsl_type} ambient_texture;");
+        if(vertex_array.material.ambient_texture != null)
+            fragment_code.AppendLine($"  {vertex_array.material.ambient_texture.glsl_type} ambient_texture;");
         else
             fragment_code.AppendLine("  vec3 ambient_color;");
 
@@ -125,8 +125,8 @@ public class AutoShader: Shader {
 
             fragment_code.AppendLine("  //------- Ambient lighting -------");
 
-            if(material.ambient_texture != null)
-                if(material.ambient_texture is Texture2DBuffer)
+            if(vertex_array.material.ambient_texture != null)
+                if(vertex_array.material.ambient_texture is Texture2DBuffer)
                     fragment_code.AppendLine("  vec3 ambient_color = texture(material.ambient_texture, vertex.texcoord.xy).rgb;");
                 else
                     fragment_code.AppendLine("  vec3 ambient_color = texture(material.ambient_texture, vertex.texcoord).rgb;");
@@ -140,7 +140,7 @@ public class AutoShader: Shader {
             fragment_code.AppendLine("  light += calculate_directional_light(directional_light[0], normal, view_direction, ambient_color);");
             fragment_code.AppendLine("  frag_color = vec4(light, 1);");
         } else {
-            if(material.ambient_texture != null)
+            if(vertex_array.material.ambient_texture != null)
                 fragment_code.AppendLine("  frag_color = texture(material.ambient_texture, vertex.texcoord);\n");
             else
                 fragment_code.AppendLine("  frag_color = vec4(material.ambient_color, 1);");
@@ -148,7 +148,7 @@ public class AutoShader: Shader {
 
         fragment_code.AppendLine("}");
 
-        if (false && material.ambient_texture != null) {
+        if (false && vertex_array.material.ambient_texture != null) {
             Console.WriteLine($"AutoShader:\n{vertex_code}\n");
             Console.WriteLine(fragment_code);
         }

@@ -5,15 +5,16 @@ using OpenTK.Mathematics;
 
 public class Terrain: Entity {
     public readonly Plane plane;
-    public readonly Material material;
     public readonly VertexArrayRenderer renderer;
 
-    private readonly Quadtree<TerrainChunk> chunks;
-    private readonly Camera camera;
+    readonly Quadtree<TerrainChunk> chunks;
+    readonly Camera camera;
 
     internal readonly Noise noise;
+    private readonly Material[] material_per_level;
 
     internal Terrain(Plane plane, Entity? parent = null): base("Terrain", parent) {
+        const int max_level = 2;
         this.plane = plane;
 
         camera = get<Camera>(EntityRelationship.HierarchyWithChildrenRecursive);
@@ -24,57 +25,40 @@ public class Terrain: Entity {
         noise.add_simplex_layer(0.01f, 2.5f);
         noise.add_value_layer(2.5f, 0.035f);
 
-        this.material = this.add_material(Material.random).material;
+        // add separate material for each level
+        material_per_level = new Material[max_level + 1];
+        for (var i = 0; i <= max_level; i++)
+            material_per_level[i] = Material.random;
+
         this.renderer = this.add_vertex_array_renderer();
-        this.chunks = new(32f, 2, allocate_chunk);
+        this.chunks = new(32f, max_level, allocate_chunk);
 
-        Console.WriteLine($"Terrain: {chunks}");
-        using var heightmap = noise.sample<half>(256, 256, 0, 0, 0.1f, 0.1f, 10);
-
-
-        Garbage g = new("heighmap average");
-        Console.WriteLine(heightmap.average());
-        g.Dispose();
-
-        g = new("heighmap median");
-        Console.WriteLine(heightmap.median());
-        g.Dispose();
-
-        g = new("heighmap minimum");
-        Console.WriteLine(heightmap.minimum());
-        g.Dispose();
-
-        g = new("heighmap maximum");
-        Console.WriteLine(heightmap.maximum());
-        g.Dispose();
-
+        //using var heightmap = noise.sample<half>(256, 256, 0, 0, 0.1f, 0.1f, 10);
         //heightmap.save_to_file("heightmap.json");
         //Console.WriteLine(heightmap);
-        Console.WriteLine();
-        Console.WriteLine("Existing terrain chunks:");
+        //Console.WriteLine();
 
+        Console.WriteLine("Existing terrain chunks:");
         foreach (var q in chunks)
             Console.WriteLine(q);
 
-
-        var chunk = chunks.request_node(0, 0, 0);
-        chunks.request_node(20, 0, 0);
-        chunks.request_node(20, -127.3f, 0);
+        var chunk = chunks.request_node(0, 0, max_level);
 
         Console.WriteLine();
         Console.WriteLine("Existing terrain chunks:");
         foreach (var q in chunks)
             Console.WriteLine(q);
 
-        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array, material));
+        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!));
         renderer.wireframe = true;
+        renderer.depth_test = true;
         this.add_behavior(_ => update());
     }
 
     private TerrainChunk allocate_chunk(in Bounds bounds, int level) {
         var distance = world_to_terrain_distance(bounds.center.x, bounds.center.y);
 
-        var chunk = new TerrainChunk(this, bounds);
+        var chunk = new TerrainChunk(this, bounds, level, material_per_level[level]);
         chunk.create(priority: 0);
         return chunk;
     }

@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace NetGL.ECS;
 
 using System.Numerics;
@@ -57,6 +59,8 @@ public class World: Entity {
                     cam.viewport.clear();
                     Debug.assert_opengl();
 
+                    var lights = entity.get_all<Light>(EntityRelationship.ParentsRecursive).ToArray();
+
                     foreach (var child in cam.entity.parent.children) {
                         // Console.WriteLine("  " + child.name);
                         render_entity(
@@ -64,7 +68,8 @@ public class World: Entity {
                             cam.projection_matrix,
                             cam.camera_matrix,
                             cam.transform.position,
-                            Matrix4.Identity);
+                            Matrix4.Identity,
+                            lights);
                     }
                 } else {
                     Console.WriteLine($"Empty camera: {cam}");
@@ -75,18 +80,20 @@ public class World: Entity {
         }
     }
 
-    private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Vector3 camera_pos, in Matrix4 parent_model_matrix) {
+    private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Vector3 camera_pos, in Matrix4 parent_model_matrix, in Light[] lights) {
         var model_matrix = entity.transform.calculate_model_matrix() * parent_model_matrix;
 
         /*entity.for_any_component_like<AmbientLight, DirectionalLight, PointLight>(
             component => lights.Add((ILight)component)
         );*/
 
-        foreach (var renderable in entity.get_renderable_components())
+        foreach (var renderable in entity.get_renderable_components()) {
+            renderable.lights = lights;
             renderable.render(projection_matrix, camera_matrix, camera_pos, model_matrix);
+        }
 
         foreach (var child in entity.children)
-            render_entity(child, projection_matrix, camera_matrix, camera_pos, model_matrix);
+            render_entity(child, projection_matrix, camera_matrix, camera_pos, model_matrix, lights);
     }
 
     public void update(float game_time, float delta_time) {

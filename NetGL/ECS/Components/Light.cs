@@ -4,6 +4,7 @@ namespace NetGL.ECS;
 
 public abstract class Light : IComponent<Light> {
     public Entity entity { get; }
+
     public string name { get; }
 
     protected Light(in Entity entity) {

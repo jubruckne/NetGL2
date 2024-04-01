@@ -7,16 +7,20 @@ internal sealed class TerrainChunk {
     public readonly float x;
     public readonly float y;
     public readonly float size;
+    public readonly int level;
+    private readonly Material material;
 
     public bool ready { get; private set; }
     public VertexArrayIndexed? vertex_array { get; private set; }
 
-    public TerrainChunk(in Terrain terrain, in Bounds bounds) {
+    public TerrainChunk(in Terrain terrain, in Bounds bounds, in int level, Material material) {
         this.x = bounds.center.x;
         this.y = bounds.center.y;
         this.size = bounds.size;
+        this.level = level;
         this.terrain = terrain;
         this.ready = false;
+        this.material = material;
     }
 
     private void upload(VertexArrayIndexed va) {
@@ -81,7 +85,7 @@ internal sealed class TerrainChunk {
             vb[i].position = plane.to_world(
                                             px,
                                             py,
-                                            noise.sample(px, py)
+                                            noise.sample(px, py) - level.select(10, 5, 0)
                                            );
 
             if (vx < chunk_quad_count && vy < chunk_quad_count) {
@@ -104,7 +108,7 @@ internal sealed class TerrainChunk {
 
         vb.calculate_normals(ib.indices);
 
-        var va = new VertexArrayIndexed(vb, ib);
+        var va = new VertexArrayIndexed(vb, ib, material);
 
         return va;
     }

@@ -2,13 +2,14 @@ using System.Numerics;
 
 namespace NetGL;
 
-public class RevolvingList<T> where T: unmanaged, IDivisionOperators<T, float, T>, INumber<T>{
+public class RevolvingList<T>
+    where T: unmanaged, IDivisionOperators<T, float, T>, IMultiplyOperators<T, float, T>, INumber<T> {
     private readonly int max_size;
     private readonly Queue<T> queue;
 
     public RevolvingList(int max_size) {
         this.max_size = max_size;
-        queue = new Queue<T>(this.max_size);
+        queue         = new Queue<T>(this.max_size);
     }
 
     public void add(T item) {
@@ -32,6 +33,8 @@ public class RevolvingList<T> where T: unmanaged, IDivisionOperators<T, float, T
     }
 
     public T minimum() {
+        if (queue.Count == 0) return T.Zero;
+
         var result = queue.First();
 
         foreach (var item in queue) {
@@ -43,6 +46,8 @@ public class RevolvingList<T> where T: unmanaged, IDivisionOperators<T, float, T
     }
 
     public T maximum() {
+        if (queue.Count == 0) return T.Zero;
+
         var result = T.Zero;
 
         foreach (var item in queue) {
@@ -53,7 +58,16 @@ public class RevolvingList<T> where T: unmanaged, IDivisionOperators<T, float, T
         return result;
     }
 
-    public T average() => sum() / count;
+    public T average() {
+        if (queue.Count == 0) return T.Zero;
+        return sum() / count;
+    }
 
-    public Span<T> as_span() => queue.ToArray();
+    public Span<T> as_span() {
+        if (queue.Count > 0) return queue.ToArray();
+        return new T[1] { T.Zero };
+    }
+
+    public override string ToString()
+        => $"avg:{average() * 1000:F1}, min:{minimum() * 1000:F1}, max:{maximum() * 1000:F1}";
 }

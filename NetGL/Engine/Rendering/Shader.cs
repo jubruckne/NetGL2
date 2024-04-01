@@ -194,7 +194,8 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         }
     }
 
-    public void set_light(in IReadOnlyList<Light> lights) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void set_light(in Light[] lights) {
         var num_directional_lights = 0;
 
         foreach (var light in lights) {

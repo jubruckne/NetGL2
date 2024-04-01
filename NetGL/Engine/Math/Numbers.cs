@@ -76,6 +76,12 @@ public static class Numbers {
         return max;
     }
 
+    public static T select<T>(this int which, params T[] values) {
+        if (which < 0 || which >= values.Length)
+            throw new ArgumentOutOfRangeException(nameof(which));
+        return values[which];
+    }
+
     public static T nearest_multiple<T>(this T number, T multiple) where T: IFloatingPoint<T>
         => T.Round(number / multiple) * multiple;
 
