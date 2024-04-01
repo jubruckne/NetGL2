@@ -30,8 +30,11 @@ public class Terrain: Entity {
         for (var i = 0; i <= max_level; i++)
             material_per_level[i] = Material.random;
 
-        this.renderer = this.add_vertex_array_renderer();
-        this.chunks = new(32f, max_level, allocate_chunk);
+        renderer = this.add_vertex_array_renderer();
+
+        chunks = new(32f, max_level, allocate_chunk);
+        var chunk = chunks.request_node(0, 0, max_level);
+        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!));
 
         //using var heightmap = noise.sample<half>(256, 256, 0, 0, 0.1f, 0.1f, 10);
         //heightmap.save_to_file("heightmap.json");
@@ -42,16 +45,15 @@ public class Terrain: Entity {
         foreach (var q in chunks)
             Console.WriteLine(q);
 
-        var chunk = chunks.request_node(0, 0, max_level);
 
         Console.WriteLine();
         Console.WriteLine("Existing terrain chunks:");
         foreach (var q in chunks)
             Console.WriteLine(q);
 
-        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!));
         renderer.wireframe = true;
         renderer.depth_test = true;
+
         this.add_behavior(_ => update());
     }
 

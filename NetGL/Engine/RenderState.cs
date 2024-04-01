@@ -1,10 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace NetGL;
 
+using ECS;
 using System.Reflection;
 using OpenTK.Graphics.OpenGL4;
 
-public interface IState {
-    string name { get; }
+public interface IState: INamed {
     object value { get; }
 }
 
@@ -22,11 +24,16 @@ public abstract class State<T>: IState
 
     public T value {
         get => this.state;
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract")]
         set {
-            // ReSharper disable ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (this.state == null || this.state.Equals(value)) return;
-            // ReSharper restore ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (this.state == null && value == null) return;
 
+            if (this.state != null && this.state.Equals(value)) {
+                ++RenderState.state_changes_count;
+                return;
+            }
+
+            ++RenderState.state_changes_count;
             this.state = value;
             if(write_through) set_state(value);
         }
@@ -39,8 +46,18 @@ public abstract class State<T>: IState
         this.value         = state;
     }
 
-    public bool verify() => get_state().Equals(state);
-    public void assert() => Debug.assert(this, verify());
+    [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract")]
+    public bool verify() {
+        if (get_state() is null)
+            return state is null;
+
+        return get_state().Equals(state);
+    }
+
+    public void assert() {
+        if (!verify())
+            Error.exception($"State '{name}' should be <{state}> but readback says <{get_state()}>");
+    }
 
     public override string ToString() => $"{this.get_type_name()}={value}";
 
@@ -48,6 +65,11 @@ public abstract class State<T>: IState
 }
 
 public static partial class RenderState {
+    public static (int state_changes_count, int state_changes_avoided) statistics => (state_changes_count, state_changes_avoided);
+
+    [SuppressMessage("ReSharper", "StaticMemberInGenericType")] internal static int state_changes_count = 0;
+    [SuppressMessage("ReSharper", "StaticMemberInGenericType")] internal static int state_changes_avoided = 0;
+
     public static readonly State<NetGL.Shader> shader = create<RenderState.Shader>();
     public static readonly State<bool> depth_test = create<RenderState.DepthTest>();
     public static readonly State<bool> cull_face = create<RenderState.CullFace>();
@@ -72,7 +94,16 @@ public static partial class RenderState {
         return default;
     }
 
-    public static void bind(params IState[] states) {
+    public static T get<T>(this Bag<IState> states) {
+        foreach (var state in states) {
+            if (state is T t) return t;
+        }
+
+        Error.index_out_of_range(states);
+        return default;
+    }
+
+    public static Bag<IState> bind(this Bag<IState> states) {
         foreach (var state in states) {
             switch (state) {
                 case RenderState.CullFace cf:
@@ -98,6 +129,13 @@ public static partial class RenderState {
                     break;
             }
         }
+
+        return states;
+    }
+
+    public static NetGL.Shader bind(this State<NetGL.Shader> render_state, in NetGL.Shader shader) {
+        render_state.value = shader;
+        return shader;
     }
 
     public static void toggle(this State<bool> render_state) =>
@@ -181,7 +219,9 @@ public static partial class RenderState {
         private Shader(): base(null!, true) {}
         public Shader(NetGL.Shader shader): base(shader, false) {}
 
-        protected override void set_state(NetGL.Shader shader) => shader.bind();
+        protected override void set_state(NetGL.Shader shader) {
+            GL.UseProgram(shader.handle);
+        }
 
         protected override NetGL.Shader get_state() {
             var current = GL.GetInteger(GetPName.CurrentProgram);

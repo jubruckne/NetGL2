@@ -201,7 +201,7 @@ public class Engine: GameWindow {
             entity.get<Component<RigidBody>>().data.LinearVelocity = Vector3.Zero;
         });
 
-        foreach (var b in Enumerable.Range(1, 30)) {
+        foreach (var b in Enumerable.Range(1, 1500)) {
             Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.35f, material:Material.random);
             cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, -15f + Random.Shared.NextSingle() * 5.9f);
 
@@ -222,7 +222,7 @@ public class Engine: GameWindow {
     }
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
-        using Garbage g = new();
+        using Garbage g = new("Update");
 
         base.OnUpdateFrame(e);
 
@@ -261,7 +261,7 @@ public class Engine: GameWindow {
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
-        using Garbage g = new();
+        using Garbage g = new("Render");
         base.OnRenderFrame(e);
 
         // Console.WriteLine($"starting frame:{frame}...");
@@ -286,12 +286,15 @@ public class Engine: GameWindow {
 
         world.render();
         Debug.assert_opengl();
+
         if(debugging) render_ui();
         Debug.assert_opengl();
 
+        //Console.WriteLine($"State changes: {RenderState.statistics.state_changes_count}, avoided: {RenderState.statistics.state_changes_avoided}");
+
         BackgroundTaskScheduler.process_scheduled_tasks();
 
-        //GC.Collect(0, GCCollectionMode.Default, false);
+        RenderState.assert();
 
         SwapBuffers();
     }

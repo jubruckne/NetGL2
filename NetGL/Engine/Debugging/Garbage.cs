@@ -8,7 +8,7 @@ internal readonly ref struct Garbage {
     private readonly Stopwatch stopwatch;
 
     public Garbage() {
-        name = Thread.CurrentThread.Name!;
+        name = "";
         allocations_before = GC.GetAllocatedBytesForCurrentThread();
         stopwatch          = new();
         stopwatch.Start();

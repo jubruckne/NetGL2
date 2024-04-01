@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using NetGL.ECS;
 
@@ -6,7 +7,18 @@ namespace NetGL;
 
 using System.Text;
 
-public class Bag<TItem> where TItem: class {
+public static class Bag {
+    public static Bag<TItem> create<TItem>(ReadOnlySpan<TItem> items)
+        where TItem: class
+        => new Bag<TItem>(items);
+
+    public static NamedBag<TItem> create_named<TItem>(ReadOnlySpan<TItem> items)
+        where TItem: class, INamed
+        => new NamedBag<TItem>(items);
+}
+
+[CollectionBuilder(typeof(Bag), nameof(Bag.create))]
+public class Bag<TItem>: IList<TItem>, IReadOnlyList<TItem> where TItem: class {
     public delegate bool ItemPredicate(ref TItem item);
     public delegate bool ItemPredicate<in T>(ref TItem item, T arg1);
     public delegate bool ItemPredicate<in T1, in T2>(ref TItem item, T1 arg1, T2 arg);
@@ -21,6 +33,7 @@ public class Bag<TItem> where TItem: class {
 
     public Bag(): this(4) {}
     public Bag(int capacity) => list = new(capacity);
+    public Bag(ReadOnlySpan<TItem> items): this(items.Length) => add(items);
 
     public int length => list.Count;
 
@@ -29,16 +42,29 @@ public class Bag<TItem> where TItem: class {
         on_added?.Invoke(ref this[^1]);
     }
 
+    public void add(ReadOnlySpan<TItem> items) {
+        foreach (var item in items)
+            add(item);
+    }
+
     public int index_of(in TItem item) => list.IndexOf(item);
 
-    public virtual void remove(in TItem item) {
-        remove(index_of(item));
+    public virtual bool remove(in TItem item) {
+        var index = index_of(item);
+        if (index == -1) return false;
+        remove(index);
+        return true;
     }
 
     public virtual void remove(in int index) {
         ref var temp  = ref this[index];
         list.RemoveAt(index);
         on_removed?.Invoke(ref temp);
+    }
+
+    public void clear() {
+        while (length > 0)
+            remove(0);
     }
 
     public void for_each(ItemDelegate action) {
@@ -64,6 +90,7 @@ public class Bag<TItem> where TItem: class {
         }
         return sb.ToString();
     }
+
 
     public Result<TItem> lookup(in ItemPredicate lookup) {
         var span = CollectionsMarshal.AsSpan(list);
@@ -92,6 +119,8 @@ public class Bag<TItem> where TItem: class {
         return Result<TItem>.failure();
     }
 
+    public virtual bool contains(in TItem item) => list.Contains(item);
+
     public bool contains(in ItemPredicate lookup) {
         var span = CollectionsMarshal.AsSpan(list);
         foreach (ref var item in span) {
@@ -118,11 +147,34 @@ public class Bag<TItem> where TItem: class {
     }
 
     public Enumerator GetEnumerator() => new Enumerator(list);
+
+    void ICollection<TItem>.Add(TItem item) => add(item);
+    void ICollection<TItem>.Clear() => clear();
+    bool ICollection<TItem>.Contains(TItem item) => contains(item);
+    void ICollection<TItem>.CopyTo(TItem[] array, int arrayIndex) => list.CopyTo(array, arrayIndex);
+    bool ICollection<TItem>.Remove(TItem item) => remove(item);
+    int ICollection<TItem>.Count => length;
+    bool ICollection<TItem>.IsReadOnly => false;
+    int IReadOnlyCollection<TItem>.Count => length;
+    int IList<TItem>.IndexOf(TItem item) => index_of(item);
+    void IList<TItem>.Insert(int index, TItem item) => throw new NotSupportedException();
+    void IList<TItem>.RemoveAt(int index) => throw new NotSupportedException();
+
+    TItem IList<TItem>.this[int index] {
+        get => this[index];
+        set => throw new NotSupportedException();
+    }
+
+    TItem IReadOnlyList<TItem>.this[int index] => this[index];
+    IEnumerator<TItem> IEnumerable<TItem>.GetEnumerator() => list.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)list).GetEnumerator();
 }
 
+[CollectionBuilder(typeof(Bag), nameof(Bag.create_named))]
 public class NamedBag<TItem>: Bag<string, TItem> where TItem: class, INamed {
     public NamedBag(): this(4) {}
     public NamedBag(int capacity): base(static (ref readonly TItem item) => item.name ) {}
+    public NamedBag(ReadOnlySpan<TItem> items): this(items.Length) => add(items);
 }
 
 public class Bag<TKey, TItem>: Bag<TItem> where TKey: IComparable<TKey> where TItem: class {
@@ -145,9 +197,9 @@ public class Bag<TKey, TItem>: Bag<TItem> where TKey: IComparable<TKey> where TI
 
     public int index_of(in TKey key) => dict[key];
 
-    public override void remove(in TItem item) {
+    public override bool remove(in TItem item) {
         dict.Remove(get_key(in item));
-        base.remove(item);
+        return base.remove(item);
     }
 
     public override void remove(in int index) {
@@ -160,4 +212,6 @@ public class Bag<TKey, TItem>: Bag<TItem> where TKey: IComparable<TKey> where TI
     public ref TItem this[in TKey key] => ref CollectionsMarshal.AsSpan(list)[dict[key]];
 
     public bool contains(in TKey key) => dict.ContainsKey(key);
+
+    public override bool contains(in TItem item) => dict.ContainsKey(get_key(in item));
 }

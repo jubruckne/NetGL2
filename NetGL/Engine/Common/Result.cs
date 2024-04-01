@@ -2,15 +2,15 @@ namespace NetGL;
 
 public readonly struct Result<T> where T: class {
     public readonly T value;
-    private readonly bool result;
+    private readonly bool succeeded;
 
     public Result(bool result, in T value) {
-        this.result = result;
+        this.succeeded = result;
         this.value = value;
     }
 
     public Result() {
-        result = false;
+        succeeded = false;
         value = default!;
     }
 
@@ -21,21 +21,12 @@ public readonly struct Result<T> where T: class {
         return new Result<T>();
     }
 
-    public static implicit operator T(in Result<T> r) => r.result ? r.value : throw new NullReferenceException();
-    public static bool operator true(in Result<T> r) => r.result;
-    public static bool operator false(in Result<T> r) => !r.result;
-    public static implicit operator bool(in Result<T> r) => r.result;
+    public static implicit operator T(in Result<T> r) => r.succeeded ? r.value : throw new NullReferenceException();
+    public static bool operator true(in Result<T> r) => r.succeeded;
+    public static bool operator false(in Result<T> r) => !r.succeeded;
+    public static implicit operator bool(in Result<T> r) => r.succeeded;
 
-
-    public Result<T> when_true(in Action<T> action) {
-        if (result) action(value);
-        return this;
-    }
-
-    public Result<T> when_false(in Action<T> action) {
-        if (!result) action(value);
-        return this;
-    }
+    public (bool result, T value) result => (succeeded, value);
 
     public static Result<T> success(in T value) => new(true, value);
     public static Result<T> failure() => new Result<T>();

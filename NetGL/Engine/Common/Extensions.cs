@@ -367,7 +367,7 @@ public static class ArrayExt {
         return CollectionsMarshal.AsSpan(list);
     }
 
-    /// <exception cref="T:System.ArgumentException"/>
+    /*
     public static T lookup<T>(this IEnumerable<T> list, Predicate<T> condition) {
         foreach(var item in list)
             if (condition(item))
@@ -375,7 +375,7 @@ public static class ArrayExt {
 
         Error.index_out_of_range(condition);
         return default;
-    }
+    }*/
 
     public static bool peek<T>(this IList<T> list, [MaybeNullWhen(false)] out T item) {
         lock (list) {
