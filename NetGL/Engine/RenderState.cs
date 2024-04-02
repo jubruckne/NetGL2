@@ -16,6 +16,7 @@ public abstract class State<T>: IState
     public string name { get; }
     private T state;
     private readonly bool write_through;
+    private Stack<T> stack = new();
 
     protected abstract void set_state(T state);
     protected abstract T get_state();
@@ -62,6 +63,15 @@ public abstract class State<T>: IState
     public override string ToString() => $"{this.get_type_name()}={value}";
 
     public static explicit operator T(State<T> render_state) => render_state.value;
+
+    public void push(in T state) {
+        stack.Push(value);
+        value = state;
+    }
+
+    public void pop() {
+        value = stack.Pop();
+    }
 }
 
 public static partial class RenderState {
@@ -76,6 +86,7 @@ public static partial class RenderState {
     public static readonly State<bool> blending = create<RenderState.Blending>();
     public static readonly State<bool> wireframe = create<RenderState.Wireframe>();
     public static readonly State<bool> front_facing = create<RenderState.FrontFacing>();
+    public static readonly State<bool> scissor_test = create<RenderState.ScissorTest>();
 
     private static T create<T>() {
         var type = typeof(T);
@@ -124,6 +135,9 @@ public static partial class RenderState {
                 case RenderState.Blending bl:
                     RenderState.blending.value = bl.value;
                     break;
+                case RenderState.ScissorTest st:
+                    RenderState.scissor_test.value = st.value;
+                    break;
                 default:
                     Error.index_out_of_range(state);
                     break;
@@ -154,6 +168,7 @@ public static partial class RenderState {
         blending.assert();
         wireframe.assert();
         front_facing.assert();
+        scissor_test.assert();
     }
 }
 
@@ -182,6 +197,18 @@ public static partial class RenderState {
         }
     }
 
+    public class ScissorTest: State<bool> {
+        private ScissorTest(): base(GL.GetBoolean(GetPName.ScissorTest), true) {}
+        public ScissorTest(bool state): base(state, false) {}
+
+        protected override bool get_state() => GL.GetBoolean(GetPName.ScissorTest);
+
+        protected override void set_state(bool state) {
+            if (state) GL.Enable(EnableCap.ScissorTest);
+            else GL.Disable(EnableCap.ScissorTest);
+        }
+    }
+
     public class Blending: State<bool> {
         private Blending(): base(false, true) {}
         public Blending(bool state): base(state, false) {}
@@ -192,6 +219,7 @@ public static partial class RenderState {
             if (state) GL.Enable(EnableCap.Blend);
             else GL.Disable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.BlendEquation(BlendEquationMode.FuncAdd);
         }
     }
 

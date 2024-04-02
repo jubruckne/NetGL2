@@ -112,8 +112,6 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         }
 
         compile_from_text(vertex_program, fragment_program, geometry_program);
-
-        Console.WriteLine();
     }
 
     private static void compile(int shader) {
@@ -217,7 +215,10 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool has_uniform(string name) => uniform_locations.ContainsKey(name);
+    public bool has_uniform(string name) => uniform_locations.ContainsKey(name);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int get_uniform_location(string name) => uniform_locations[name];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void set_uniform(string name, int data) {

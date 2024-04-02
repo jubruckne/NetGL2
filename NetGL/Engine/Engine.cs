@@ -201,7 +201,7 @@ public class Engine: GameWindow {
             entity.get<Component<RigidBody>>().data.LinearVelocity = Vector3.Zero;
         });
 
-        foreach (var b in Enumerable.Range(1, 1500)) {
+        foreach (var b in Enumerable.Range(1, 5000)) {
             Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.35f, material:Material.random);
             cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, -15f + Random.Shared.NextSingle() * 5.9f);
 
@@ -326,8 +326,6 @@ public class Engine: GameWindow {
 
         ImGui.StyleColorsClassic();
 
-        Debug.assert_opengl();
-
         ImGui.Text("Frame Time (ms):");
         ImGui.PlotHistogram(
                             $"##frame_time",
@@ -348,7 +346,6 @@ public class Engine: GameWindow {
 
         ImGui.PopStyleVar(4);
         ImGui.End();
-        Debug.assert_opengl();
 
         ImGuiRenderer.render();
     }
@@ -357,7 +354,7 @@ public class Engine: GameWindow {
         ImGui.PushStyleColor(ImGuiCol.Header, Color.random_for(entity.name).to_int());
         if (ImGui.TreeNodeEx(
                 $"{entity.name}##{entity.path}",
-                entity.name == "World" | entity.name == "Terrain"
+                entity.name == "World" || entity.name == "Terrain"
                     ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
                     : ImGuiTreeNodeFlags.Framed, entity.name)) {
             ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Color.make(55, 65, 255).to_int());

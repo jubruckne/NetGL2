@@ -67,7 +67,10 @@ public class ReadOnlyEntityList: IReadOnlyList<Entity> {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IEnumerator<Entity> GetEnumerator() {
+    public List<Entity>.Enumerator GetEnumerator() => list.GetEnumerator();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() {
         for (var i = 0; i < list.Count; ++i)
             yield return list[i];
     }

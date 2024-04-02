@@ -1,22 +1,13 @@
 namespace NetGL;
 
-public readonly ref struct Finally<T> {
-    private readonly List<(Action<T>, T)> actions;
+public struct Finally: IDisposable {
+    private Action? action;
 
-    public Finally() => actions = [];
-    public Finally(in Action<T> action, T value) => actions = [(action, value)];
+    public Finally(in Action action) => this.action = action;
 
-    public void add(in Action<T> action, T value) => actions.Add((action, value));
-
-    public void keep() {
-        actions.Clear();
-    }
-
-    public void reset() {
-        foreach(var (action, value) in actions)
-            action(value);
-
-        actions.Clear();
+    private void reset() {
+        action?.Invoke();
+        action = null;
     }
 
     public void Dispose() {

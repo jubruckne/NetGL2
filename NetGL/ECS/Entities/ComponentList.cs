@@ -24,35 +24,8 @@ public class ReadOnlyComponentList {
                 yield return component;
     }
 
-    public struct Enumerator: IEnumerator<IComponent> {
-        private readonly List<IComponent> _list;
-        private int _index;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator(in List<IComponent> list) {
-            _list  = list;
-            _index = -1;
-        }
-
-        public IComponent Current {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _list[_index];
-        }
-
-        object IEnumerator.Current => Current;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool MoveNext() => ++_index < _list.Count;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Reset() => _index = -1;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose() { }
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public Enumerator GetEnumerator() => new Enumerator(list);
+    public List<IComponent>.Enumerator GetEnumerator() => list.GetEnumerator();
 }
 
 public sealed class ComponentList: ReadOnlyComponentList {

@@ -377,6 +377,14 @@ public static class ArrayExt {
         return default;
     }*/
 
+    public static int index_of(this IReadOnlyList<string> list, in string item) {
+        for (var i = 0; i < list.Count; i++)
+            if (list[i] == item)
+                return i;
+
+        return -1;
+    }
+
     public static bool peek<T>(this IList<T> list, [MaybeNullWhen(false)] out T item) {
         lock (list) {
             if (list.Count != 0) {

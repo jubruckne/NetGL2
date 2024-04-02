@@ -10,6 +10,7 @@ using OpenTK.Windowing.Common;
 using Vector2 = System.Numerics.Vector2;
 
 public static class ImGuiRenderer {
+    private static Shader shader;
     private static NativeWindow window = null!;
     private static bool _frameBegun;
 
@@ -21,7 +22,7 @@ public static class ImGuiRenderer {
 
     private static int _fontTexture;
 
-    private static int _shader = -1;
+    //private static int _shader = -1;
     private static int _shaderFontTextureLocation = -1;
     private static int _shaderProjectionMatrixLocation = -1;
 
@@ -58,11 +59,15 @@ public static class ImGuiRenderer {
         window.TextInput += on_text_input;
 
         CreateDeviceResources();
+        CreateShader();
+
         SetPerFrameImGuiData(1f / 60f);
 
         ImGui.NewFrame();
 
         _frameBegun = true;
+
+        Debug.assert_opengl();
     }
 
     private static void on_text_input(TextInputEventArgs e) {
@@ -81,11 +86,11 @@ public static class ImGuiRenderer {
     private static void CreateDeviceResources() {
         Console.WriteLine($"ImguiController.CreateDeviceResources()");
 
-        _vertexBufferSize = 65535;
-        _indexBufferSize = 16382;
+        _vertexBufferSize = 4048 * Unsafe.SizeOf<ImDrawVert>();
+        _indexBufferSize = 4048 * Unsafe.SizeOf<ushort>() * 3;
 
         int prevVAO = GL.GetInteger(GetPName.VertexArrayBinding);
-        int prevArrayBuffer = GL.GetInteger(GetPName.ArrayBufferBinding);
+        // int prevArrayBuffer = GL.GetInteger(GetPName.ArrayBufferBinding);
 
         _vertexArray = GL.GenVertexArray();
         GL.BindVertexArray(_vertexArray);
@@ -100,6 +105,26 @@ public static class ImGuiRenderer {
 
         RecreateFontDeviceTexture();
 
+        var stride = Unsafe.SizeOf<ImDrawVert>();
+        GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, stride, 0);
+        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, stride, 8);
+        GL.VertexAttribPointer(2, 4, VertexAttribPointerType.UnsignedByte, true, stride, 16);
+
+        GL.EnableVertexAttribArray(0);
+        GL.EnableVertexAttribArray(1);
+        GL.EnableVertexAttribArray(2);
+
+        //Console.WriteLine($"ArrayBufferBinding = {GL.GetInteger(GetPName.ArrayBufferBinding)}");
+        //Console.WriteLine($"ElementArrayBufferBinding = {GL.GetInteger(GetPName.ElementArrayBufferBinding)}");
+
+        GL.BindVertexArray(0);
+        GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+
+        Debug.assert_opengl();
+    }
+
+    private static void CreateShader() {
         string VertexSource = @"#version 330 core
 
 uniform mat4 projection_matrix;
@@ -131,23 +156,15 @@ void main()
 outputColor = color * texture(in_fontTexture, texCoord);
 }";
 
-        _shader = CreateProgram("ImGui", VertexSource, FragmentSource);
-        _shaderProjectionMatrixLocation = GL.GetUniformLocation(_shader, "projection_matrix");
-        _shaderFontTextureLocation = GL.GetUniformLocation(_shader, "in_fontTexture");
+        shader = new Shader("ImguiRenderer", VertexSource, FragmentSource);
 
-        int stride = Unsafe.SizeOf<ImDrawVert>();
-        GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, stride, 0);
-        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, stride, 8);
-        GL.VertexAttribPointer(2, 4, VertexAttribPointerType.UnsignedByte, true, stride, 16);
 
-        GL.EnableVertexAttribArray(0);
-        GL.EnableVertexAttribArray(1);
-        GL.EnableVertexAttribArray(2);
+        //_shader = CreateProgram("ImGui", VertexSource, FragmentSource);
+        _shaderProjectionMatrixLocation = shader.get_uniform_location("projection_matrix"); //GL.GetUniformLocation(_shader, "projection_matrix");
+        _shaderFontTextureLocation = shader.get_uniform_location("in_fontTexture"); //GL.GetUniformLocation(_shader, "in_fontTexture");
 
-        GL.BindVertexArray(prevVAO);
-        GL.BindBuffer(BufferTarget.ArrayBuffer, prevArrayBuffer);
-
-        Debug.assert_opengl();
+        Debug.assert(_shaderProjectionMatrixLocation != -1);
+        Debug.assert(_shaderFontTextureLocation != -1);
     }
 
     private static void RecreateFontDeviceTexture() {
@@ -156,11 +173,11 @@ outputColor = color * texture(in_fontTexture, texCoord);
         ImGuiIOPtr io = ImGui.GetIO();
         io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out int bytesPerPixel);
 
-        int mips = (int)Math.Floor(Math.Log(Math.Max(width, height), 2));
+        var mips = (int)Math.Floor(Math.Log(Math.Max(width, height), 2));
 
-        int prevActiveTexture = GL.GetInteger(GetPName.ActiveTexture);
+        var prevActiveTexture = GL.GetInteger(GetPName.ActiveTexture);
         GL.ActiveTexture(TextureUnit.Texture0);
-        int prevTexture2D = GL.GetInteger(GetPName.TextureBinding2D);
+        var prevTexture2D = GL.GetInteger(GetPName.TextureBinding2D);
 
         _fontTexture = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, _fontTexture);
@@ -214,25 +231,24 @@ outputColor = color * texture(in_fontTexture, texCoord);
         if (ig_size.X != fb_size.X || ig_size.Y != fb_size.Y) {
             io.DisplaySize = new Vector2(fb_size.X, fb_size.Y);
             io.DisplayFramebufferScale = new Vector2(
-                (float)window.FramebufferSize.X / window.ClientSize.X,
-                (float)window.FramebufferSize.Y / window.ClientSize.Y
-                );
+                                                     (float)window.FramebufferSize.X / window.ClientSize.X,
+                                                     (float)window.FramebufferSize.Y / window.ClientSize.Y
+                                                    );
 
             Console.WriteLine("window resized");
 
             // Setup orthographic projection matrix into our constant buffer
-            Matrix4 mvp = Matrix4.CreateOrthographicOffCenter(
-                0.0f,
-                window.ClientSize.X,
-                window.ClientSize.Y,
-                0.0f,
-                -1.0f,
-                1.0f);
+            var mvp = Matrix4.CreateOrthographicOffCenter(
+                                                          0.0f,
+                                                          window.ClientSize.X,
+                                                          window.ClientSize.Y,
+                                                          0.0f,
+                                                          -1.0f,
+                                                          1.0f
+                                                         );
 
-            Debug.assert(_shader != 0);
-
-            GL.ProgramUniformMatrix4(_shader, _shaderProjectionMatrixLocation, false, ref mvp);
-            GL.ProgramUniform1(_shader, _shaderFontTextureLocation, 0);
+            GL.ProgramUniformMatrix4(shader.handle, _shaderProjectionMatrixLocation, false, ref mvp);
+            GL.ProgramUniform1(shader.handle, _shaderFontTextureLocation, 0);
         }
 
         //Console.WriteLine($"SetPerFrameImGuiData(w:{_windowWidth}, h:{_windowHeight}, scale: {_scaleFactor})");
@@ -287,19 +303,19 @@ outputColor = color * texture(in_fontTexture, texCoord);
             return;
 
         // Get initial state.
+
         int prevVAO = GL.GetInteger(GetPName.VertexArrayBinding);
-        int prevArrayBuffer = GL.GetInteger(GetPName.ArrayBufferBinding);
-        int prevProgram = GL.GetInteger(GetPName.CurrentProgram);
-        bool prevBlendEnabled = GL.GetBoolean(GetPName.Blend);
-        bool prevScissorTestEnabled = GL.GetBoolean(GetPName.ScissorTest);
-        int prevBlendEquationRgb = GL.GetInteger(GetPName.BlendEquationRgb);
+        //int prevProgram = GL.GetInteger(GetPName.CurrentProgram);
+        //bool prevBlendEnabled = GL.GetBoolean(GetPName.Blend);
+        //bool prevScissorTestEnabled = GL.GetBoolean(GetPName.ScissorTest);
+        /*int prevBlendEquationRgb = GL.GetInteger(GetPName.BlendEquationRgb);
         int prevBlendEquationAlpha = GL.GetInteger(GetPName.BlendEquationAlpha);
         int prevBlendFuncSrcRgb = GL.GetInteger(GetPName.BlendSrcRgb);
         int prevBlendFuncSrcAlpha = GL.GetInteger(GetPName.BlendSrcAlpha);
         int prevBlendFuncDstRgb = GL.GetInteger(GetPName.BlendDstRgb);
-        int prevBlendFuncDstAlpha = GL.GetInteger(GetPName.BlendDstAlpha);
-        bool prevCullFaceEnabled = GL.GetBoolean(GetPName.CullFace);
-        bool prevDepthTestEnabled = GL.GetBoolean(GetPName.DepthTest);
+        int prevBlendFuncDstAlpha = GL.GetInteger(GetPName.BlendDstAlpha);*/
+        //bool prevCullFaceEnabled = GL.GetBoolean(GetPName.CullFace);
+        //bool prevDepthTestEnabled = GL.GetBoolean(GetPName.DepthTest);
         int prevActiveTexture = GL.GetInteger(GetPName.ActiveTexture);
         GL.ActiveTexture(TextureUnit.Texture0);
         int prevTexture2D = GL.GetInteger(GetPName.TextureBinding2D);
@@ -311,7 +327,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
             }
         }
 
-        Span<int> prevPolygonMode = stackalloc int[2];
+        /*Span<int> prevPolygonMode = stackalloc int[2];
         unsafe {
             fixed (int* iptr = &prevPolygonMode[0]) {
                 GL.GetInteger(GetPName.PolygonMode, iptr);
@@ -319,17 +335,24 @@ outputColor = color * texture(in_fontTexture, texCoord);
         }
 
         GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-
+*/
         // Bind the element buffer (thru the VAO) so that we can resize it.
-        GL.BindVertexArray(_vertexArray);
-        // Bind the vertex buffer so that we can resize it.
-        GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
-        for (int i = 0; i < draw_data.CmdListsCount; i++) {
-            ImDrawListPtr cmd_list = draw_data.CmdLists[0];
 
-            int vertexSize = cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>();
+
+        GL.BindVertexArray(_vertexArray);
+
+        // Bind the vertex buffer so that we can resize it.
+        // int prevArrayBuffer = GL.GetInteger(GetPName.ArrayBufferBinding);
+        GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
+
+        //onsole.WriteLine($"ArrayBufferBinding = {GL.GetInteger(GetPName.ArrayBufferBinding)}");
+        //Console.WriteLine($"ElementArrayBufferBinding = {GL.GetInteger(GetPName.ElementArrayBufferBinding)}");
+
+        for (var i = 0; i < draw_data.CmdListsCount; i++) {
+            ImDrawListPtr cmd_list = draw_data.CmdLists[0];
+            var vertexSize = cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>();
             if (vertexSize > _vertexBufferSize) {
-                int newSize = (int)Math.Max(_vertexBufferSize * 1.5f, vertexSize);
+                var newSize = (int)Math.Max(_vertexBufferSize * 1.5f, vertexSize);
 
                 GL.BufferData(BufferTarget.ArrayBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                 _vertexBufferSize = newSize;
@@ -337,9 +360,9 @@ outputColor = color * texture(in_fontTexture, texCoord);
                 Console.WriteLine($"Resized dear imgui vertex buffer to new size {_vertexBufferSize}");
             }
 
-            int indexSize = cmd_list.IdxBuffer.Size * sizeof(ushort);
+            var indexSize = cmd_list.IdxBuffer.Size * sizeof(ushort);
             if (indexSize > _indexBufferSize) {
-                int newSize = (int)Math.Max(_indexBufferSize * 1.5f, indexSize);
+                var newSize = (int)Math.Max(_indexBufferSize * 1.5f, indexSize);
                 GL.BufferData(BufferTarget.ElementArrayBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                 _indexBufferSize = newSize;
 
@@ -347,29 +370,28 @@ outputColor = color * texture(in_fontTexture, texCoord);
             }
         }
 
-        GL.UseProgram(_shader);
-
-        GL.BindVertexArray(_vertexArray);
+        RenderState.shader.push(shader);
 
         var io = ImGui.GetIO();
 
         draw_data.ScaleClipRects(io.DisplayFramebufferScale);
 
-        GL.Enable(EnableCap.Blend);
-        GL.Enable(EnableCap.ScissorTest);
-        GL.BlendEquation(BlendEquationMode.FuncAdd);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-        GL.Disable(EnableCap.CullFace);
-        GL.Disable(EnableCap.DepthTest);
+        RenderState.blending.push(true); ////GL.Enable(EnableCap.Blend);
+        RenderState.scissor_test.push(true); // GL.Enable(EnableCap.ScissorTest);
+        //GL.BlendEquation(BlendEquationMode.FuncAdd);
+        //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        RenderState.cull_face.push(false); // GL.Disable(EnableCap.CullFace);
+        RenderState.depth_test.push(false); // GL.Disable(EnableCap.DepthTest);
+        RenderState.wireframe.push(false);
 
         // Render command lists
-        for (int n = 0; n < draw_data.CmdListsCount; n++) {
+        for (var n = 0; n < draw_data.CmdListsCount; n++) {
             ImDrawListPtr cmd_list = draw_data.CmdLists[n];
 
             GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>(), cmd_list.VtxBuffer.Data);
             GL.BufferSubData(BufferTarget.ElementArrayBuffer, IntPtr.Zero, cmd_list.IdxBuffer.Size * sizeof(ushort), cmd_list.IdxBuffer.Data);
 
-            for (int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++) {
+            for (var cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++) {
                 ImDrawCmdPtr pcmd = cmd_list.CmdBuffer[cmd_i];
                 if (pcmd.UserCallback != IntPtr.Zero)
                     throw new NotImplementedException();
@@ -391,40 +413,48 @@ outputColor = color * texture(in_fontTexture, texCoord);
             }
         }
 
+        GL.BindVertexArray(0 /*prevVAO */);
+        GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
         // GL.Disable(EnableCap.Blend);
         // GL.Disable(EnableCap.ScissorTest);
 
         // Reset state
         GL.BindTexture(TextureTarget.Texture2D, prevTexture2D);
         GL.ActiveTexture((TextureUnit)prevActiveTexture);
-        GL.UseProgram(prevProgram);
-        GL.BindVertexArray(prevVAO);
+        RenderState.shader.pop(); // GL.UseProgram(prevProgram);
+
         GL.Scissor(prevScissorBox[0], prevScissorBox[1], prevScissorBox[2], prevScissorBox[3]);
-        GL.BindBuffer(BufferTarget.ArrayBuffer, prevArrayBuffer);
-        GL.BlendEquationSeparate((BlendEquationMode)prevBlendEquationRgb, (BlendEquationMode)prevBlendEquationAlpha);
+        /*GL.BlendEquationSeparate((BlendEquationMode)prevBlendEquationRgb, (BlendEquationMode)prevBlendEquationAlpha);
         GL.BlendFuncSeparate(
             (BlendingFactorSrc)prevBlendFuncSrcRgb,
             (BlendingFactorDest)prevBlendFuncDstRgb,
             (BlendingFactorSrc)prevBlendFuncSrcAlpha,
-            (BlendingFactorDest)prevBlendFuncDstAlpha);
-        if (prevBlendEnabled) GL.Enable(EnableCap.Blend); else GL.Disable(EnableCap.Blend);
-        if (prevDepthTestEnabled) GL.Enable(EnableCap.DepthTest); else GL.Disable(EnableCap.DepthTest);
-        if (prevCullFaceEnabled) GL.Enable(EnableCap.CullFace); else GL.Disable(EnableCap.CullFace);
-        if (prevScissorTestEnabled) GL.Enable(EnableCap.ScissorTest); else GL.Disable(EnableCap.ScissorTest);
-        GL.PolygonMode(MaterialFace.FrontAndBack, (PolygonMode)prevPolygonMode[0]);
+            (BlendingFactorDest)prevBlendFuncDstAlpha);*/
 
+        RenderState.blending.pop();
+        RenderState.depth_test.pop();
+        RenderState.cull_face.pop();
+        RenderState.scissor_test.pop();
+        RenderState.wireframe.pop();
+
+        //if (prevBlendEnabled) GL.Enable(EnableCap.Blend); else GL.Disable(EnableCap.Blend);
+        //if (prevDepthTestEnabled) GL.Enable(EnableCap.DepthTest); else GL.Disable(EnableCap.DepthTest);
+        //if (prevCullFaceEnabled) GL.Enable(EnableCap.CullFace); else GL.Disable(EnableCap.CullFace);
+        //if (prevScissorTestEnabled) GL.Enable(EnableCap.ScissorTest); else GL.Disable(EnableCap.ScissorTest);
+        //GL.PolygonMode(MaterialFace.FrontAndBack, (PolygonMode)prevPolygonMode[0]);
         Debug.assert_opengl();
     }
 
     public static void Dispose() {
-        GL.DeleteVertexArray(_vertexArray);
-        GL.DeleteBuffer(_vertexBuffer);
-        GL.DeleteBuffer(_indexBuffer);
-
-        GL.DeleteTexture(_fontTexture);
-        GL.DeleteProgram(_shader);
+        //GL.DeleteVertexArray(_vertexArray);
+        //GL.DeleteBuffer(_vertexBuffer);
+        //GL.DeleteBuffer(_indexBuffer);
+        //GL.DeleteTexture(_fontTexture);
+        //shader.Dispose();
     }
 
+    /*
     private static int CreateProgram(string name, string vertexSource, string fragmentSoruce) {
         int program = GL.CreateProgram();
 
@@ -465,7 +495,7 @@ outputColor = color * texture(in_fontTexture, texCoord);
 
         return shader;
     }
-
+*/
     private static ImGuiKey TranslateKey(Keys key) {
         if (key >= Keys.D0 && key <= Keys.D9)
             return key - Keys.D0 + ImGuiKey._0;
