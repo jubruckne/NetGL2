@@ -44,23 +44,31 @@
       <None Remove="generated\**" />
       <None Remove="Assets\Scripts\**" />
       <None Remove="Assets\Temp\**" />
+      <None Remove="Libraries\MagicPhysX\**" />
+      <None Remove="Libraries\Jitter2\**" />
     </ItemGroup>
 
+  <!--  
     <ItemGroup> 
         <ProjectReference Include="..\SourceGenerators\SourceGenerators\SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
+    -->
     
 
     <ItemGroup>
       <Compile Remove="generated\**" />
       <Compile Remove="Assets\Scripts\**" />
       <Compile Remove="Assets\Temp\**" />
+      <Compile Remove="Libraries\MagicPhysX\**" />
+      <Compile Remove="Libraries\Jitter2\**" />
     </ItemGroup>
 
     <ItemGroup>
       <EmbeddedResource Remove="generated\**" />
       <EmbeddedResource Remove="Assets\Scripts\**" />
       <EmbeddedResource Remove="Assets\Temp\**" />
+      <EmbeddedResource Remove="Libraries\MagicPhysX\**" />
+      <EmbeddedResource Remove="Libraries\Jitter2\**" />
     </ItemGroup>
     
 </Project>

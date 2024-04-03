@@ -8,8 +8,7 @@ public class TextureCubemapBuffer: Texture2DArrayBuffer {
         : base(TextureTarget.TextureCubeMap, [right, left, bottom, top, front, back]) {
     }
 
-    public override void upload(TextureUnit texture_unit) {
-        GL.ActiveTexture(texture_unit);
+    public override void create() {
         if (handle == 0)
             handle = GL.GenTexture();
 
@@ -31,6 +30,29 @@ public class TextureCubemapBuffer: Texture2DArrayBuffer {
                 width,
                 height,
                 border:0,
+                PixelFormat.Rgba,
+                PixelType.UnsignedByte,
+                textures[tex_idx].image_data
+            );
+        }
+
+        Debug.assert_opengl();
+    }
+
+    public override void update() {
+        if(handle == 0)
+            Error.not_allocated(this);
+
+        GL.BindTexture(target, handle);
+
+        for (int tex_idx = 0; tex_idx < textures.Length; tex_idx++) {
+            GL.TexSubImage2D(
+                TextureTarget.TextureCubeMapPositiveX + tex_idx,
+                level: 0,
+                xoffset: 0,
+                yoffset: 0,
+                width,
+                height,
                 PixelFormat.Rgba,
                 PixelType.UnsignedByte,
                 textures[tex_idx].image_data

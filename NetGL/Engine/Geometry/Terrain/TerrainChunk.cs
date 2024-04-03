@@ -29,10 +29,10 @@ internal sealed class TerrainChunk {
 
         foreach(var b in va.vertex_buffers)
             if (b.status != Buffer.Status.Uploaded)
-                b.upload();
+                b.create();
 
         if(va.index_buffer.status != Buffer.Status.Uploaded)
-            va.index_buffer.upload();
+            va.index_buffer.create();
 
         va.upload();
 
@@ -85,7 +85,7 @@ internal sealed class TerrainChunk {
             vb[i].position = plane.to_world(
                                             px,
                                             py,
-                                            noise.sample(px, py) - level.select(10, 5, 0)
+                                            noise.sample(px, py) - level.select(20, 15, 10, 5, 0)
                                            );
 
             if (vx < chunk_quad_count && vy < chunk_quad_count) {

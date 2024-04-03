@@ -1,13 +1,72 @@
 #pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
-
 global using half = System.Half;
+using System.ComponentModel;
+using System.Diagnostics.Contracts;
+using System.Runtime.InteropServices.Marshalling;
+
 
 namespace NetGL;
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Numerics;
 
 public static class Numbers {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool is_approximately_equal_to<T>(this ref T left, in T right) where T: unmanaged, IFloatingPoint<T>
+        => T.Abs(left - right) < T.CreateSaturating(1e-5f);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool is_approximately_equal_to(this in float left, in float right)
+        => Math.Abs(left - right) < 1e-5f;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool is_approximately_equal_to(this in half left, in half right)
+        => MathF.Abs((float)left - (float)right) < 1e-4f;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool is_approximately_equal_to(this in double left, in double right)
+        => Math.Abs(left - right) < 1e-6d;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool is_approximately_equal_to(this ref readonly Vector3 left, ref readonly Vector3 right) {
+        if(!left.X.is_approximately_equal_to(right.X)) return false;
+        if(!left.Y.is_approximately_equal_to(right.Y)) return false;
+        return left.Z.is_approximately_equal_to(right.Z);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool is_approximately_equal_to(this ref readonly float3 left, ref readonly float3 right) {
+        if(!left.x.is_approximately_equal_to(right.x)) return false;
+        if(!left.y.is_approximately_equal_to(right.y)) return false;
+        return left.z.is_approximately_equal_to(right.z);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining), Pure]
+    public static bool is_equal_to<T>(this ref T left, ref readonly T right)
+        where T: unmanaged {
+        var left_span  = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(in left, 1));
+        var right_span = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(in right, 1));
+
+        var i = 0;
+        var length       = left_span.Length;
+        var vector_width = Vector<byte>.Count;
+
+        for (; i <= length - vector_width; i += vector_width) {
+            var v1 = new Vector<byte>(left_span.Slice(i, vector_width));
+            var v2 = new Vector<byte>(right_span.Slice(i, vector_width));
+            if (!Vector.EqualsAll(v1, v2))
+                return false;
+        }
+
+        // compare remaining...
+        for (; i < length; i++)
+            if (left_span[i] != right_span[i])
+                return false;
+
+        return true;
+    }
+
     public static T median<T>(this IEnumerable<T> values)
         where T: unmanaged, INumber<T> {
         // Convert the IEnumerable<T> to a sortable list and sort it.

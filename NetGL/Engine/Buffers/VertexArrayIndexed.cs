@@ -100,6 +100,28 @@ public class VertexArrayIndexed: VertexArray {
         return $"vert:{vertex_buffers.sum(static buffer => buffer.length):N0}, ind:{index_buffer.length:N0}";
     }
 
+    public override void draw_patches() {
+        //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
+
+        GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
+
+        if (draw_ranges.length <= 1) {
+            GL.DrawElements(PrimitiveType.Patches, index_buffer.length * 3, index_buffer.draw_element_type, 0);
+        } else {
+            GL.MultiDrawElementsBaseVertex(
+                                           PrimitiveType.Patches,
+                                           draw_ranges.counts,
+                                           index_buffer.draw_element_type,
+                                           draw_ranges.indices,
+                                           draw_ranges.length,
+                                           draw_ranges.base_vertices
+                                          );
+        }
+
+        Debug.assert_opengl();
+    }
+
+
     public override void draw() {
         //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
         if (draw_ranges.length <= 1) {

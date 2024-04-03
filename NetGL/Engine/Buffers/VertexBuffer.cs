@@ -4,8 +4,10 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 
-public interface IVertexBuffer: IBuffer {
+public interface IVertexBuffer: IBuffer, IBindable {
     ReadOnlyMap<string, VertexAttribute> attribute_definitions { get; }
+    void create();
+    void update();
 }
 
 public delegate void Update<TPosition, TNormal, TAttributes>(int index, ref TPosition position, ref TNormal normal, ref TAttributes attribute);
@@ -35,6 +37,8 @@ public class VertexBuffer<T>: Buffer<T>, IVertexBuffer where T: unmanaged {
     }
 
     public ArrayView<T> vertices => get_view();
+
+    public void bind() => base.bind_buffer();
 }
 
 public class VertexBuffer<TPosition, TNormal>: VertexBuffer<VertexBuffer<TPosition,TNormal>.Vertex>

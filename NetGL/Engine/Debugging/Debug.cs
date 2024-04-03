@@ -103,7 +103,7 @@ public static class Debug {
 
 
     [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
-    public static bool assert_opengl<T>(T source) {
+    public static void assert_opengl<T>(T source) {
         var err = GL.GetError();
         var msg = "";
 
@@ -114,13 +114,13 @@ public static class Debug {
             err = GL.GetError();
         }
 
-        if (msg == "") return true;
+        if (msg == "") return;
 
         throw new Exception($"OpenGL: {msg}! ({source})");
     }
 
     [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
-    public static bool assert_opengl() {
+    public static void assert_opengl() {
         var err = GL.GetError();
         var msg = "";
 
@@ -132,7 +132,7 @@ public static class Debug {
         }
 
         if (msg == "")
-            return true;
+            return;
 
         throw new Exception($"OpenGL: {msg}!");
     }

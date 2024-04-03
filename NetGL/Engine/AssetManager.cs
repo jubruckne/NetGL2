@@ -69,20 +69,22 @@ public static class AssetManager {
     public static ref readonly T get<T>(string name) where T: IAssetType<T> {
         var key = typeof(T).GetHashCode() ^ name.GetHashCode();
         var asset = library[key];
-
         return ref ((Asset<T>)asset).data;
     }
 
     public static void for_each<T>(Action<T> action) where T: IAssetType<T> {
-        foreach (var asset in library.Values) {
+        foreach (var asset in library.Values)
             if (asset is Asset<T> at) action(at.data);
-        }
+    }
+
+    public static IEnumerable<T> get_all<T>() where T: IAssetType<T> {
+        foreach (var asset in library.Values)
+            if (asset is Asset<T> at) yield return at.data;
     }
 
     public static void load_all_files<T>() where T: IAssetType<T> {
-        foreach (var file in get_files<T>()) {
+        foreach (var file in get_files<T>())
             load_from_file<T>(file);
-        }
     }
 
     public static ref readonly T load_from_file<T>(string filename) where T: IAssetType<T> {

@@ -6,10 +6,13 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public interface IIndexBuffer: IBuffer {
+public interface IIndexBuffer: IBuffer, IBindable {
     DrawElementsType draw_element_type { get; }
     PrimitiveType primitive_type { get; }
     int max_vertex_count { get; }
+
+    void create();
+    void update();
 }
 
 public static class IndexBuffer {
@@ -111,4 +114,6 @@ public class IndexBuffer<T>: Buffer<Index<T>>, IIndexBuffer where T: unmanaged, 
             (buffer[index], buffer[index + 2]) = (buffer[index + 2], buffer[index]);
         }
     }
+
+    public void bind() => bind_buffer();
 }

@@ -6,68 +6,56 @@ public class RevolvingList<T>
     where T: unmanaged, IDivisionOperators<T, float, T>, IMultiplyOperators<T, float, T>, INumber<T> {
     private readonly int max_size;
     private readonly Queue<T> queue;
+    private readonly T[] array;
+
+    private T r_sum = T.Zero;
+    private T r_min = T.Zero;
+    private T r_max = T.Zero;
 
     public RevolvingList(int max_size) {
         this.max_size = max_size;
         queue         = new Queue<T>(this.max_size);
+        array         = new T[this.max_size];
     }
 
     public void add(T item) {
-        if (queue.Count == max_size)
-            queue.Dequeue(); // Removes the oldest item
+        if (queue.Count == max_size) {
+            var removed = queue.Dequeue();
+            r_sum -= removed;
+        }
 
-        queue.Enqueue(item); // Adds a new item
+        queue.Enqueue(item);
+        r_sum += item;
+
+        update_min_max();
+    }
+
+    private void update_min_max() {
+        if (queue.Count == 0) return;
+
+        var min = queue.First();
+        var max = queue.First();
+
+        foreach (var item in queue) {
+            if (item < min)
+                min = item;
+            else if (item > max)
+                max = item;
+        }
     }
 
     public int count => queue.Count;
-    public T last => queue.Last();
 
-    public T sum() {
-        var result = T.Zero;
-
-        foreach (var item in queue) {
-            result += item;
-        }
-
-        return result;
-    }
-
-    public T minimum() {
-        if (queue.Count == 0) return T.Zero;
-
-        var result = queue.First();
-
-        foreach (var item in queue) {
-            if (item < result)
-                result = item;
-        }
-
-        return result;
-    }
-
-    public T maximum() {
-        if (queue.Count == 0) return T.Zero;
-
-        var result = T.Zero;
-
-        foreach (var item in queue) {
-            if (item > result)
-                result = item;
-        }
-
-        return result;
-    }
-
-    public T average() {
-        if (queue.Count == 0) return T.Zero;
-        return sum() / count;
-    }
+    public T sum() => r_sum;
+    public T average() => queue.Count == 0 ? T.Zero : sum() / count;
+    public T minimum() => r_min;
+    public T maximum() => r_max;
 
     public Span<T> as_span() {
-        if (queue.Count > 0) return queue.ToArray();
-        return new T[1] { T.Zero };
+        queue.CopyTo(array, 0);
+        return array;
     }
 
     public override string ToString()
-        => $"avg:{average() * 1000:F1}, min:{minimum() * 1000:F1}, max:{maximum() * 1000:F1}";
+        => $"avg:{average() * 1000:F1}, min:{r_min * 1000:F1}, max:{r_max * 1000:F1}";
 }

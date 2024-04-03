@@ -15,7 +15,7 @@ public class Behavior: IComponent<Behavior>, IUpdatableComponent {
 
     public bool enable_update { get; set; } = true;
 
-    public void update(in float game_time, in float delta_time) {
+    public void update(in float delta_time) {
         if (condition == null || condition(entity)) action(entity);
     }
 }

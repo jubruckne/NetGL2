@@ -1,3 +1,4 @@
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -27,15 +28,15 @@ public class OrthographicCamera: Camera, IComponent<FirstPersonCamera>, IUpdatab
         this.keyboard_state = keyboard_state;
         this.mouse_state = mouse_state;
 
-        projection_matrix = Matrix4.CreateOrthographicOffCenter(x, x+width, y, y+height, near, far);
-        camera_matrix = Matrix4.Identity;
+        camera_data.projection_matrix = Matrix4.CreateOrthographicOffCenter(x, x+width, y, y+height, near, far);
+        camera_data.camera_matrix = Matrix4.Identity;
     }
 
     public override string ToString() {
         return $"position: {entity.transform.position} rotation: {entity.transform.rotation}";
     }
 
-    public override void update(in float game_time, in float delta_time) {
+    public override void update(in float delta_time) {
         if (enable_input) {
             var speed = this.speed * delta_time;
             var sensitivity = this.sensitivity * this.speed * delta_time * 180f;
@@ -75,7 +76,9 @@ public class OrthographicCamera: Camera, IComponent<FirstPersonCamera>, IUpdatab
 
         entity.transform.copy_from(transform);
 
-        camera_matrix = transform.calculate_look_at_matrix();
+        camera_data.camera_matrix = transform.calculate_look_at_matrix();
+        camera_data.game_time = Engine.game_time;
+        camera_data.camera_position = transform.position;
 
         if (enable_input && enable_update) {
             entity.transform.rotation = transform.rotation;

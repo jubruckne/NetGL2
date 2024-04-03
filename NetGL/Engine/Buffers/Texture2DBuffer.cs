@@ -21,12 +21,7 @@ public class Texture2DBuffer: TextureBuffer {
         this.texture = texture;
     }
 
-    public override void upload() {
-        upload(TextureUnit.Texture0);
-    }
-
-    public virtual void upload(TextureUnit texture_unit) {
-        GL.ActiveTexture(texture_unit);
+    public override void create() {
         if (handle == 0)
             handle = GL.GenTexture();
 
@@ -44,6 +39,28 @@ public class Texture2DBuffer: TextureBuffer {
             width,
             height,
             border: 0,
+            PixelFormat.Rgba,
+            PixelType.UnsignedByte,
+            texture.image_data
+        );
+
+        GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+        Debug.assert_opengl();
+    }
+
+    public override void update() {
+        if (handle == 0)
+            Error.not_allocated(this);
+
+        GL.BindTexture(target, handle);
+        GL.TexSubImage2D(
+            target,
+            level: 0,
+            xoffset: 0,
+            yoffset: 0,
+            width,
+            height,
             PixelFormat.Rgba,
             PixelType.UnsignedByte,
             texture.image_data

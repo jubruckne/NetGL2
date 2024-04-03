@@ -3,19 +3,27 @@ namespace NetGL;
 using OpenTK.Graphics.OpenGL4;
 using System.Runtime.CompilerServices;
 
-public interface IBindable: IEquatable<IBindable> {
+public interface IBindable {
     int handle { get; }
     void bind();
 
-    bool IEquatable<IBindable>.Equals(IBindable? other) => other?.handle == handle;
+    //bool IEquatable<IBindable>.Equals(IBindable? other) => other?.handle == handle;
 }
 
-public interface IBuffer: IBindable {
+public interface IBindableIndexed {
+    int handle { get; }
+    int binding_point { get; }
+
+    void bind(int binding_point);
+
+    // bool IEquatable<IBindable>.Equals(IBindable? other) => other?.handle == handle;
+}
+
+public interface IBuffer {
     int length { get; }
     Type item_type { get; }
     int item_size{ get; }
     int total_size { get; }
-    void upload();
     Buffer.Status status { get; }
 }
 
@@ -34,8 +42,9 @@ public abstract class Buffer: IBuffer {
     public abstract Type item_type { get; }
     public abstract int total_size { get; }
 
-    public abstract void upload();
-    public abstract void bind();
+    public abstract void create();
+
+    public abstract void update();
 
     public override string ToString() => $"{GetType().get_type_name(false)} (type={item_type.get_type_name()}, length={length:N0}, size={total_size:N0}, status={status})";
 
@@ -64,6 +73,13 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         this.target = target;
         this.handle = 0;
         this.buffer = new NativeArray<T>(count);
+    }
+
+    protected Buffer(BufferTarget target, in T data) {
+        this.target = target;
+        this.handle = 0;
+        this.buffer = new NativeArray<T>(1);
+        buffer[0] = data;
     }
 
     public override Type item_type => typeof(T);
@@ -124,7 +140,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
     public override int item_size => Unsafe.SizeOf<T>();
     public override int total_size => item_size * length;
 
-    public override void bind() {
+    protected void bind_buffer() {
         // Console.WriteLine("Binding " + ToString());
 
         if (handle == 0)
@@ -133,15 +149,26 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         GL.BindBuffer(target, handle);
     }
 
-    public override void upload() {
-        if (handle == 0) {
-            handle = GL.GenBuffer();
-        }
+    public override void create() => create(BufferUsageHint.StaticDraw);
 
-        bind();
-        GL.BufferData(target, buffer.length * item_size, buffer.get_address(), BufferUsageHint.StaticDraw);
+    public void create(in BufferUsageHint usage) {
+        if (handle == 0)
+            handle = GL.GenBuffer();
+
+        bind_buffer();
+        GL.BufferData(target, buffer.length * item_size, buffer.get_address(), usage);
 
         status = Status.Uploaded;
+    }
+
+    public override void update() {
+        if (handle == 0)
+            Error.not_allocated(this);
+
+        bind_buffer();
+        GL.BufferSubData(target, IntPtr.Zero, buffer.length * item_size, buffer.get_address());
+
+        status = Status.Modified;
     }
 
     public void Dispose() {

@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace NetGL.ECS;
 
@@ -61,13 +62,13 @@ public class World: Entity {
 
                     var lights = entity.get_all<Light>(EntityRelationship.ParentsRecursive).ToArray();
 
+
+
                     foreach (var child in cam.entity.parent.children) {
                         // Console.WriteLine("  " + child.name);
                         render_entity(
                             child,
-                            cam.projection_matrix,
-                            cam.camera_matrix,
-                            cam.transform.position,
+                            cam,
                             Matrix4.Identity,
                             lights);
                     }
@@ -80,7 +81,7 @@ public class World: Entity {
         }
     }
 
-    private void render_entity(in Entity entity, in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Vector3 camera_pos, in Matrix4 parent_model_matrix, in Light[] lights) {
+    private void render_entity(in Entity entity, in Camera camera, in Matrix4 parent_model_matrix, in Light[] lights) {
         var model_matrix = entity.transform.calculate_model_matrix() * parent_model_matrix;
 
         /*entity.for_any_component_like<AmbientLight, DirectionalLight, PointLight>(
@@ -89,11 +90,11 @@ public class World: Entity {
 
         foreach (var renderable in entity.get_renderable_components()) {
             renderable.lights = lights;
-            renderable.render(projection_matrix, camera_matrix, camera_pos, model_matrix);
+            renderable.render(camera, model_matrix);
         }
 
         foreach (var child in entity.children)
-            render_entity(child, projection_matrix, camera_matrix, camera_pos, model_matrix, lights);
+            render_entity(child, camera, model_matrix, lights);
     }
 
     public void update(float game_time, float delta_time) {
@@ -129,7 +130,7 @@ public class World: Entity {
         foreach (var updateable in entity.get_updateable_components()) {
             //Console.WriteLine("update: " + updateable);
             if(updateable.enable_update)
-                updateable.update(game_time, delta_time);
+                updateable.update(delta_time);
         }
 
         foreach (var child in entity.children) {

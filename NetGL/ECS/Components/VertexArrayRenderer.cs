@@ -1,5 +1,4 @@
 using OpenTK.Mathematics;
-
 namespace NetGL.ECS;
 
 public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableComponent {
@@ -30,20 +29,25 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
     }
 
     public override string ToString() {
-        return $"va: {vertex_arrays}";
+        return $"{name}: {entity.name}";
     }
 
-    public void render(in Matrix4 projection_matrix,
-                       in Matrix4 camera_matrix,
-                       in Vector3 camera_pos,
+    public void render(in Camera camera,
                        in Matrix4 model_matrix
     ) {
         var shader = entity.get<ShaderComponent>().shader;
 
-        shader.set_projection_matrix(projection_matrix);
-        shader.set_camera_matrix(camera_matrix);
-        shader.set_model_matrix(model_matrix);
-        shader.set_camera_position(camera_pos);
+        //camera.uniforms.bind(0);
+        //shader.set_uniform_buffer(camera.uniforms);
+
+        shader.set_projection_matrix(camera.camera_data.projection_matrix);
+        shader.set_camera_matrix(camera.camera_data.camera_matrix);
+        shader.set_camera_position(camera.camera_data.camera_position);
+        shader.model_matrix.data = model_matrix;
+        shader.shared_uniforms.data = camera.camera_data;
+
+        Debug.assert_opengl(this);
+
 
         shader.set_light(lights);
 
@@ -61,10 +65,15 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
         foreach (var (va, enabled) in vertex_arrays) {
             if (enabled) {
                 va.bind();
-                va.material.ambient_texture?.bind();
+
+                va.material.ambient_texture?.bind(0);
+
                 shader.set_material(va.material);
 
-                va.draw();
+                if (shader.has_tesselation_shader)
+                    va.draw_patches();
+                else
+                    va.draw();
             }
         }
 

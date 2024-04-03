@@ -93,6 +93,31 @@ public static class TypeExtensions {
     public static unsafe int size_of<T>(this T integer) where T : unmanaged, INumberBase<T> {
         return sizeof(T);
     }
+
+    public static int std140_alignment(this Type field_type) {
+        return field_type switch {
+            _ when field_type == typeof(int) => 4,
+            _ when field_type == typeof(uint) => 4,
+            _ when field_type == typeof(float) => 4,
+            _ when field_type == typeof(System.Numerics.Vector2) => 8,
+            _ when field_type == typeof(OpenTK.Mathematics.Vector2) => 8,
+            _ when field_type == typeof(OpenTK.Mathematics.Vector2i) => 8,
+            _ when field_type == typeof(float2) => 8,
+            _ when field_type == typeof(int2) => 8,
+            _ when field_type == typeof(System.Numerics.Vector3) => 16,
+            _ when field_type == typeof(OpenTK.Mathematics.Vector3) => 16,
+            _ when field_type == typeof(float3) => 16,
+            _ when field_type == typeof(int3) => 16,
+            _ when field_type == typeof(System.Numerics.Vector4) => 16,
+            _ when field_type == typeof(OpenTK.Mathematics.Vector4) => 16,
+            _ when field_type == typeof(float4) => 16,
+            _ when field_type == typeof(int4)   => 16,
+            _ when field_type == typeof(OpenTK.Mathematics.Matrix4) => 16,
+            _ when field_type == typeof(System.Numerics.Matrix4x4) => 16,
+            _ => throw new NotImplementedException($"Alignment not defined for type {field_type}")
+        };
+    }
+
 }
 
 public static class RandomExt {

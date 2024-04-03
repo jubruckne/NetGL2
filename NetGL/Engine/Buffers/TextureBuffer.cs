@@ -1,12 +1,14 @@
-using OpenTK.Graphics.OpenGL4;
-
 namespace NetGL;
 
-public abstract class TextureBuffer: Buffer {
+using OpenTK.Graphics.OpenGL4;
+
+public abstract class TextureBuffer: Buffer, IBindableIndexed {
     protected readonly TextureTarget target;
 
     public int width { get; protected init; }
     public int height { get; protected init; }
+    public int texture_unit { get; private set; } = -1;
+    int IBindableIndexed.binding_point => texture_unit;
 
     public string glsl_type {
         get {
@@ -22,10 +24,11 @@ public abstract class TextureBuffer: Buffer {
         this.target = target;
     }
 
-    public override void bind() {
+    public void bind(int texture_unit) {
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");
 
+        GL.ActiveTexture(TextureUnit.Texture0 + texture_unit);
         GL.BindTexture(target, handle);
     }
 }

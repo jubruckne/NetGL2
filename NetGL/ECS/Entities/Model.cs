@@ -24,8 +24,8 @@ public class Model {
     public static Model from_shape(IShapeGenerator shape_generator, in Material material) {
         VertexBuffer<Vector3, Vector3> vb = new(shape_generator.get_vertices_and_normals());
         var ib = IndexBuffer.create(shape_generator.get_indices(), vb.length);
-        vb.upload();
-        ib.upload();
+        vb.create();
+        ib.create();
 
         var va = new VertexArrayIndexed(vb, ib, material);
 
@@ -75,10 +75,10 @@ public class Model {
 
         foreach (var mesh in assimp.Meshes) {
             var vb = new VertexBuffer<Assimp.Vector3D, Assimp.Vector3D>(mesh.Vertices.as_readonly_span(), mesh.Normals.as_readonly_span());
-            vb.upload();
+            vb.create();
 
             var ib = new IndexBuffer<int>(mesh.GetIndices());
-            ib.upload();
+            ib.create();
 
             var va = new VertexArrayIndexed(vb, ib, materials[mesh.MaterialIndex]);
             va.upload();

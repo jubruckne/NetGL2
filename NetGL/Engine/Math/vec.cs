@@ -1,9 +1,11 @@
 global using float2 = NetGL.Vectors.vec2<float>;
 global using float3 = NetGL.Vectors.vec3<float>;
+global using float4 = NetGL.Vectors.vec4<float>;
 global using double2 = NetGL.Vectors.vec2<double>;
 global using double3 = NetGL.Vectors.vec3<double>;
 global using int2 = NetGL.Vectors.vec2<int>;
 global using int3 = NetGL.Vectors.vec3<int>;
+global using int4 = NetGL.Vectors.vec4<int>;
 global using ushort3 = NetGL.Vectors.vec3<ushort>;
 global using short2 = NetGL.Vectors.vec2<short>;
 global using short3 = NetGL.Vectors.vec3<short>;

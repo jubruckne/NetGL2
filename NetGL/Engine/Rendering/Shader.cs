@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace NetGL;
 
 using System.Runtime.CompilerServices;
@@ -8,6 +10,15 @@ using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct SharedUniforms {
+    public Matrix4 projection_matrix;
+    public Matrix4 camera_matrix;
+    public Vector3 camera_position;
+    public float game_time;
+}
+
 public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     static string IAssetType<Shader>.path => "Shaders";
 
@@ -15,8 +26,17 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         throw new NotImplementedException();
     }
 
+    int IBindable.handle => this.handle;
+
+    public UniformVariable<Matrix4> model_matrix { get; private set; }
+    public UniformBuffer<SharedUniforms> shared_uniforms { get; private set; }
+
+    public bool has_geometry_shader { get; private set; }
+    public bool has_tesselation_shader { get; private set; }
+
     public readonly string name;
-    public int handle { get; init; }
+    public readonly int handle;
+
     private readonly Dictionary<string, int> uniform_locations;
 
     public IReadOnlyList<string> uniforms => uniform_locations.Keys.ToList();
@@ -30,12 +50,22 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         Shader.instances.writeable().Add(handle, new WeakReference<Shader>(this));
     }
 
-    public Shader(string name, string vertex_program, string fragment_program, string geometry_program = "")
+    public Shader(string name, string vertex_program, string fragment_program)
     : this(name) {
+        compile_from_file(vertex_program, fragment_program);
+    }
+
+    public Shader(string name, string vertex_program, string fragment_program, string geometry_program)
+        : this(name) {
         compile_from_file(vertex_program, fragment_program, geometry_program);
     }
 
-    protected void compile_from_text(string vertex_program, string fragment_program, string geometry_program = "") {
+    public Shader(string name, string vertex_program, string fragment_program, string tess_control, string tess_eval)
+        : this(name) {
+        compile_from_file(vertex_program, fragment_program, tess_control_program:tess_control, tess_eval_program:tess_eval);
+    }
+
+    protected void compile_from_text(string vertex_program, string fragment_program, string geometry_program = "", string tess_control_program = "", string tess_eval_program = "") {
         // Console.WriteLine("\ncompiling vertex shader...");
         var vertex_shader_handle = GL.CreateShader(ShaderType.VertexShader);
         GL.ShaderSource(vertex_shader_handle, vertex_program);
@@ -48,6 +78,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
         var geometry_shader_handle = -1;
         if (geometry_program != "") {
+            has_geometry_shader = true;
             // Console.WriteLine("compiling geometry shader...");
 
             geometry_shader_handle = GL.CreateShader(ShaderType.GeometryShader);
@@ -55,26 +86,65 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
             compile(geometry_shader_handle);
         }
 
+        var tess_control_shader_handle = -1;
+        if (tess_control_program != "") {
+            has_tesselation_shader = true;
+            // Console.WriteLine("compiling tesselation control shader...");
+            tess_control_shader_handle = GL.CreateShader(ShaderType.TessControlShader);
+            GL.ShaderSource(tess_control_shader_handle, tess_control_program);
+            compile(tess_control_shader_handle);
+        }
+
+        var tess_eval_shader_handle = -1;
+        if (tess_eval_program != "") {
+            // Console.WriteLine("compiling tesselation control shader...");
+            tess_eval_shader_handle = GL.CreateShader(ShaderType.TessEvaluationShader);
+            GL.ShaderSource(tess_eval_shader_handle, tess_eval_program);
+            compile(tess_eval_shader_handle);
+        }
+
         // Console.WriteLine("attaching shaders...");
 
         // Attach shaders...
         GL.AttachShader(handle, vertex_shader_handle);
+
+        if(tess_control_shader_handle != -1)
+            GL.AttachShader(handle, tess_control_shader_handle);
+
+        if(tess_eval_shader_handle != -1)
+            GL.AttachShader(handle, tess_eval_shader_handle);
+
         if(geometry_shader_handle != -1)
             GL.AttachShader(handle, geometry_shader_handle);
+
         GL.AttachShader(handle, fragment_shader_handle);
 
-        // And then link them together.
         // Console.WriteLine("linking shaders...");
 
         LinkProgram(handle);
 
         GL.DetachShader(handle, vertex_shader_handle);
+
+        if(tess_control_shader_handle != -1)
+            GL.DetachShader(handle, tess_control_shader_handle);
+
+        if(tess_eval_shader_handle != -1)
+            GL.DetachShader(handle, tess_eval_shader_handle);
+
         GL.DetachShader(handle, fragment_shader_handle);
+
         if(geometry_shader_handle != -1)
             GL.DetachShader(handle, geometry_shader_handle);
 
         GL.DeleteShader(fragment_shader_handle);
         GL.DeleteShader(vertex_shader_handle);
+
+        if (tess_control_shader_handle != -1)
+            GL.DeleteShader(tess_control_shader_handle);
+
+        if (tess_eval_shader_handle != -1)
+            GL.DeleteShader(tess_eval_shader_handle);
+
         if(geometry_shader_handle != -1)
             GL.DeleteShader(geometry_shader_handle);
 
@@ -96,10 +166,14 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
             //Console.WriteLine("  " + key + " -> " + location);
         }
 
-        //Console.WriteLine();
+        if(has_uniform("model"))
+            model_matrix = new(this, "model");
+
+        if(has_uniform_block("shared"))
+            shared_uniforms = new UniformBuffer<SharedUniforms>(this, "shared");
     }
 
-    private void compile_from_file(string vertex_program, string fragment_program, string geometry_program="") {
+    private void compile_from_file(string vertex_program, string fragment_program, string geometry_program="", string tess_control_program="", string tess_eval_program="") {
         if (File.Exists(AssetManager.asset_path<Shader>(vertex_program)))
             vertex_program = AssetManager.asset_path<Shader>(vertex_program);
 
@@ -111,7 +185,17 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
                 geometry_program = AssetManager.asset_path<Shader>(geometry_program);
         }
 
-        compile_from_text(vertex_program, fragment_program, geometry_program);
+        if(tess_control_program != "") {
+            if (File.Exists(AssetManager.asset_path<Shader>(tess_control_program)))
+                geometry_program = AssetManager.asset_path<Shader>(tess_control_program);
+        }
+
+        if(tess_eval_program != "") {
+            if (File.Exists(AssetManager.asset_path<Shader>(tess_eval_program)))
+                geometry_program = AssetManager.asset_path<Shader>(tess_eval_program);
+        }
+
+        compile_from_text(vertex_program, fragment_program, geometry_program, tess_control_program, tess_eval_program);
     }
 
     private static void compile(int shader) {
@@ -143,7 +227,6 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
     public void set_projection_matrix(in Matrix4 matrix) => set_uniform("projection", matrix);
     public void set_camera_matrix(in Matrix4 matrix) => set_uniform("camera", matrix);
-    public void set_model_matrix(in Matrix4 matrix) => set_uniform("model", matrix);
     public void set_game_time(in float game_time) => set_uniform("game_time", game_time);
 
     public void set_material(Material material) {
@@ -192,7 +275,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void set_light(in Light[] lights) {
         var num_directional_lights = 0;
 
@@ -216,6 +299,9 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool has_uniform(string name) => uniform_locations.ContainsKey(name);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool has_uniform_block(string name) => GL.GetUniformBlockIndex(handle, name) != -1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int get_uniform_location(string name) => uniform_locations[name];

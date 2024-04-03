@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetGL", "NetGL\NetGL.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerators", "SourceGenerators\SourceGenerators\SourceGenerators.csproj", "{E6B71839-1C86-43A1-8AE3-82DCCF05A9BB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Benchmark\Benchmark.csproj", "{560FE862-15AF-4D3C-874A-F690E923EFA2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -18,5 +20,9 @@ Global
 		{E6B71839-1C86-43A1-8AE3-82DCCF05A9BB}.Debug|ARM64.Build.0 = Debug|Any CPU
 		{E6B71839-1C86-43A1-8AE3-82DCCF05A9BB}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{E6B71839-1C86-43A1-8AE3-82DCCF05A9BB}.Release|ARM64.Build.0 = Release|Any CPU
+		{560FE862-15AF-4D3C-874A-F690E923EFA2}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{560FE862-15AF-4D3C-874A-F690E923EFA2}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{560FE862-15AF-4D3C-874A-F690E923EFA2}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{560FE862-15AF-4D3C-874A-F690E923EFA2}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

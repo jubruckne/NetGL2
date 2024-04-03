@@ -14,12 +14,12 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
 
     public NativeArray(int length, bool zero_out = true) {
         if (length < 0) {
-            Error.index_out_of_range(nameof(length), length);
+            Error.index_out_of_range(length);
         }
 
         var bytes = sizeof(T) * length;
         if (bytes < 0) {
-            Error.index_out_of_range(nameof(T), bytes);
+            Error.index_out_of_range(length);
         }
 
         this.data = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes, 64);

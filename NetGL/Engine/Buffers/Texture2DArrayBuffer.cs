@@ -24,13 +24,8 @@ public class Texture2DArrayBuffer: TextureBuffer {
 
     public Texture2DArrayBuffer(in Texture[] textures): this(TextureTarget.Texture2DArray, textures) {}
 
-    public override void upload() {
-        upload(TextureUnit.Texture0);
-    }
-
-    public virtual void upload(TextureUnit texture_unit) {
-        GL.ActiveTexture(texture_unit);
-        if (handle == 0) 
+    public override void create() {
+        if (handle == 0)
             handle = GL.GenTexture();
         
         GL.BindTexture(target, handle);
@@ -54,6 +49,32 @@ public class Texture2DArrayBuffer: TextureBuffer {
         );
 
         for (int tex_idx = 0; tex_idx < textures.Length; tex_idx++) {
+            GL.TexSubImage3D(
+                target,
+                level: 0,
+                xoffset: 0,
+                yoffset: 0,
+                zoffset: tex_idx,
+                width,
+                height,
+                depth: 1,
+                PixelFormat.Rgba,
+                PixelType.UnsignedByte,
+                textures[tex_idx].image_data
+            );
+        }
+
+        GL.GenerateMipmap(GenerateMipmapTarget.Texture2DArray);
+
+        Debug.assert_opengl();
+    }
+
+    public override void update() {
+        if (handle == 0)
+            Error.not_allocated(this);
+
+        GL.BindTexture(target, handle);
+        for (var tex_idx = 0; tex_idx < textures.Length; tex_idx++) {
             GL.TexSubImage3D(
                 target,
                 level: 0,

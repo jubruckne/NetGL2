@@ -1,3 +1,4 @@
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -23,11 +24,11 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         this.keyboard_state = keyboard_state;
         this.mouse_state = mouse_state;
 
-        projection_matrix = Matrix4.CreatePerspectiveFieldOfView(field_of_view.degree_to_radians(), aspect_ratio, near, far);
-        camera_matrix = Matrix4.Identity;
+        camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(field_of_view.degree_to_radians(), aspect_ratio, near, far);
+        camera_data.camera_matrix = Matrix4.Identity;
     }
 
-    public override void update(in float game_time, in float delta_time) {
+    public override void update(in float delta_time) {
         if (enable_input) {
             var speed = this.speed * delta_time;
 
@@ -69,26 +70,18 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         else if (transform.attitude.pitch < pitch_clamp[1])
             transform.attitude.pitch = pitch_clamp[1];
 */
-        camera_matrix = transform.calculate_look_at_matrix();
+
+        camera_data.camera_matrix = transform.calculate_look_at_matrix();
+        camera_data.game_time = Engine.game_time;
+        camera_data.camera_position = transform.position;
 
         if (enable_input && enable_update) {
             entity.transform.rotation = transform.rotation;
             entity.transform.position = transform.position;
         }
-        /*
-        Console.WriteLine("");
-        Console.WriteLine("Camera Matrix:");
-        Console.WriteLine(camera_matrix.ToString());
-        Console.WriteLine("Camera Position:");
-        Console.WriteLine(transform.position.ToString());
-        Console.WriteLine("Extracted:");
-        Console.WriteLine(camera_matrix.ExtractTranslation());
-        */
     }
 
-    public override string ToString() {
-        return $"position: {entity.transform.position} rotation: {entity.transform.rotation}";
-    }
+    public override string ToString() => $"position: {entity.transform.position} rotation: {entity.transform.rotation}";
 }
 
 public static class FirstPersonCameraExt {

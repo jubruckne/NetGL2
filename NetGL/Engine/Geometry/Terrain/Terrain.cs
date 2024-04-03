@@ -14,7 +14,7 @@ public class Terrain: Entity {
     private readonly Material[] material_per_level;
 
     internal Terrain(Plane plane, Entity? parent = null): base("Terrain", parent) {
-        const int max_level = 2;
+        const int max_level = 4;
         this.plane = plane;
 
         camera = get<Camera>(EntityRelationship.HierarchyWithChildrenRecursive);
@@ -32,9 +32,9 @@ public class Terrain: Entity {
 
         renderer = this.add_vertex_array_renderer();
 
-        chunks = new(32f, max_level, allocate_chunk);
+        chunks = new(4096, max_level, allocate_chunk);
         var chunk = chunks.request_node(0, 0, max_level);
-        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!));
+        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!, tesselate:false));
 
         //using var heightmap = noise.sample<half>(256, 256, 0, 0, 0.1f, 0.1f, 10);
         //heightmap.save_to_file("heightmap.json");
@@ -44,7 +44,6 @@ public class Terrain: Entity {
         Console.WriteLine("Existing terrain chunks:");
         foreach (var q in chunks)
             Console.WriteLine(q);
-
 
         Console.WriteLine();
         Console.WriteLine("Existing terrain chunks:");

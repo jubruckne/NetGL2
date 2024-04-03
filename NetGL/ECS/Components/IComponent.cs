@@ -4,12 +4,12 @@ namespace NetGL.ECS;
 
 public interface IUpdatableComponent {
     bool enable_update { get; set; }
-    void update(in float game_time, in float delta_time);
+    void update(in float delta_time);
 }
 
 public interface IRenderableComponent {
     Light[] lights { get; internal set; }
-    void render(in Matrix4 projection_matrix, in Matrix4 camera_matrix, in Vector3 camera_pos, in Matrix4 model_matrix);
+    void render(in Camera camera, in Matrix4 model_matrix);
 }
 
 public interface IComponent: INamed {

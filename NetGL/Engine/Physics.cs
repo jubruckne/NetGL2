@@ -2,7 +2,6 @@ using System.Numerics;
 using NetGL.ECS;
 
 namespace NetGL;
-
 using BulletSharp;
 using System.Collections.Generic;
 

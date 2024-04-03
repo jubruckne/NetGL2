@@ -30,7 +30,7 @@ public abstract class State<T>: IState
             if (this.state == null && value == null) return;
 
             if (this.state != null && this.state.Equals(value)) {
-                ++RenderState.state_changes_count;
+                ++RenderState.state_changes_avoided;
                 return;
             }
 

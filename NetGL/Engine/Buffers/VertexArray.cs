@@ -82,6 +82,10 @@ public class VertexArray: IBindable {
         }
     }
 
+    public virtual void draw_patches() {
+        throw new NotImplementedException();
+    }
+
     public bool has_normals {
         get {
             foreach (var a in vertex_attributes)

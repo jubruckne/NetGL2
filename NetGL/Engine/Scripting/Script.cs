@@ -7,7 +7,7 @@ public class Script: IAssetType<Script> {
     public static string path => "Scripts";
 
     private readonly string code;
-    private Script<Engine> executable;
+    private readonly Script<Engine> executable;
 
     public Script(string code) {
         this.code = code;

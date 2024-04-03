@@ -15,7 +15,7 @@ public class Engine: GameWindow {
     public readonly World world;
 
     private readonly RevolvingList<float> frame_times = new(60);
-    protected float game_time;
+    public static float game_time;
 
     private float cursor_state_last_switch = 1f;
     private double frame_time;
@@ -109,7 +109,7 @@ public class Engine: GameWindow {
                                            AssetManager.load_from_file<Texture>("front.jpg"),
                                            AssetManager.load_from_file<Texture>("back.jpg")
                                           );
-        cubemap.upload();
+        cubemap.create();
 
         var mat = Material.Chrome;
         mat.ambient_texture = cubemap;
@@ -159,7 +159,7 @@ public class Engine: GameWindow {
 
         var planet_mat = new Material("planet", Color.Black, Color.White, Color.White, 2.5f);
         Texture2DBuffer planets_texture = new Texture2DBuffer(AssetManager.load_from_file<Texture>("8k_jupiter.jpg"));
-        planets_texture.upload();
+        planets_texture.create();
 
         planet_mat.ambient_texture = planets_texture;
 
@@ -201,7 +201,7 @@ public class Engine: GameWindow {
             entity.get<Component<RigidBody>>().data.LinearVelocity = Vector3.Zero;
         });
 
-        foreach (var b in Enumerable.Range(1, 5000)) {
+        foreach (var b in Enumerable.Range(1, 50)) {
             Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.35f, material:Material.random);
             cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, -15f + Random.Shared.NextSingle() * 5.9f);
 
@@ -212,7 +212,8 @@ public class Engine: GameWindow {
         GL.Enable(EnableCap.ProgramPointSize);
 
         AssetManager.load_all_files<Script>();
-        AssetManager.for_each<Script>(script => script.run(this));
+        foreach (var script in AssetManager.get_all<Script>())
+            script.run(this);
 
         Debug.assert_opengl();
 

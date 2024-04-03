@@ -10,7 +10,7 @@ public class AutoShader: Shader {
             File.Delete(file);
     }
 
-    public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array, bool is_sky_box = false) {
+    public static AutoShader for_vertex_type(in string name, in VertexArray vertex_array, bool is_sky_box = false, bool tesselate = false) {
         // Console.WriteLine($"\nCreating shader {name} for {vertex_array}");
         var vertex_code = new StringBuilder();
         var shader = new AutoShader(name);
@@ -155,7 +155,15 @@ public class AutoShader: Shader {
 
         save_to_file(name, vertex_code.ToString(), fragment_code.ToString());
 
-        shader.compile_from_text(vertex_code.ToString(), fragment_code.ToString());
+        if(tesselate)
+            shader.compile_from_text(
+                                     vertex_code.ToString(),
+                                     fragment_code.ToString(),
+                                     tess_control_program: File.ReadAllText(AssetManager.asset_path<Shader>("tessctrl.glsl")),
+                                     tess_eval_program: File.ReadAllText(AssetManager.asset_path<Shader>("tesseval.glsl"))
+                                     );
+        else
+            shader.compile_from_text(vertex_code.ToString(), fragment_code.ToString());
 
         return shader;
     }

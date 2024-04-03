@@ -1,5 +1,3 @@
-// ReSharper disable StaticMemberInGenericType
-
 namespace NetGL;
 
 public static class Pool<T> where T: unmanaged {
