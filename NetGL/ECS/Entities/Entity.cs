@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using NetGL.ECS.Events;
 
 namespace NetGL.ECS;
@@ -54,7 +55,6 @@ public class Entity: INamed, IEventSender<Entity, EntityComponentAdded> {
         if (parent != null)
             ((EntityList)parent.children).add(this);
     }
-
     public enum EntityRelationship {Self, Parent, ParentsRecursive, Children, ChildrenRecursive, HierarchyWithChildrenRecursive}
 
     /// <summary>

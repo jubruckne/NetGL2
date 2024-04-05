@@ -7,6 +7,17 @@ public interface IUpdatableComponent {
     void update(in float delta_time);
 }
 
+public class RenderData {
+    public Shader shader;
+    public RenderSettings render_settings;
+    public List<VertexArrayIndexed> vertex_arrays;
+    public Matrix4 model_matrix;
+}
+
+public interface IRenderable {
+    RenderData data { get; }
+}
+
 public interface IRenderableComponent {
     Light[] lights { get; internal set; }
     void render(in Camera camera, in Matrix4 model_matrix);

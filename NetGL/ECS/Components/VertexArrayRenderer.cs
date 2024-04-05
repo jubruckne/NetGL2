@@ -9,12 +9,14 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
 
     public readonly Dictionary<VertexArray, bool> vertex_arrays;
 
-    public bool cull_face = true;
-    public bool depth_test = true;
-    public bool wireframe = false;
-    public bool blending = false;
-    public bool front_facing = true;
-
+    public RenderSettings render_settings = new(
+                                                cull_face: true,
+                                                depth_test: true,
+                                                wireframe: false,
+                                                blending: false,
+                                                front_facing: true,
+                                                scissor_test: false
+                                               );
     public Light[] lights { get; set; }
 
     internal VertexArrayRenderer(in Entity entity, List<VertexArray> vertex_arrays) {
@@ -40,27 +42,27 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
         //camera.uniforms.bind(0);
         //shader.set_uniform_buffer(camera.uniforms);
 
-        shader.set_projection_matrix(camera.camera_data.projection_matrix);
-        shader.set_camera_matrix(camera.camera_data.camera_matrix);
-        shader.set_camera_position(camera.camera_data.camera_position);
         shader.model_matrix.data = model_matrix;
-        shader.shared_uniforms.data = camera.camera_data;
+        if (shader.uniform_buffer_camera_data is not null) {
+            var m = camera.camera_data;
+            m.camera_matrix.Transpose();
+            m.projection_matrix.Transpose();
+            shader.uniform_buffer_camera_data.data = m;
+        }  else {
+            shader.set_projection_matrix(camera.camera_data.projection_matrix);
+            shader.set_camera_matrix(camera.camera_data.camera_matrix);
+            shader.set_camera_position(camera.camera_data.camera_position);
+        }
 
         Debug.assert_opengl(this);
-
-
         shader.set_light(lights);
 
         // Console.WriteLine($"projection:\n{projection_matrix}");
         // Console.WriteLine($"camera:\n{camera_matrix}");
         // Console.WriteLine($"model:\n{model_matrix}");
 
-        RenderState.shader.bind(shader);
-        RenderState.depth_test.value   = depth_test;
-        RenderState.cull_face.value    = cull_face;
-        RenderState.blending.value     = blending;
-        RenderState.wireframe.value    = wireframe;
-        RenderState.front_facing.value = front_facing;
+        RenderState.bind(shader);
+        RenderState.bind(render_settings);
 
         foreach (var (va, enabled) in vertex_arrays) {
             if (enabled) {

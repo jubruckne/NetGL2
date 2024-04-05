@@ -156,7 +156,7 @@ void main()
 outputColor = color * texture(in_fontTexture, texCoord);
 }";
 
-        shader = new Shader("ImguiRenderer", VertexSource, FragmentSource);
+        shader = Shader.from_text("ImguiRenderer", VertexSource, FragmentSource);
 
 
         //_shader = CreateProgram("ImGui", VertexSource, FragmentSource);

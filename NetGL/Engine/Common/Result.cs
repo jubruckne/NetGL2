@@ -1,6 +1,6 @@
 namespace NetGL;
 
-public readonly struct Result<T> where T: class {
+public readonly struct Result<T> {
     public readonly T value;
     private readonly bool succeeded;
 

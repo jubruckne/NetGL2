@@ -34,7 +34,7 @@ public class Terrain: Entity {
 
         chunks = new(4096, max_level, allocate_chunk);
         var chunk = chunks.request_node(0, 0, max_level);
-        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!, tesselate:false));
+        this.add_shader(Shader.from_file("terrain_shader", "terrain.vert.glsl", "terrain.frag.glsl"));
 
         //using var heightmap = noise.sample<half>(256, 256, 0, 0, 0.1f, 0.1f, 10);
         //heightmap.save_to_file("heightmap.json");
@@ -50,8 +50,8 @@ public class Terrain: Entity {
         foreach (var q in chunks)
             Console.WriteLine(q);
 
-        renderer.wireframe = true;
-        renderer.depth_test = true;
+        renderer.render_settings.wireframe = true;
+        renderer.render_settings.depth_test = true;
 
         this.add_behavior(_ => update());
     }

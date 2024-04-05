@@ -13,6 +13,7 @@
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>./generated</CompilerGeneratedFilesOutputPath>
         <Optimize>true</Optimize>
+        <WholeProgramOptimization>true</WholeProgramOptimization>
     </PropertyGroup>
 
     <ItemGroup>

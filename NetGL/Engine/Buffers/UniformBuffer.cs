@@ -7,32 +7,29 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 
-public interface IUniformBuffer: INamed, IUniform;
+public interface IUniformBuffer: IBuffer, IUniform, INamed {
+    int binding_point { get; }
+}
 
 public class UniformBuffer<T>: Buffer<T>, IUniformBuffer
     where T: unmanaged {
 
-    private readonly Shader shader;
-    private readonly int block_index;
-
     public string name { get; }
     private readonly int binding_point;
+    int IUniformBuffer.binding_point => this.binding_point;
 
     private T uniform_value;
 
-    public UniformBuffer(in Shader shader, in string name, in T item): base(BufferTarget.UniformBuffer, item) {
-        this.shader = shader;
-        this.name = name;
+    public UniformBuffer(in string name, in T item): base(BufferTarget.UniformBuffer, item) {
+        this.name   = name;
         verify_std_140_alignment();
 
         binding_point = 0;
-        block_index = GL.GetUniformBlockIndex(handle, name);
-        if (block_index == -1) Error.index_out_of_range(name);
 
         create(BufferUsageHint.DynamicDraw);
     }
 
-    public UniformBuffer(in Shader shader, in string name): this(shader, name, default) {}
+    public UniformBuffer(in string name): this(name, default) {}
 
     public T data {
         get => uniform_value;
@@ -62,7 +59,7 @@ public class UniformBuffer<T>: Buffer<T>, IUniformBuffer
         var total_size = Unsafe.SizeOf<T>();
         Console.WriteLine($"Total calculated size: {offset}, Total Marshal.SizeOf: {total_size}");
 
-        if(offset != total_size) Error.type_alignment_mismatch<T>(offset, total_size);
+        if (offset != total_size) Error.type_alignment_mismatch<T>(offset, total_size);
 
         return;
 
@@ -70,11 +67,15 @@ public class UniformBuffer<T>: Buffer<T>, IUniformBuffer
             => current_offset + (alignment - current_offset % alignment) % alignment;
     }
 
+    public void bind() {
+        base.bind_buffer();
+    }
+
     private void update_and_make_current() {
         base.update();
 
-        GL.BindBufferBase(BufferRangeTarget.UniformBuffer, binding_point, shader.handle);
-        GL.UniformBlockBinding(shader.handle, block_index, binding_point);
+        //GL.BindBufferBase(BufferRangeTarget.UniformBuffer, binding_point, handle);
+        GL.BindBufferRange(BufferRangeTarget.UniformBuffer, binding_point, handle, 0, uniform_value.size_of());
 
         Debug.assert_opengl();
     }

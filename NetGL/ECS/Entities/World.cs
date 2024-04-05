@@ -1,3 +1,4 @@
+using System.Formats.Tar;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -48,55 +49,6 @@ public class World: Entity {
         world_entities.add(e);
     }
 
-    public void render() {
-        foreach (var entity in children.with_component<Camera>()) {
-            foreach(var cam in entity.get_all<Camera>()) {
-                // Console.WriteLine($"Switching to cam {cam.name}");
-                //render_items.Sort(new Comparison<RenderItem>((item, renderItem) => ));
-
-                if (cam.entity.parent != null) {
-                    // Console.WriteLine($"Switching to viewport {cam.viewport}");
-                    cam.viewport.make_current();
-                    cam.viewport.clear();
-                    Debug.assert_opengl();
-
-                    var lights = entity.get_all<Light>(EntityRelationship.ParentsRecursive).ToArray();
-
-
-
-                    foreach (var child in cam.entity.parent.children) {
-                        // Console.WriteLine("  " + child.name);
-                        render_entity(
-                            child,
-                            cam,
-                            Matrix4.Identity,
-                            lights);
-                    }
-                } else {
-                    Console.WriteLine($"Empty camera: {cam}");
-                }
-            }
-
-            Debug.assert_opengl();
-        }
-    }
-
-    private void render_entity(in Entity entity, in Camera camera, in Matrix4 parent_model_matrix, in Light[] lights) {
-        var model_matrix = entity.transform.calculate_model_matrix() * parent_model_matrix;
-
-        /*entity.for_any_component_like<AmbientLight, DirectionalLight, PointLight>(
-            component => lights.Add((ILight)component)
-        );*/
-
-        foreach (var renderable in entity.get_renderable_components()) {
-            renderable.lights = lights;
-            renderable.render(camera, model_matrix);
-        }
-
-        foreach (var child in entity.children)
-            render_entity(child, camera, model_matrix, lights);
-    }
-
     public void update(float game_time, float delta_time) {
         foreach (var entity in children) {
             update_entity_pre_physics(entity);
@@ -136,5 +88,52 @@ public class World: Entity {
         foreach (var child in entity.children) {
             update_entity(game_time, delta_time, child);
         }
+    }
+
+    public void render() {
+        foreach (var entity in children.with_component<Camera>()) {
+            foreach(var cam in entity.get_all<Camera>()) {
+                // Console.WriteLine($"Switching to cam {cam.name}");
+                //render_items.Sort(new Comparison<RenderItem>((item, renderItem) => ));
+
+                if (cam.entity.parent != null) {
+                    // Console.WriteLine($"Switching to viewport {cam.viewport}");
+                    cam.viewport.make_current();
+                    cam.viewport.clear();
+                    Debug.assert_opengl();
+
+                    var lights = entity.get_all<Light>(EntityRelationship.ParentsRecursive).ToArray();
+
+                    foreach (var child in cam.entity.parent.children) {
+                        // Console.WriteLine("  " + child.name);
+                        render_entity(
+                                      child,
+                                      cam,
+                                      Matrix4.Identity,
+                                      lights);
+                    }
+                } else {
+                    Console.WriteLine($"Empty camera: {cam}");
+                }
+            }
+
+            Debug.assert_opengl();
+        }
+    }
+
+    private void render_entity(in Entity entity, in Camera camera, in Matrix4 parent_model_matrix, in Light[] lights) {
+        var model_matrix = entity.transform.calculate_model_matrix() * parent_model_matrix;
+
+        /*entity.for_any_component_like<AmbientLight, DirectionalLight, PointLight>(
+            component => lights.Add((ILight)component)
+        );*/
+
+        foreach (var renderable in entity.get_renderable_components()) {
+            renderable.lights = lights;
+            renderable.render(camera, model_matrix);
+        }
+
+        foreach (var child in entity.children)
+            render_entity(child, camera, model_matrix, lights);
     }
 }

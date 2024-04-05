@@ -18,7 +18,7 @@ public static class Bag {
 }
 
 [CollectionBuilder(typeof(Bag), nameof(Bag.create))]
-public class Bag<TItem>: IList<TItem>, IReadOnlyList<TItem> where TItem: class {
+public class Bag<TItem>: IList<TItem>, IReadOnlyList<TItem>  {
     public delegate bool ItemPredicate(ref TItem item);
     public delegate bool ItemPredicate<in T>(ref TItem item, T arg1);
     public delegate bool ItemPredicate<in T1, in T2>(ref TItem item, T1 arg1, T2 arg);
@@ -171,13 +171,13 @@ public class Bag<TItem>: IList<TItem>, IReadOnlyList<TItem> where TItem: class {
 }
 
 [CollectionBuilder(typeof(Bag), nameof(Bag.create_named))]
-public class NamedBag<TItem>: Bag<string, TItem> where TItem: class, INamed {
+public class NamedBag<TItem>: Bag<string, TItem> where TItem: notnull, INamed {
     public NamedBag(): this(4) {}
     public NamedBag(int capacity): base(static (ref readonly TItem item) => item.name ) {}
     public NamedBag(ReadOnlySpan<TItem> items): this(items.Length) => add(items);
 }
 
-public class Bag<TKey, TItem>: Bag<TItem> where TKey: IComparable<TKey> where TItem: class {
+public class Bag<TKey, TItem>: Bag<TItem> where TKey: IComparable<TKey> {
     public delegate TKey KeyDelegate(ref readonly TItem item);
 
     private readonly Dictionary<TKey, int> dict;

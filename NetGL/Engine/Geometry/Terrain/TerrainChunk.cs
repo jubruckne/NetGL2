@@ -85,7 +85,7 @@ internal sealed class TerrainChunk {
             vb[i].position = plane.to_world(
                                             px,
                                             py,
-                                            noise.sample(px, py) - level.select(20, 15, 10, 5, 0)
+                                            noise.sample(px, py) - level.select([20, 15, 10, 5, 0])
                                            );
 
             if (vx < chunk_quad_count && vy < chunk_quad_count) {

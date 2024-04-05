@@ -136,4 +136,12 @@ public static class Debug {
 
         throw new Exception($"OpenGL: {msg}!");
     }
+
+    [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
+    public static void break_if(bool condition, [CallerArgumentExpression("condition")] string? name = default) {
+        if (!condition) return;
+
+        Console.WriteLine($"{name} == {condition}");
+        Debugger.Break();
+    }
 }

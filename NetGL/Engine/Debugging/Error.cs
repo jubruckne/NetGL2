@@ -47,4 +47,8 @@ public static class Error {
     public static void index_out_of_range<T>(string param_name, T index, [CallerMemberName] string caller = default!) =>
         throw new IndexOutOfRangeException($"{caller}({index}) {param_name} out of range!");
 
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
+    public static void duplicated_key<T>(T key, [CallerMemberName] string caller = default!) =>
+        throw new IndexOutOfRangeException($"{caller}({key}) key already exists!");
+
 }

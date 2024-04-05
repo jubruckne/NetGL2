@@ -11,7 +11,7 @@ public abstract class Camera: IComponent<Camera>, IUpdatableComponent {
 
     public readonly Transform transform;
 
-    public SharedUniforms camera_data;
+    public CameraData camera_data;
 
     protected Camera(in Entity entity, Viewport viewport) {
         this.entity = entity;

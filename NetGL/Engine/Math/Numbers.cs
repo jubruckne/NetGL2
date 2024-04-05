@@ -1,8 +1,7 @@
 #pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
 global using half = System.Half;
-using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
-using System.Runtime.InteropServices.Marshalling;
 
 
 namespace NetGL;
@@ -42,7 +41,7 @@ public static class Numbers {
         return left.z.is_approximately_equal_to(right.z);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining), Pure]
+    [MethodImpl(MethodImplOptions.AggressiveInlining), Pure, SkipLocalsInit]
     public static bool is_equal_to<T>(this ref T left, ref readonly T right)
         where T: unmanaged {
         var left_span  = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(in left, 1));
@@ -119,6 +118,7 @@ public static class Numbers {
         return min;
     }
 
+    [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public static T maximum<T>(this IEnumerable<T> values)
         where T: INumber<T>, IMinMaxValue<T> {
         var max = T.MinValue;
@@ -135,7 +135,7 @@ public static class Numbers {
         return max;
     }
 
-    public static T select<T>(this int which, params T[] values) {
+    public static T select<T>(this int which, Span<T> values) where T: unmanaged {
         if (which < 0 || which >= values.Length)
             throw new ArgumentOutOfRangeException(nameof(which));
         return values[which];

@@ -25,6 +25,7 @@ public interface IBuffer {
     int item_size{ get; }
     int total_size { get; }
     Buffer.Status status { get; }
+    int version { get; }
 }
 
 public abstract class Buffer: IBuffer {
@@ -47,6 +48,8 @@ public abstract class Buffer: IBuffer {
     public abstract void update();
 
     public override string ToString() => $"{GetType().get_type_name(false)} (type={item_type.get_type_name()}, length={length:N0}, size={total_size:N0}, status={status})";
+
+    public int version { get; protected set; }
 
     public Status status {
         get;
@@ -159,6 +162,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         GL.BufferData(target, buffer.length * item_size, buffer.get_address(), usage);
 
         status = Status.Uploaded;
+        version = Engine.frame;
     }
 
     public override void update() {
@@ -169,6 +173,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         GL.BufferSubData(target, IntPtr.Zero, buffer.length * item_size, buffer.get_address());
 
         status = Status.Modified;
+        version = Engine.frame;
     }
 
     public void Dispose() {

@@ -10,13 +10,29 @@ using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct SharedUniforms {
+public struct CameraData {
+    public static string uniform_name => "Camera";
     public Matrix4 projection_matrix;
     public Matrix4 camera_matrix;
     public Vector3 camera_position;
     public float game_time;
+}
+
+public readonly struct UniformBlockDef: INamed {
+    public readonly int index;
+    public readonly string name;
+    public readonly int size_of;
+
+    public UniformBlockDef(int index, string name, int size_of) {
+        this.index = index;
+        this.name    = name;
+        this.size_of = size_of;
+    }
+
+    public override string ToString() => $"<UniformBlock index={index}, name={name}, size_of={size_of}/>";
+
+    string INamed.name => this.name;
 }
 
 public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
@@ -29,7 +45,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     int IBindable.handle => this.handle;
 
     public UniformVariable<Matrix4> model_matrix { get; private set; }
-    public UniformBuffer<SharedUniforms> shared_uniforms { get; private set; }
+    public UniformBuffer<CameraData> uniform_buffer_camera_data { get; private set; }
 
     public bool has_geometry_shader { get; private set; }
     public bool has_tesselation_shader { get; private set; }
@@ -38,6 +54,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     public readonly int handle;
 
     private readonly Dictionary<string, int> uniform_locations;
+    private readonly NamedBag<UniformBlockDef> uniform_block_defs;
 
     public IReadOnlyList<string> uniforms => uniform_locations.Keys.ToList();
 
@@ -46,24 +63,48 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     protected Shader(string name) {
         this.name = name;
         uniform_locations = [];
+        uniform_block_defs = new();
+
         handle = GL.CreateProgram();
         Shader.instances.writeable().Add(handle, new WeakReference<Shader>(this));
     }
 
-    public Shader(string name, string vertex_program, string fragment_program)
-    : this(name) {
-        compile_from_file(vertex_program, fragment_program);
+    public static Shader from_file(string name, string vertex_program, string fragment_program) {
+        var shader = new Shader(name);
+        shader.compile_from_file(vertex_program, fragment_program);
+        return shader;
     }
 
-    public Shader(string name, string vertex_program, string fragment_program, string geometry_program)
-        : this(name) {
-        compile_from_file(vertex_program, fragment_program, geometry_program);
+    public static Shader from_file(string name, string vertex_program, string fragment_program, string geometry_program) {
+        var shader = new Shader(name);
+        shader.compile_from_file(vertex_program, fragment_program, geometry_program);
+        return shader;
     }
 
-    public Shader(string name, string vertex_program, string fragment_program, string tess_control, string tess_eval)
-        : this(name) {
-        compile_from_file(vertex_program, fragment_program, tess_control_program:tess_control, tess_eval_program:tess_eval);
+    public static Shader from_file(string name, string vertex_program, string fragment_program, string tess_control, string tess_eval) {
+        var shader = new Shader(name);
+        shader.compile_from_file(vertex_program, fragment_program, tess_control_program:tess_control, tess_eval_program:tess_eval);
+        return shader;
     }
+
+    public static Shader from_text(string name, string vertex_program, string fragment_program) {
+        var shader = new Shader(name);
+        shader.compile_from_text(vertex_program, fragment_program);
+        return shader;
+    }
+
+    public static Shader from_text(string name, string vertex_program, string fragment_program, string geometry_program) {
+        var shader = new Shader(name);
+        shader.compile_from_text(vertex_program, fragment_program, geometry_program);
+        return shader;
+    }
+
+    public static Shader from_text(string name, string vertex_program, string fragment_program, string tess_control, string tess_eval) {
+        var shader = new Shader(name);
+        shader.compile_from_text(vertex_program, fragment_program, tess_control_program:tess_control, tess_eval_program:tess_eval);
+        return shader;
+    }
+
 
     protected void compile_from_text(string vertex_program, string fragment_program, string geometry_program = "", string tess_control_program = "", string tess_eval_program = "") {
         // Console.WriteLine("\ncompiling vertex shader...");
@@ -169,30 +210,68 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         if(has_uniform("model"))
             model_matrix = new(this, "model");
 
-        if(has_uniform_block("shared"))
-            shared_uniforms = new UniformBuffer<SharedUniforms>(this, "shared");
+        // cache uniform locations.
+        GL.GetProgram(handle, GetProgramParameterName.ActiveUniformBlocks, out var block_count);
+
+        //Console.WriteLine("Uniforms: ");
+
+        // Loop over all the uniforms,
+        for (var i = 0; i < block_count; i++) {
+            GL.GetActiveUniformBlockName(handle, i, 128, out var buf_len, out var buffer);
+            GL.GetActiveUniformBlock(handle, i, ActiveUniformBlockParameter.UniformBlockDataSize, out var block_size);
+            GL.GetActiveUniformBlock(handle, i, ActiveUniformBlockParameter.UniformBlockBinding, out var block_binding);
+            string block_name = buffer[..buf_len];
+            var block_index = GL.GetUniformBlockIndex(handle, block_name);
+
+            uniform_block_defs.add(new UniformBlockDef(block_index, block_name, block_size));
+            Console.WriteLine($"Uniform Block: {i} {uniform_block_defs[0]}");
+
+        }
+
+        if (has_uniform_block(CameraData.uniform_name)) {
+            if(uniform_block_defs[CameraData.uniform_name].size_of != Unsafe.SizeOf<CameraData>())
+                Error.type_alignment_mismatch<CameraData>(uniform_block_defs[CameraData.uniform_name].size_of, Unsafe.SizeOf<CameraData>());
+
+            uniform_buffer_camera_data = new UniformBuffer<CameraData>(CameraData.uniform_name);
+            uniform_buffer_camera_data.create();
+            set_uniform_buffer(uniform_block_defs[CameraData.uniform_name], uniform_buffer_camera_data);
+        }
+    }
+
+    private void set_uniform_buffer(UniformBlockDef uniform_block_def, IUniformBuffer uniform_buffer) {
+        GL.UniformBlockBinding(handle, uniform_block_def.index, uniform_buffer.binding_point);
     }
 
     private void compile_from_file(string vertex_program, string fragment_program, string geometry_program="", string tess_control_program="", string tess_eval_program="") {
         if (File.Exists(AssetManager.asset_path<Shader>(vertex_program)))
             vertex_program = AssetManager.asset_path<Shader>(vertex_program);
+        Console.WriteLine(vertex_program);
+        vertex_program = File.ReadAllText(vertex_program);
 
         if (File.Exists(AssetManager.asset_path<Shader>(fragment_program)))
-            vertex_program = AssetManager.asset_path<Shader>(fragment_program);
+            fragment_program = AssetManager.asset_path<Shader>(fragment_program);
+        Console.WriteLine(fragment_program);
+        fragment_program = File.ReadAllText(fragment_program);
 
         if(geometry_program != "") {
             if (File.Exists(AssetManager.asset_path<Shader>(geometry_program)))
                 geometry_program = AssetManager.asset_path<Shader>(geometry_program);
+            Console.WriteLine(geometry_program);
+            geometry_program = File.ReadAllText(geometry_program);
         }
 
         if(tess_control_program != "") {
             if (File.Exists(AssetManager.asset_path<Shader>(tess_control_program)))
-                geometry_program = AssetManager.asset_path<Shader>(tess_control_program);
+                tess_control_program = AssetManager.asset_path<Shader>(tess_control_program);
+            Console.WriteLine(tess_control_program);
+            tess_control_program = File.ReadAllText(tess_control_program);
         }
 
         if(tess_eval_program != "") {
             if (File.Exists(AssetManager.asset_path<Shader>(tess_eval_program)))
-                geometry_program = AssetManager.asset_path<Shader>(tess_eval_program);
+                tess_eval_program = AssetManager.asset_path<Shader>(tess_eval_program);
+            Console.WriteLine(tess_eval_program);
+            tess_eval_program = File.ReadAllText(tess_eval_program);
         }
 
         compile_from_text(vertex_program, fragment_program, geometry_program, tess_control_program, tess_eval_program);

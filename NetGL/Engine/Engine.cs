@@ -94,13 +94,6 @@ public class Engine: GameWindow {
             Texture.load_from_file("test.png")
         );*/
 
-        Bag<Entity> g = new();
-        foreach (var e in g) {
-            Console.WriteLine(e);
-        }
-
-
-
         TextureCubemapBuffer cubemap = new(
                                            AssetManager.load_from_file<Texture>("right.jpg"),
                                            AssetManager.load_from_file<Texture>("left.jpg"),
@@ -116,9 +109,9 @@ public class Engine: GameWindow {
         Entity environment = world.create_cube("Environment", material:mat, radius:100f);
         //((environment.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).reverse_winding();
        //((environment.get<VertexArrayRenderer>().vertex_arrays[0] as VertexArrayIndexed).index_buffer).upload();
-       environment.get<VertexArrayRenderer>().front_facing = false;
-       environment.get<VertexArrayRenderer>().depth_test = false;
-       environment.get<VertexArrayRenderer>().cull_face = true;
+       environment.get<VertexArrayRenderer>().render_settings.front_facing = false;
+       environment.get<VertexArrayRenderer>().render_settings.depth_test = false;
+       environment.get<VertexArrayRenderer>().render_settings.cull_face = true;
 
        Debug.println(RenderState.depth_test);
 
@@ -194,14 +187,16 @@ public class Engine: GameWindow {
         entd.transform.position = (-4, -4, 0);
         entd.transform.rotation.yaw_pitch_roll = (-120, -5f, 2.5f);
 */
-        var con = new Predicate<Entity>(static entity => entity.transform.position.Y < -2.75f);
+        var con = new Predicate<Entity>(static entity => entity.transform.position.Y < 0f);
         var beh = new Action<Entity>(
                                      static entity => {
             entity.transform.position.randomize(-2.5f, 2.5f).add(x: 0, y: 16, -15);
             entity.get<Component<RigidBody>>().data.LinearVelocity = Vector3.Zero;
         });
 
-        foreach (var b in Enumerable.Range(1, 50)) {
+        // 3000 - 40fps
+        // 3500 - 30fps
+        foreach (var b in Enumerable.Range(1, 9)) {
             Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.35f, material:Material.random);
             cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, -15f + Random.Shared.NextSingle() * 5.9f);
 
@@ -217,9 +212,14 @@ public class Engine: GameWindow {
 
         Debug.assert_opengl();
 
+        TreePrinter.print(world);
+
         CursorState = CursorState.Normal;
 
         game_time = 0f;
+        return;
+
+
     }
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
@@ -428,10 +428,10 @@ public class Engine: GameWindow {
                     if (ImGui.TreeNodeEx($"{var.name}##{entity.name}_{var.name}_node", ImGuiTreeNodeFlags.None)) {
                         ImGui.Unindent();
 
-                        ImGui.Checkbox("Cull Face", ref var.cull_face);
-                        ImGui.Checkbox("Depth Test", ref var.depth_test);
-                        ImGui.Checkbox("Wireframe", ref var.wireframe);
-                        ImGui.Checkbox("Front Facing", ref var.front_facing);
+                        ImGui.Checkbox("Cull Face", ref var.render_settings.cull_face);
+                        ImGui.Checkbox("Depth Test", ref var.render_settings.depth_test);
+                        ImGui.Checkbox("Wireframe", ref var.render_settings.wireframe);
+                        ImGui.Checkbox("Front Facing", ref var.render_settings.front_facing);
 
                         ImGui.Separator();
 

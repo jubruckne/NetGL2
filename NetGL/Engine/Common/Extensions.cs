@@ -90,7 +90,7 @@ public static class TypeExtensions {
     }
 
 
-    public static unsafe int size_of<T>(this T integer) where T : unmanaged, INumberBase<T> {
+    public static unsafe int size_of<T>(this T obj) where T : unmanaged {
         return sizeof(T);
     }
 
@@ -401,14 +401,6 @@ public static class ArrayExt {
         Error.index_out_of_range(condition);
         return default;
     }*/
-
-    public static int index_of(this IReadOnlyList<string> list, in string item) {
-        for (var i = 0; i < list.Count; i++)
-            if (list[i] == item)
-                return i;
-
-        return -1;
-    }
 
     public static bool peek<T>(this IList<T> list, [MaybeNullWhen(false)] out T item) {
         lock (list) {

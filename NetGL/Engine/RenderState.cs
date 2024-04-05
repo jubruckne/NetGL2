@@ -16,7 +16,7 @@ public abstract class State<T>: IState
     public string name { get; }
     private T state;
     private readonly bool write_through;
-    private Stack<T> stack = new();
+    private readonly Stack<T> stack = new();
 
     protected abstract void set_state(T state);
     protected abstract T get_state();
@@ -111,7 +111,20 @@ public static partial class RenderState {
         }
 
         Error.index_out_of_range(states);
-        return default;
+        return default!;
+    }
+
+    public static void bind(in NetGL.Shader shader) {
+        RenderState.shader.value = shader;
+    }
+
+    public static void bind(in RenderSettings settings) {
+        depth_test.value   = settings.depth_test;
+        cull_face.value    = settings.cull_face;
+        blending.value     = settings.blending;
+        wireframe.value    = settings.wireframe;
+        front_facing.value = settings.front_facing;
+        scissor_test.value = settings.scissor_test;
     }
 
     public static Bag<IState> bind(this Bag<IState> states) {
@@ -147,7 +160,7 @@ public static partial class RenderState {
         return states;
     }
 
-    public static NetGL.Shader bind(this State<NetGL.Shader> render_state, in NetGL.Shader shader) {
+    public static NetGL.Shader bind(State<NetGL.Shader> render_state, in NetGL.Shader shader) {
         render_state.value = shader;
         return shader;
     }
