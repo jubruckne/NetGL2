@@ -77,7 +77,7 @@ public class OrthographicCamera: Camera, IComponent<FirstPersonCamera>, IUpdatab
         entity.transform.copy_from(transform);
 
         camera_data.camera_matrix = transform.calculate_look_at_matrix();
-        camera_data.game_time = Engine.game_time;
+        //camera_data.game_time = Engine.game_time;
         camera_data.camera_position = transform.position;
 
         if (enable_input && enable_update) {

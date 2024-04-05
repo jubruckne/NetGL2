@@ -39,16 +39,18 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
     ) {
         var shader = entity.get<ShaderComponent>().shader;
 
-        //camera.uniforms.bind(0);
-        //shader.set_uniform_buffer(camera.uniforms);
+        RenderState.bind(shader);
+        RenderState.bind(render_settings);
 
+        //shader.set_model_matrix(model_matrix);
         shader.model_matrix.data = model_matrix;
+
         if (shader.uniform_buffer_camera_data is not null) {
             var m = camera.camera_data;
-            m.camera_matrix.Transpose();
-            m.projection_matrix.Transpose();
+            //m.camera_matrix.Transpose();
+            //m.projection_matrix.Transpose();
             shader.uniform_buffer_camera_data.data = m;
-        }  else {
+        } else {
             shader.set_projection_matrix(camera.camera_data.projection_matrix);
             shader.set_camera_matrix(camera.camera_data.camera_matrix);
             shader.set_camera_position(camera.camera_data.camera_position);
@@ -61,15 +63,11 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
         // Console.WriteLine($"camera:\n{camera_matrix}");
         // Console.WriteLine($"model:\n{model_matrix}");
 
-        RenderState.bind(shader);
-        RenderState.bind(render_settings);
-
         foreach (var (va, enabled) in vertex_arrays) {
             if (enabled) {
                 va.bind();
 
                 va.material.ambient_texture?.bind(0);
-
                 shader.set_material(va.material);
 
                 if (shader.has_tesselation_shader)

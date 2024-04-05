@@ -155,6 +155,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
     public override void create() => create(BufferUsageHint.StaticDraw);
 
     public void create(in BufferUsageHint usage) {
+        Debug.assert(handle == 0);
         if (handle == 0)
             handle = GL.GenBuffer();
 
@@ -170,7 +171,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
             Error.not_allocated(this);
 
         bind_buffer();
-        GL.BufferSubData(target, IntPtr.Zero, buffer.length * item_size, buffer.get_address());
+        GL.BufferSubData(target, IntPtr.Zero, buffer.total_size, (IntPtr)buffer.get_address());
 
         status = Status.Modified;
         version = Engine.frame;

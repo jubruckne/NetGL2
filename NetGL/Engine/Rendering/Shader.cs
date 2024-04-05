@@ -16,7 +16,7 @@ public struct CameraData {
     public Matrix4 projection_matrix;
     public Matrix4 camera_matrix;
     public Vector3 camera_position;
-    public float game_time;
+    private float __padding;
 }
 
 public readonly struct UniformBlockDef: INamed {
@@ -105,7 +105,6 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         return shader;
     }
 
-
     protected void compile_from_text(string vertex_program, string fragment_program, string geometry_program = "", string tess_control_program = "", string tess_eval_program = "") {
         // Console.WriteLine("\ncompiling vertex shader...");
         var vertex_shader_handle = GL.CreateShader(ShaderType.VertexShader);
@@ -164,6 +163,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
         LinkProgram(handle);
 
+
         GL.DetachShader(handle, vertex_shader_handle);
 
         if(tess_control_shader_handle != -1)
@@ -172,12 +172,11 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         if(tess_eval_shader_handle != -1)
             GL.DetachShader(handle, tess_eval_shader_handle);
 
-        GL.DetachShader(handle, fragment_shader_handle);
-
         if(geometry_shader_handle != -1)
             GL.DetachShader(handle, geometry_shader_handle);
 
-        GL.DeleteShader(fragment_shader_handle);
+        GL.DetachShader(handle, fragment_shader_handle);
+
         GL.DeleteShader(vertex_shader_handle);
 
         if (tess_control_shader_handle != -1)
@@ -189,6 +188,8 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
         if(geometry_shader_handle != -1)
             GL.DeleteShader(geometry_shader_handle);
 
+        GL.DeleteShader(fragment_shader_handle);
+
         Debug.assert_opengl();
 
         // cache uniform locations.
@@ -196,7 +197,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
         uniform_locations.Clear();
 
-        //Console.WriteLine("Uniforms: ");
+        Console.WriteLine("Uniforms: ");
 
         // Loop over all the uniforms,
         for (var i = 0; i < numberOfUniforms; i++) {
@@ -204,7 +205,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
             var location = GL.GetUniformLocation(handle, key);
             uniform_locations.Add(key, location);
 
-            //Console.WriteLine("  " + key + " -> " + location);
+            Console.WriteLine("  " + key + " -> " + location);
         }
 
         if(has_uniform("model"))
@@ -212,8 +213,6 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
         // cache uniform locations.
         GL.GetProgram(handle, GetProgramParameterName.ActiveUniformBlocks, out var block_count);
-
-        //Console.WriteLine("Uniforms: ");
 
         // Loop over all the uniforms,
         for (var i = 0; i < block_count; i++) {
@@ -233,7 +232,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
                 Error.type_alignment_mismatch<CameraData>(uniform_block_defs[CameraData.uniform_name].size_of, Unsafe.SizeOf<CameraData>());
 
             uniform_buffer_camera_data = new UniformBuffer<CameraData>(CameraData.uniform_name);
-            uniform_buffer_camera_data.create();
+            uniform_buffer_camera_data.create(BufferUsageHint.StaticDraw);
             set_uniform_buffer(uniform_block_defs[CameraData.uniform_name], uniform_buffer_camera_data);
         }
     }
@@ -306,6 +305,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
     public void set_projection_matrix(in Matrix4 matrix) => set_uniform("projection", matrix);
     public void set_camera_matrix(in Matrix4 matrix) => set_uniform("camera", matrix);
+    //public void set_model_matrix(in Matrix4 matrix) => set_uniform("model", matrix);
     public void set_game_time(in float game_time) => set_uniform("game_time", game_time);
 
     public void set_material(Material material) {

@@ -71,8 +71,9 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
             transform.attitude.pitch = pitch_clamp[1];
 */
 
+        camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(60f.degree_to_radians(), viewport.aspect_ratio, 0.01f, 1000f);
         camera_data.camera_matrix = transform.calculate_look_at_matrix();
-        camera_data.game_time = Engine.game_time;
+        //camera_data.game_time = Engine.game_time;
         camera_data.camera_position = transform.position;
 
         if (enable_input && enable_update) {

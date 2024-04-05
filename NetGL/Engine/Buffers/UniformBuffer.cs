@@ -25,8 +25,6 @@ public class UniformBuffer<T>: Buffer<T>, IUniformBuffer
         verify_std_140_alignment();
 
         binding_point = 0;
-
-        create(BufferUsageHint.DynamicDraw);
     }
 
     public UniformBuffer(in string name): this(name, default) {}
@@ -67,15 +65,11 @@ public class UniformBuffer<T>: Buffer<T>, IUniformBuffer
             => current_offset + (alignment - current_offset % alignment) % alignment;
     }
 
-    public void bind() {
-        base.bind_buffer();
-    }
-
     private void update_and_make_current() {
         base.update();
 
-        //GL.BindBufferBase(BufferRangeTarget.UniformBuffer, binding_point, handle);
-        GL.BindBufferRange(BufferRangeTarget.UniformBuffer, binding_point, handle, 0, uniform_value.size_of());
+        GL.BindBufferBase(BufferRangeTarget.UniformBuffer, binding_point, handle);
+        //GL.BindBufferRange(BufferRangeTarget.UniformBuffer, binding_point, handle, 0, uniform_value.size_of());
 
         Debug.assert_opengl();
     }

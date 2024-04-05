@@ -46,6 +46,8 @@ public class UniformVariable<T>: IUniform, INamed where T: unmanaged {
             case OpenTK.Mathematics.Matrix4 m4:
                 GL.ProgramUniformMatrix4(handle, location, true, ref m4);
                 break;
+            default:
+                throw new NotImplementedException($"Uniform type {typeof(T).get_type_name()} is not implemented");
         }
     }
 }

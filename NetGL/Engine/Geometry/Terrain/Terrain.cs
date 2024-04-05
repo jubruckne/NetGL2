@@ -14,7 +14,7 @@ public class Terrain: Entity {
     private readonly Material[] material_per_level;
 
     internal Terrain(Plane plane, Entity? parent = null): base("Terrain", parent) {
-        const int max_level = 4;
+        const int max_level = 3;
         this.plane = plane;
 
         camera = get<Camera>(EntityRelationship.HierarchyWithChildrenRecursive);
@@ -30,10 +30,13 @@ public class Terrain: Entity {
         for (var i = 0; i <= max_level; i++)
             material_per_level[i] = Material.random;
 
+
         renderer = this.add_vertex_array_renderer();
 
-        chunks = new(4096, max_level, allocate_chunk);
+        chunks = new(128, max_level, allocate_chunk);
         var chunk = chunks.request_node(0, 0, max_level);
+
+        //this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.data.vertex_array!, tesselate:false));
         this.add_shader(Shader.from_file("terrain_shader", "terrain.vert.glsl", "terrain.frag.glsl"));
 
         //using var heightmap = noise.sample<half>(256, 256, 0, 0, 0.1f, 0.1f, 10);
@@ -50,8 +53,10 @@ public class Terrain: Entity {
         foreach (var q in chunks)
             Console.WriteLine(q);
 
-        renderer.render_settings.wireframe = true;
+        renderer.render_settings.wireframe = false;
         renderer.render_settings.depth_test = true;
+        renderer.render_settings.cull_face = true;
+        renderer.render_settings.front_facing = true;
 
         this.add_behavior(_ => update());
     }

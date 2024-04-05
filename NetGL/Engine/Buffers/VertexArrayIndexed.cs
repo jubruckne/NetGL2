@@ -102,7 +102,7 @@ public class VertexArrayIndexed: VertexArray {
 
     public override void draw_patches() {
         //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
-
+        Debug.assert(false);
         GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
 
         if (draw_ranges.length <= 1) {
@@ -127,6 +127,8 @@ public class VertexArrayIndexed: VertexArray {
         if (draw_ranges.length <= 1) {
             GL.DrawElements(primitive_type, index_buffer.length * 3, index_buffer.draw_element_type, 0);
         } else {
+            Debug.assert(false);
+
             GL.MultiDrawElementsBaseVertex(
                                            primitive_type,
                                            draw_ranges.counts,
