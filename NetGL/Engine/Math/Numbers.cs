@@ -1,5 +1,6 @@
 #pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
 global using half = System.Half;
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
@@ -103,6 +104,20 @@ public static class Numbers {
         return sum / T.CreateChecked(count); // Calculate mean
     }
 
+    public static T minimum<T>(this ReadOnlySpan<T> values)
+        where T: INumber<T>, IMinMaxValue<T> {
+        var min = T.MaxValue;
+
+        if (values.Length == 0)
+            throw new InvalidOperationException("Cannot compute min of an empty set.");
+
+        foreach (var value in values)
+            if (value < min)
+                min = value;
+
+        return min;
+    }
+
     public static T minimum<T>(this IEnumerable<T> values)
         where T: INumber<T>, IMinMaxValue<T> {
         var min = T.MaxValue;
@@ -141,7 +156,7 @@ public static class Numbers {
         return values[which];
     }
 
-    public static T nearest_multiple<T>(this T number, T multiple) where T: IFloatingPoint<T>
+    public static T nearest_multiple<T>(this T number, in T multiple) where T: IFloatingPoint<T>
         => T.Round(number / multiple) * multiple;
 
     public static T at_most<T>(this T n, T maximum)
@@ -155,6 +170,9 @@ public static class Numbers {
     public static bool is_between<T>(this T t, in T lower, in T upper)
         where T: INumber<T> => t > lower && t < upper;
 
+    public static bool is_between_including<T>(this T t, in T lower, in T upper)
+        where T: INumber<T> => t >= lower && t <= upper;
+
     public static T sqrt<T>(this T number)
         where T: IRootFunctions<T>
         => T.Sqrt(number);
@@ -162,6 +180,10 @@ public static class Numbers {
     public static T power<T>(this T value, in T exp)
         where T: IPowerFunctions<T>
         => T.Pow(value, exp);
+
+    public static T power<T>(this T value, int exp)
+        where T: IBinaryInteger<T>
+        => T.RotateLeft(value, exp);
 
     public static T clamp<T>(this T value, in T min, in T max) where T: INumber<T> {
         Debug.assert(min < max);

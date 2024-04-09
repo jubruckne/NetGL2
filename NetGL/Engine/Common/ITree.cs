@@ -6,6 +6,18 @@ public static class TreePrinter {
     public static void print(Entity entity)
         => print<INamed>(entity, get_caption, get_children, "", true, false);
 
+    public static void print<TTreeNode>(Quadtree<TTreeNode> tree) where TTreeNode: class {
+        foreach (var node in tree.root_nodes)
+            print<Quadtree<TTreeNode>.Node>(node, get_caption, get_children, "", true, false);
+    }
+
+    private static IEnumerable<Quadtree<TTreeNode>.Node> get_children<TTreeNode>(Quadtree<TTreeNode>.Node node) where TTreeNode: class {
+        foreach (var child in node.sub_nodes)
+            yield return child;
+    }
+
+    private static string get_caption<TTreeNode>(Quadtree<TTreeNode>.Node node) where TTreeNode: class => node.ToString();
+
     public static void print<TItem>(TItem node, Func<TItem, string> get_caption, Func<TItem, IEnumerable<TItem>> get_children)
         => print(node, get_caption, get_children, "", true, false);
 
@@ -13,7 +25,7 @@ public static class TreePrinter {
         Console.Write(indent);
 
         if (root) {
-            Console.Write("\ud83c\udf00"); // Unique marker for the root node
+            //Console.Write("\ud83c\udf00"); // Unique marker for the root node
         } else if (last) {
             Console.Write("\u2570\u2500");
             indent += "  ";

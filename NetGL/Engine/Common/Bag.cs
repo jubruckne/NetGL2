@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using NetGL.ECS;
@@ -29,6 +30,7 @@ public class Bag<TItem>: IList<TItem>, IReadOnlyList<TItem>  {
     public event ItemDelegate? on_added;
     public event ItemDelegate? on_removed;
 
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     protected readonly List<TItem> list;
 
     public Bag(): this(4) {}
@@ -79,7 +81,9 @@ public class Bag<TItem>: IList<TItem>, IReadOnlyList<TItem>  {
         }
     }
 
+    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
     public ref TItem this[in int index] => ref CollectionsMarshal.AsSpan(list)[index];
+
     public ref TItem this[in Index index] => ref CollectionsMarshal.AsSpan(list)[index];
     public Span<TItem> this[in Range range] => CollectionsMarshal.AsSpan(list)[range];
 

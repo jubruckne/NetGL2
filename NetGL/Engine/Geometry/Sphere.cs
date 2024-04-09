@@ -1,6 +1,3 @@
-using System.Runtime.InteropServices;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using NetGL;
 using OpenTK.Mathematics;
 
 namespace NetGL;

@@ -42,7 +42,7 @@ public static class Selftest {
         Console.WriteLine("TestMemoryPool1 = " + v);
 
         Console.WriteLine(Pool<Vector3>.capacity);
-        Console.WriteLine(Pool<Vector3>.count());
+        Console.WriteLine(Pool<Vector3>.used_capacity);
     }
 
     private static void TestMemoryPool2() {
@@ -50,12 +50,12 @@ public static class Selftest {
         Console.WriteLine("TestMemoryPool2 = " + v);
 
         Console.WriteLine(Pool<Vector3>.capacity);
-        Console.WriteLine(Pool<Vector3>.count());
+        Console.WriteLine(Pool<Vector3>.used_capacity);
     }
 
     private static void TestMemoryPool3() {
         Console.WriteLine(Pool<Vector3>.capacity);
-        Console.WriteLine(Pool<Vector3>.count());
+        Console.WriteLine(Pool<Vector3>.used_capacity);
         Console.WriteLine(Pointer.alive_count);
     }
 

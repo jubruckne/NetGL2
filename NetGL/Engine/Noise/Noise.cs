@@ -5,14 +5,11 @@ namespace NetGL;
 using Libraries;
 using OpenTK.Mathematics;
 
-internal abstract class Layer {
+public abstract class Layer {
     public readonly float amplitude;
     public readonly float frequency;
 
-    private readonly FastNoiseLite generator = new();
-    public delegate float Generation(float x, float y);
-
-    public readonly Generation generate;
+    protected readonly FastNoiseLite generator = new();
 
     protected Layer(int seed, FastNoiseLite.NoiseType type, float frequency, float amplitude) {
         generator.SetSeed(seed);
@@ -20,39 +17,54 @@ internal abstract class Layer {
         generator.SetFrequency(frequency);
         this.amplitude = amplitude;
         this.frequency = frequency;
-
-        generate = type switch {
-            FastNoiseLite.NoiseType.Perlin => generator.SinglePerlin,
-            FastNoiseLite.NoiseType.OpenSimplex2 => generator.SingleSimplex,
-            FastNoiseLite.NoiseType.OpenSimplex2S => generator.SingleOpenSimplex2S,
-            FastNoiseLite.NoiseType.Cellular => generator.SingleCellular,
-            FastNoiseLite.NoiseType.ValueCubic => generator.SingleValueCubic,
-            FastNoiseLite.NoiseType.Value => generator.SingleValue,
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
-        };
     }
+
+    public abstract float generate(float x, float y);
+
+    public abstract float this[float x, float y] { get; }
 }
 
-file class PerlinLayer: Layer {
+public sealed class PerlinLayer: Layer {
     public PerlinLayer(int seed, float frequency, float amplitude) :
-        base(seed - 355875, FastNoiseLite.NoiseType.Perlin, frequency, amplitude) {
-    }
+        base(seed - 355875, FastNoiseLite.NoiseType.Perlin, frequency, amplitude) {}
+
+    public override float generate(float x, float y)
+        => generator.SinglePerlin(x * frequency, y * frequency);
+
+    public override float this[float x, float y] => generator.SinglePerlin(x * frequency, y * frequency);
 }
 
-file class SimplexLayer: Layer {
+public sealed class SimplexLayer: Layer {
     public SimplexLayer(int seed, float frequency, float amplitude):
         base(seed - 438050, FastNoiseLite.NoiseType.OpenSimplex2, frequency, amplitude) {}
+
+    public override float generate(float x, float y)
+        => generator.SingleSimplex(x * frequency, y * frequency);
+
+    public override float this[float x, float y] => generator.SingleSimplex(x * frequency, y * frequency);
+
 }
 
-file class ValueLayer: Layer {
+public sealed class ValueLayer: Layer {
     public ValueLayer(int seed, float frequency, float amplitude):
         base(seed + 730236, FastNoiseLite.NoiseType.Value, frequency, amplitude) {}
+
+    public override float generate(float x, float y)
+        => generator.SingleValue(x * frequency, y * frequency);
+
+    public override float this[float x, float y] => generator.SingleValue(x * frequency, y * frequency);
+
 }
 
-file class CellularLayer: Layer {
+public sealed class CellularLayer: Layer {
     public CellularLayer(int seed, float frequency, float amplitude) :
         base(seed + 886344, FastNoiseLite.NoiseType.Cellular, frequency, amplitude) {
     }
+
+    public override float generate(float x, float y)
+        => generator.SingleCellular(x * frequency, y * frequency);
+
+    public override float this[float x, float y] => generator.SingleCellular(x * frequency, y * frequency);
 }
 
 public class Noise {
@@ -64,26 +76,20 @@ public class Noise {
         this.layers = [];
     }
 
-    public float sample(in float x, in float y) {
+    public virtual float sample(in float x, in float y) {
         float sample = 0;
 
-        for(var l = 0; l < layers.Count - 1; l++) {
-            sample += layers[l].generate(
-                x * layers[l].frequency,
-                y * layers[l].frequency
-                ) * layers[l].amplitude;
-        }
+        for(var l = 0; l < layers.Count - 1; ++l)
+            sample += layers[l].generate(x, y) * layers[l].amplitude;
 
         return sample;
     }
 
-
     public float sample(in Vector2 p) {
         float sample = 0;
 
-        for(var l = 0; l < layers.Count - 1; l ++) {
-            sample += layers[l].generate(p.X * layers[l].frequency, p.Y * layers[l].frequency) * layers[l].amplitude;
-        }
+        for(var l = 0; l < layers.Count - 1; ++l)
+            sample += layers[l].generate(p.X, p.Y) * layers[l].amplitude;
 
         return sample;
     }
@@ -117,8 +123,10 @@ public class Noise {
         layers.Add(new PerlinLayer(seed + layers.Count, frequency, amplitude));
     }
 
-    public void add_simplex_layer(float frequency, float amplitude) {
-        layers.Add(new SimplexLayer(seed + layers.Count, frequency, amplitude));
+    public SimplexLayer add_simplex_layer(float frequency, float amplitude) {
+        var layer = new SimplexLayer(seed + layers.Count, frequency, amplitude);
+        layers.Add(layer);
+        return layer;
     }
 
     public void add_value_layer(float frequency, float amplitude) {

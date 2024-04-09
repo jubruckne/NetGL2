@@ -12,6 +12,7 @@ global using short3 = NetGL.Vectors.vec3<short>;
 global using byte3 = NetGL.Vectors.vec3<byte>;
 global using half2 = NetGL.Vectors.vec2<System.Half>;
 global using half3 = NetGL.Vectors.vec3<System.Half>;
+using System.Runtime.CompilerServices;
 
 namespace NetGL.Vectors;
 
@@ -81,39 +82,34 @@ public static partial class vec {
 }
 
 public static partial class vec {
-    public static half dot(in half3 left, in half3 right) {
-        return (half)((float)left.x * (float)right.x + (float)left.y * (float)right.y + (float)left.z * (float)right.z);
-    }
+    public static half dot(in half3 left, in half3 right)
+        => (half)((float)left.x * (float)right.x + (float)left.y * (float)right.y + (float)left.z * (float)right.z);
 
-    public static float dot(in float3 left, in float3 right) {
-        return left.x * right.x + left.y * right.y + left.z * right.z;
-    }
+    public static float dot(in float3 left, in float3 right) =>
+        left.x * right.x + left.y * right.y + left.z * right.z;
 
-    public static double dot(in double3 left, in double3 right) {
-        return left.x * right.x + left.y * right.y + left.z * right.z;
-    }
+    public static double dot(in double3 left, in double3 right)
+        => left.x * right.x + left.y * right.y + left.z * right.z;
 
-    public static half3 cross(in half3 left, in half3 right) {
-        return new half3(
-                          (half)((float)left.y * (float)right.z - (float)left.z * (float)right.y),
-                          (half)((float)left.z * (float)right.x - (float)left.x * (float)right.z),
-                          (half)((float)left.x * (float)right.y - (float)left.y * (float)right.x)
-                         );
-    }
+    public static half3 cross(in half3 left, in half3 right)
+        => new half3(
+                     (half)((float)left.y * (float)right.z - (float)left.z * (float)right.y),
+                     (half)((float)left.z * (float)right.x - (float)left.x * (float)right.z),
+                     (half)((float)left.x * (float)right.y - (float)left.y * (float)right.x)
+                    );
 
-    public static float3 cross(in float3 left, in float3 right) {
-        return new float3(
-                          left.y * right.z - left.z * right.y,
-                          left.z * right.x - left.x * right.z,
-                          left.x * right.y - left.y * right.x
-                         );
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float3 cross(in float3 left, in float3 right)
+        => new float3(
+                      left.y * right.z - left.z * right.y,
+                      left.z * right.x - left.x * right.z,
+                      left.x * right.y - left.y * right.x
+                     );
 
-    public static double3 cross(in double3 left, in double3 right) {
-        return new double3(
-                          left.y * right.z - left.z * right.y,
-                          left.z * right.x - left.x * right.z,
-                          left.x * right.y - left.y * right.x
-                         );
-    }
+    public static double3 cross(in double3 left, in double3 right)
+        => new double3(
+                       left.y * right.z - left.z * right.y,
+                       left.z * right.x - left.x * right.z,
+                       left.x * right.y - left.y * right.x
+                      );
 }

@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace NetGL.Vectors;
 
@@ -46,6 +47,26 @@ public struct vec2<T>:
         return this;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec2<T> operator+(vec2<T> left, in vec2<T> right) {
+        left.x += right.x;
+        left.y += right.y;
+        return left;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec2<T> operator-(vec2<T> left, in vec2<T> right) {
+        left.x -= right.x;
+        left.y -= right.y;
+        return left;
+    }
+
+    public static bool operator==(in vec2<T> left, in vec2<T> right)
+        => left.x == right.x && left.y == right.y;
+
+    public static bool operator!=(in vec2<T> left, in vec2<T> right)
+        => left.x != right.x || left.y != right.y;
+
     public static explicit operator half2(in vec2<T> other) =>
         new half2().set(other);
 
@@ -72,7 +93,16 @@ public struct vec2<T>:
     public bool Equals(vec2<T> other)
         => x == other.x && y == other.y;
 
-    int IComparable<vec2<T>>.CompareTo(vec2<T> other) => int.CreateSaturating(length() - other.length());
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int CompareTo(vec2<T> other) {
+        if (x < other.x) return -1;
+        if (x > other.x) return 1;
+
+        if (y < other.y) return -1;
+        if (y > other.y) return 1;
+
+        return 0;
+    }
 
     public override string ToString() => $"({x}, {y})";
 
@@ -80,6 +110,9 @@ public struct vec2<T>:
 
     public static vec2<T> unit_x => new(T.One, T.Zero);
     public static vec2<T> unit_y => new(T.Zero, T.One);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override int GetHashCode() => HashCode.Combine(x, y);
 
     I[] ivec.get_array<I>() => new T[]{x, y}.Cast<I>().ToArray();
     T[] ivec<T>.array => [x, y];

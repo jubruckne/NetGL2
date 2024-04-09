@@ -1,12 +1,17 @@
+using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
+
 namespace NetGL;
 
+[SuppressMessage("ReSharper", "StaticMemberInGenericType")]
 public static class Pool<T> where T: unmanaged {
     private static int first_free;
     private static readonly NativeArray<T> array = new NativeArray<T>(100);
-    private static readonly NativeArray<bool> used_list = new NativeArray<bool>(100);
+    private static BitBag used_list = new BitBag(100);
 
     public static int capacity => array.length;
-    public static int count() => used_list.count(static b => b);
+    public static int used_capacity => used_list.count<BitBag, bool>(static b => b);
+    public static int free_capacity => capacity - used_capacity;
 
     public static unsafe Pointer<T> allocate() {
         while (used_list[first_free] && first_free < used_list.length)

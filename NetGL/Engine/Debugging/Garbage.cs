@@ -1,21 +1,54 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace NetGL;
 
-internal readonly ref struct Garbage {
-    private readonly long allocations_before = new();
+internal class Garbage: IDisposable {
+    private readonly long allocations_before;
     private readonly string name;
     private readonly Stopwatch stopwatch;
 
-    public Garbage() {
-        name = "";
-        allocations_before = GC.GetAllocatedBytesForCurrentThread();
-        stopwatch          = new();
-        stopwatch.Start();
+    private static readonly Dictionary<object, Garbage> instances = new();
+
+    public static void start_measuring([CallerMemberName] string? caller = default) {
+        if (instances.TryGetValue(string.Empty, out var instance)) {
+            instance.Dispose();
+            instances.Remove(string.Empty);
+        }
+
+        instances.Add(string.Empty, new Garbage(string.Intern(caller!)));
     }
 
-    public Garbage(string caller) {
-        name = caller;
+    public static void start_measuring<T>(T caller) where T: class {
+        if (instances.TryGetValue(caller, out var instance)) {
+            instance.Dispose();
+            instances.Remove(caller);
+        }
+        instances.Add(caller, new Garbage(string.Intern(caller.get_type_name())));
+    }
+
+    public static void stop_measuring([CallerMemberName] string? caller = default) {
+        if (instances.TryGetValue(string.Empty, out var instance)) {
+            instance.Dispose();
+            instances.Remove(string.Empty);
+            return;
+        }
+
+        Error.not_allocated(caller);
+    }
+
+    public static void stop_measuring<T>(T caller) where T: class {
+        if (instances.TryGetValue(caller, out var instance)) {
+            instance.Dispose();
+            instances.Remove(caller);
+            return;
+        }
+
+        Error.not_allocated(caller);
+    }
+
+    private Garbage([CallerMemberName] string? caller = default) {
+        name = caller!;
         allocations_before = GC.GetAllocatedBytesForCurrentThread();
         stopwatch          = new();
         stopwatch.Start();
@@ -24,6 +57,6 @@ internal readonly ref struct Garbage {
     public void Dispose() {
         stopwatch.Stop();
         var allocations = GC.GetAllocatedBytesForCurrentThread() - allocations_before;
-        Debug.println($"{name}: duration={stopwatch.ElapsedMilliseconds:N0} ms, allocated={allocations:N0} bytes");
+        Debug.println($"{name}: duration={stopwatch.Elapsed.Microseconds / 100.0:N2} ms, allocated={allocations:N0} bytes");
     }
 }

@@ -61,16 +61,16 @@ public static class Debug {
 
 
     [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
-    public static bool assert([DoesNotReturnIf(false)]bool condition, [CallerArgumentExpression("condition")] string? name = default) {
+    public static bool assert([DoesNotReturnIf(false)]bool condition, [CallerArgumentExpression("condition")] string? expression = default, [CallerMemberName] string? caller = default) {
         if (!condition)
-            throw new ApplicationException($"Assertion failed: {name}!");
+            throw new ApplicationException($"Assertion failed: {caller}->{expression}!");
         return true;
     }
 
     [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
-    public static void assert<T>(T obj, [DoesNotReturnIf(false)]bool condition, [CallerArgumentExpression("condition")] string? name = default) where T: notnull {
+    public static void assert<T>(T obj, [DoesNotReturnIf(false)] bool condition, [CallerArgumentExpression("condition")] string? expression = default, [CallerMemberName] string? caller = default) where T: notnull {
         if (!condition)
-            throw new Exception($"Assertion failed: {name}! ({obj.ToString()})");
+            throw new Exception($"Assertion failed: {obj.get_type_name()}->{caller}->{expression}!");
     }
 
     [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]

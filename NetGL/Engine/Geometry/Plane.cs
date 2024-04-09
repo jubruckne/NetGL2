@@ -1,22 +1,18 @@
 using System.Runtime.CompilerServices;
-using OpenTK.Mathematics;
-using Vector3 = OpenTK.Mathematics.Vector3;
 
 namespace NetGL;
 
+
 public readonly struct Plane {
-    public readonly Vector3 local_x;
-    public readonly Vector3 local_y;
-    public readonly Vector3 local_z;
+    public readonly float3 normal;
+    public readonly float D;
 
-    public static Plane XZ => new(Vector3.UnitY, Vector3.UnitX, Vector3.UnitZ);
-
-    private Plane(Vector3 normal, Vector3 right, Vector3 forward) {
-        local_z = normal;
-        local_x = right;
-        local_y = forward;
+    public Plane(float3 normal, float d) {
+        this.normal = normal;
+        this.D      = d;
     }
 
+    /*
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float3 to_world(float x, float y, float height) => new float3(x, height, -y);
 
@@ -37,4 +33,12 @@ public readonly struct Plane {
         float y = -world_pos.Z;
         return new Vector2(x, y);
     }
+    */
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float signed_distance(in float3 point)
+        => normal.x * point.x + normal.y * point.y + normal.z * point.z + D;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float distance(in float3 point) => MathF.Abs(signed_distance(point));
 }

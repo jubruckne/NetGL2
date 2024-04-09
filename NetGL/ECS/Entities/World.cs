@@ -1,13 +1,8 @@
-using System.Formats.Tar;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
 namespace NetGL.ECS;
 
 using System.Numerics;
 using BulletSharp;
 using OpenTK.Mathematics;
-using Vector3 = OpenTK.Mathematics.Vector3;
 
 public class World: Entity {
     private readonly EntityList world_entities;

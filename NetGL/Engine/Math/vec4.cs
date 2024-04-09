@@ -49,17 +49,13 @@ public partial struct vec4<T>:
 }
 
 public partial struct vec4<T> {
-    public bool Equals(vec4<T> other) {
-        return x.Equals(other.x) && y.Equals(other.y) && z.Equals(other.z);
-    }
+    public bool Equals(vec4<T> other)
+        => x.Equals(other.x) && y.Equals(other.y) && z.Equals(other.z);
 
-    public override bool Equals(object? obj) {
-        return obj is vec3<T> other && Equals(other);
-    }
+    public override bool Equals(object? obj)
+        => obj is vec3<T> other && Equals(other);
 
-    public override int GetHashCode() {
-        return HashCode.Combine(x, y, z, w);
-    }
+    public override int GetHashCode() => HashCode.Combine(x, y, z, w);
 
     public override string ToString() => $"({x}, {y}, {z}, {w})";
 }

@@ -1,4 +1,3 @@
-using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -10,6 +9,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
 
     public float speed = 2.5f;
     public float sensitivity = 0.5f;
+    public readonly float field_of_view_degrees;
 
     internal FirstPersonCamera (
         in Entity entity,
@@ -24,8 +24,29 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         this.keyboard_state = keyboard_state;
         this.mouse_state = mouse_state;
 
+        this.field_of_view_degrees = field_of_view;
         camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(field_of_view.degree_to_radians(), aspect_ratio, near, far);
         camera_data.camera_matrix = Matrix4.Identity;
+    }
+
+    public bool is_in_frustum(in Vector3 position) {
+        var view_projection = Matrix4.Mult(camera_data.camera_matrix, camera_data.projection_matrix);
+        var clipCoords = Vector4.Transform(new Vector4(position, 1f), view_projection.ExtractRotation());
+
+        // Normalize clip space coordinates (homogeneous division)
+        if (clipCoords.W != 0f) {
+            clipCoords.X /= clipCoords.W;
+            clipCoords.Y /= clipCoords.W;
+            clipCoords.Z /= clipCoords.W;
+        }
+
+        return Math.Abs(clipCoords.X) <= 1f && Math.Abs(clipCoords.Y) <= 1f && clipCoords.Z <= 1f;
+    }
+
+    public bool is_in_frustum(in Vector2 xz) {
+        // Create a 3D position using the XZ plane and a neutral Y value (e.g., the camera's Y position)
+        var position = new Vector3(xz.X, this.transform.position.Y, xz.Y);
+        return is_in_frustum(position);
     }
 
     public override void update(in float delta_time) {
@@ -80,6 +101,24 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
             entity.transform.rotation = transform.rotation;
             entity.transform.position = transform.position;
         }
+    }
+
+    public float calculate_resolution_at_distance(float distance) {
+        var fov = field_of_view_degrees.degree_to_radians();
+
+        var screen_width_at_distance = 2f * MathF.Tan(fov / 2f) * distance;
+        return viewport.width / screen_width_at_distance;
+    }
+
+    public float calculate_size_at_distance(float size, float distance) {
+        // Convert the field of view from degrees to radians
+        var fov = field_of_view_degrees.degree_to_radians();
+
+        // Calculate the width of the view at the distance
+        var screen_width_at_distance = 2f * MathF.Tan(fov / 2f) * distance;
+
+        // Determine what fraction of the screen width the object covers
+        return size / screen_width_at_distance * viewport.width;
     }
 
     public override string ToString() => $"position: {entity.transform.position} rotation: {entity.transform.rotation}";

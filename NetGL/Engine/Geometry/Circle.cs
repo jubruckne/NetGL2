@@ -1,4 +1,3 @@
-using NetGL;
 using OpenTK.Mathematics;
 
 namespace NetGL;

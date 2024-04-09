@@ -1,25 +1,20 @@
-using System.Diagnostics;
-
 namespace NetGL;
 
-internal sealed class TerrainChunk {
+public sealed class TerrainChunk {
     private const int chunk_quad_count = 255;
+    private const int vertex_count = (chunk_quad_count + 1) * (chunk_quad_count + 1);
+    private const int index_count = chunk_quad_count * chunk_quad_count * 2;
 
     public readonly Terrain terrain;
-    public readonly float x;
-    public readonly float y;
-    public readonly float size;
-    public readonly int level;
+    public readonly Rectangle rectangle;
     private readonly Material material;
 
     public bool ready { get; private set; }
     public VertexArrayIndexed? vertex_array { get; private set; }
+    public static IndexBuffer<ushort>? shared_index_buffer;
 
-    public TerrainChunk(in Terrain terrain, in Bounds bounds, in int level, Material material) {
-        this.x = bounds.center.x;
-        this.y = bounds.center.y;
-        this.size = bounds.size;
-        this.level = level;
+    public TerrainChunk(in Terrain terrain, in Rectangle rectangle, Material material) {
+        this.rectangle = rectangle;
         this.terrain = terrain;
         this.ready = false;
         this.material = material;
@@ -51,25 +46,48 @@ internal sealed class TerrainChunk {
         //Garbage.measure("VertexArrayIndexed.upload");
     }
 
+    private IndexBuffer<ushort> get_shared_index_buffer() {
+        if (shared_index_buffer is not null) return shared_index_buffer;
+
+        shared_index_buffer = new IndexBuffer<ushort>(index_count);
+
+        int vx, vy;
+
+        var index = 0;
+        for (var i = 0; i < index_count / 2; ++i) {
+            // Calculate x and y positions based on the current index (i)
+            vx = i % chunk_quad_count;
+            vy = i / chunk_quad_count;
+
+            var bottom_left  = vy * (chunk_quad_count + 1) + vx;
+            var bottom_right = bottom_left + 1;
+            var top_left     = bottom_left + chunk_quad_count + 1;
+            var top_right    = top_left + 1;
+
+            shared_index_buffer[index].p0 = (ushort)bottom_left;
+            shared_index_buffer[index].p1 = (ushort)bottom_right;
+            shared_index_buffer[index].p2 = (ushort)top_right;
+            ++index;
+
+            shared_index_buffer[index].p0 = (ushort)top_right;
+            shared_index_buffer[index].p1 = (ushort)top_left;
+            shared_index_buffer[index].p2 = (ushort)bottom_left;
+            ++index;
+        }
+
+        return shared_index_buffer;
+    }
+
     private VertexArrayIndexed create() {
-        using Garbage g = new();
+        var noise = terrain.noise;
 
-        int vertex_count = (chunk_quad_count + 1) * (chunk_quad_count + 1);
-        int index_count  = chunk_quad_count * chunk_quad_count * 2;
-
-        Plane plane = terrain.plane;
-        Noise noise = terrain.noise;
-
-        var vb           = new VertexBuffer<float3, half3>(vertex_count);
-        var ib           = new IndexBuffer<ushort>(index_count);
+        var vb = new VertexBuffer<float3, half3>(vertex_count);
+        var ib = get_shared_index_buffer();
 
         Debug.println(
-                      $"Creating chunk {size} x {size}, vtx={vertex_count:N0}, idx<{ib[0].p0.GetType().Name}>={index_count:N0}",
+                      $"Creating chunk {rectangle.width} x {rectangle.height}, vtx={vertex_count:N0}, idx<{shared_index_buffer?[0].p0.GetType().Name}>={index_count:N0}",
                       ConsoleColor.Magenta
                      );
-
-        var offset_x = this.x - this.size * 0.5f;
-        var offset_y = this.y - this.size * 0.5f;
 
         float px;
         float py;
@@ -77,36 +95,18 @@ internal sealed class TerrainChunk {
         int vx;
         int vy;
 
-        var index = 0;
         for (var i = 0; i < vertex_count; ++i) {
             vx = i % (chunk_quad_count + 1);
             vy = i / (chunk_quad_count + 1);
 
-            px = offset_x + size * vx / chunk_quad_count;
-            py = offset_y + size * vy / chunk_quad_count;
+            px = rectangle.left + rectangle.width * vx / chunk_quad_count;
+            py = rectangle.bottom + rectangle.height * vy / chunk_quad_count;
 
-            vb[i].position = plane.to_world(
+            vb[i].position = terrain.terrain_to_world_position(
                                             px,
                                             py,
-                                            noise.sample(px, py) - level.select([30, 20, 10, 0])
+                                            noise.sample(px, py)
                                            );
-
-            if (vx < chunk_quad_count && vy < chunk_quad_count) {
-                var top_right    = (vy + 1) * (chunk_quad_count + 1) + vx + 1;
-                var bottom_right = vy * (chunk_quad_count + 1) + vx + 1;
-                var bottom_left  = vy * (chunk_quad_count + 1) + vx;
-                var top_left     = (vy + 1) * (chunk_quad_count + 1) + vx;
-
-                ib[index].p0 = (ushort)bottom_left;
-                ib[index].p1 = (ushort)bottom_right;
-                ib[index].p2 = (ushort)top_right;
-                ++index;
-
-                ib[index].p0 =  (ushort)top_right;
-                ib[index].p1 =  (ushort)top_left;
-                ib[index].p2 =  (ushort)bottom_left;
-                ++index;
-            }
         }
 
         vb.calculate_normals(ib.indices);
@@ -121,11 +121,13 @@ internal sealed class TerrainChunk {
             upload(create());
         } else {
             BackgroundTaskScheduler.schedule<VertexArrayIndexed>(
-                id: $"TerrainChunk.create(pos={(x, y)}, size={size})",
+                id: $"TerrainChunk.create(rect={rectangle})",
                 threaded: create,
                 completed: upload,
                 priority
             );
         }
     }
+
+    public int key => HashCode.Combine(rectangle.bottom_left, rectangle.top_right);
 }

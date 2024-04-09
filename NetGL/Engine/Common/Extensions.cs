@@ -66,7 +66,12 @@ public static class TypeExtensions {
             var genericArguments = type.GetGenericArguments()
                 .Select(static x => x.Name)
                 .Aggregate(static (x1, x2) => $"{x1}, {x2}");
-            return $"{type.Name[..type.Name.IndexOf('`')]} <{genericArguments}>".Replace(" >", ">");
+
+            var g = type.Name.IndexOf('`');
+
+            return g > 0
+                ? $"{type.Name[..type.Name.IndexOf('`')]}<{genericArguments}>"
+                : $"{type.Name}<{genericArguments}>";
         }
         return type.Name;
     }
@@ -79,7 +84,6 @@ public static class TypeExtensions {
             var genericArguments = type.GetGenericArguments()
                 .Select(static x => x.get_type_name())
                 .Aggregate(static (x1, x2) => $"{x1}, {x2}");
-
 
             var g = type.Name.IndexOf('`');
             return g > 0
@@ -475,6 +479,15 @@ public static class ArrayExt {
         var result = 0;
         foreach (var e in list)
             result += sum_function(e);
+        return result;
+    }
+
+    public static int count<TList, T>(this TList list, Predicate<T> count_function) where T: unmanaged where TList: IEnumerable<T> {
+        var result = 0;
+        foreach (var e in list)
+            if (count_function(e))
+                ++result;
+
         return result;
     }
 

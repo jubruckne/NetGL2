@@ -1,6 +1,8 @@
+using System.Collections;
+
 namespace NetGL;
 
-public struct BitBag {
+public struct BitBag: IEnumerable<bool> {
     private uint[] data;
 
     public BitBag()
@@ -26,6 +28,14 @@ public struct BitBag {
                 data[index / 32] &= ~(1u << (index % 32));
         }
     }
+
+    public IEnumerator<bool> GetEnumerator() {
+        for (var index = 0; index < data.Length; ++index) {
+            yield return (data[index / 32] & (1u << (index % 32))) != 0;
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
 }
 
 public struct BitBag<TEnum>

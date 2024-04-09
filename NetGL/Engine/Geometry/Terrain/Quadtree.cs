@@ -1,125 +1,15 @@
-using System.Collections;
+using System.Diagnostics;
 
 namespace NetGL;
 
-public sealed class Quadtree<T>: IEnumerable<Quadtree<T>.Node> where T: notnull {
+public sealed partial class Quadtree<T> where T: class {
     public delegate T AllocateDelegate(in Bounds bounds, int level);
 
-    public sealed class Node: IEnumerable<Node> {
-        public readonly T data;
-        public readonly int level;
-        public readonly Bounds bounds;
-        public readonly Quadtree<T> tree;
-
-        public Node? parent;
-        public Node? top_right;
-        public Node? bottom_right;
-        public Node? bottom_left;
-        public Node? top_left;
-
-        internal Node(Quadtree<T> tree, Node? parent, Bounds bounds, int level) {
-            Debug.println($"new Quadtree.Node: level={level}, max_level={tree.max_level}, bound={bounds}");
-            Debug.assert(level.is_between(-1, tree.max_level + 1));
-            this.tree   = tree;
-            this.parent = parent;
-            this.bounds = bounds;
-            this.level  = level;
-            data        = tree.allocate(bounds, level);
-        }
-
-        internal Node? this[Bounds.Tile tile] {
-            get => tile switch {
-                //Bounds.Tile.parent       => parent,
-                Bounds.Tile.top_right    => top_right,
-                Bounds.Tile.bottom_right => bottom_right,
-                Bounds.Tile.bottom_left  => bottom_left,
-                Bounds.Tile.top_left     => top_left,
-                _                        => throw new ArgumentOutOfRangeException(nameof(tile), tile, null)
-            };
-            set {
-                switch (tile) {
-                    //case Bounds.Tile.parent:
-                    //    parent = value;
-                    //    break;
-                    case Bounds.Tile.bottom_left:
-                        bottom_left = value;
-                        break;
-                    case Bounds.Tile.bottom_right:
-                        bottom_right = value;
-                        break;
-                    case Bounds.Tile.top_left:
-                        top_left = value;
-                        break;
-                    case Bounds.Tile.top_right:
-                        top_right = value;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(tile), tile, null);
-                }
-            }
-        }
-
-        internal bool has_node(float x, float y, int level) => get_node(x, y, level, false);
-
-        internal Node get_node(float x, float y, int level) => get_node(x, y, level, true);
-
-        internal Result<Node> get_node(float x, float y, int level, bool allocate_as_needed) {
-            Debug.assert(bounds.intersects(x, y));
-            Debug.assert(this.level <= level);
-
-            var new_bounds = Bounds.intersects(x, y, bounds.tiles);
-            Debug.assert(new_bounds != null);
-
-            if (this[new_bounds.tile] is not null)
-                return this[new_bounds.tile]!.get_node(x, y, level, allocate_as_needed);
-
-            if (!allocate_as_needed)
-                return false;
-
-            var node = new Node(tree, this, new_bounds, this.level + 1);
-            this[new_bounds.tile] = node;
-
-            return node.level == level
-                ? node
-                : node.get_node(x, y, level, allocate_as_needed);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<Node>)this).GetEnumerator();
-
-        IEnumerator<Node> IEnumerable<Node>.GetEnumerator() {
-            if (top_right != null) {
-                yield return top_right;
-                foreach (var q in top_right)
-                    yield return q;
-            }
-
-            if (bottom_right != null) {
-                yield return bottom_right;
-                foreach (var q in bottom_right)
-                    yield return q;
-            }
-
-            if (bottom_left != null) {
-                yield return bottom_left;
-                foreach (var q in bottom_left)
-                    yield return q;
-            }
-
-            if (top_left != null) {
-                yield return top_left;
-                foreach (var q in top_left)
-                    yield return q;
-            }
-        }
-
-        public override string ToString() => $"Quadtree (node): level={level} bounds={bounds} data={data}";
-    }
-
     public readonly int max_level;
-    public readonly float level_max_tile_size;
-    public readonly float level_0_tile_size;
+    public readonly float[] tile_size_by_level;
 
-    private readonly Bag<int2, Node> roots;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private readonly Bag<int2, Node> nodes;
 
     private readonly AllocateDelegate allocate;
 
@@ -132,17 +22,20 @@ public sealed class Quadtree<T>: IEnumerable<Quadtree<T>.Node> where T: notnull 
         this.allocate  = allocate;
         this.max_level = max_level;
 
-        level_0_tile_size = tile_size * (1 << max_level);
-        level_max_tile_size = tile_size;
+        tile_size_by_level = new float[max_level + 1];
+        for (var i = 0; i <= max_level; i++)
+            tile_size_by_level[max_level - i] = tile_size * (1 << i);
 
-        roots = new(static (ref readonly Node item) => (int2)item.bounds.center);
+        nodes = new(static (ref readonly Node item) => (int2)item.bounds.center);
     }
 
     public Node request_node(float x, float y, int level) {
-        var nearest_x     = x.nearest_multiple(level_0_tile_size);
-        var nearest_y     = y.nearest_multiple(level_0_tile_size);
+        Debug.assert(level <= max_level);
 
-        var node = roots.lookup(nearest_x, nearest_y, static (ref Node item, float x, float y) => item.bounds.intersects(x, y));
+        var nearest_x     = x.nearest_multiple(tile_size_by_level[0]);
+        var nearest_y     = y.nearest_multiple(tile_size_by_level[0]);
+
+        var node = nodes.lookup(nearest_x, nearest_y, static (ref Node item, float x, float y) => item.bounds.intersects(x, y));
         if (node) {
             return node.value.level == level
                 ? node
@@ -156,27 +49,24 @@ public sealed class Quadtree<T>: IEnumerable<Quadtree<T>.Node> where T: notnull 
                                     Bounds.Tile.full,
                                     nearest_x,
                                     nearest_y,
-                                    level_0_tile_size
+                                    tile_size_by_level[0]
                                    ),
-                                0
+                                0,
+                                0 == level
                                );
-        roots.add(new_node);
+        nodes.add(new_node);
 
         return new_node.level == level
             ? new_node
-            : new_node.get_node(x, y, level.at_most(max_level));
+            : new_node.get_node(x, y, level, true);
     }
 
-    IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<Node>)this).GetEnumerator();
-
-    IEnumerator<Node> IEnumerable<Node>.GetEnumerator() {
-        for (var i = 0; i < roots.length; ++i) {
-            var node = roots[i];
-            yield return node;
-            foreach (var q in node)
-                yield return q;
+    public IEnumerable<Node> root_nodes {
+        get {
+            for (var i = 0; i < nodes.length; ++i)
+                yield return nodes[i];
         }
     }
 
-    public override string ToString() => $"new Quadtree (root): tile size: level_0={level_0_tile_size}, level_{max_level}={level_max_tile_size}";
+    public override string ToString() => $"Quadtree: tile size level_0={tile_size_by_level[0]}, level_{max_level}={tile_size_by_level[max_level]}";
 }

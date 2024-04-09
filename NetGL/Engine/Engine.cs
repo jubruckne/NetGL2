@@ -7,7 +7,6 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Plane = NetGL.Plane;
 using Vector2 = System.Numerics.Vector2;
 using Vector3 = System.Numerics.Vector3;
 
@@ -126,10 +125,10 @@ public class Engine: GameWindow {
         player.transform.position = (0, 8, 0);
         player.transform.rotation = Rotation.Forward;
 
-        player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:15f, sensitivity:0.75f);
+        player.add_first_person_camera(Viewport.Gameplay, field_of_view:70f, keyboard_state: KeyboardState, mouse_state: MouseState, enable_input:false, speed:85f, sensitivity:0.75f);
 
 
-        Entity terrain1 = world.create_terrain(Plane.XZ);
+        Entity terrain1 = world.create_terrain();
 
         /*
         var oc1 = player.add_first_person_camera(Viewport.Hud.copy("O2", x:325, y:200), field_of_view:60f, enable_input:false);
@@ -196,7 +195,7 @@ public class Engine: GameWindow {
 
         // 3000 - 40fps
         // 3500 - 30fps
-        foreach (var b in Enumerable.Range(1, 9)) {
+        foreach (var b in Enumerable.Range(1, 2)) {
             Entity cube = world.create_sphere_cube($"Sphere{b}", radius:0.35f, material:Material.random);
             cube.transform.position.randomize(-2.5f, 2.5f).add(x:-1.5f, y:15, -15f + Random.Shared.NextSingle() * 5.9f);
 
@@ -217,13 +216,10 @@ public class Engine: GameWindow {
         CursorState = CursorState.Normal;
 
         game_time = 0f;
-        return;
-
-
     }
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
-        using Garbage g = new("Update");
+        //Garbage.start_measuring();
 
         base.OnUpdateFrame(e);
 
@@ -258,11 +254,11 @@ public class Engine: GameWindow {
         BackgroundTaskScheduler.process_completed_tasks();
 
         world.update(game_time, delta_time);
-        //Garbage.measure($"Engine.update - frame: {frame}");
+        //Garbage.stop_measuring();
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
-        using Garbage g = new("Render");
+        //Garbage.start_measuring();
         base.OnRenderFrame(e);
 
         // Console.WriteLine($"starting frame:{frame}...");
@@ -297,6 +293,7 @@ public class Engine: GameWindow {
 
         RenderState.assert();
 
+        // Garbage.stop_measuring();
         SwapBuffers();
     }
 

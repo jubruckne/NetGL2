@@ -2,22 +2,42 @@ using OpenTK.Mathematics;
 
 namespace NetGL;
 
-public class Rectangle: IShape {
-    public readonly float x;
-    public readonly float y;
-    public readonly float width;
-    public readonly float height;
+public readonly struct Rectangle: IShape, IComparable<Rectangle> {
+    public readonly float2 bottom_left;
+    public readonly float2 top_right;
+
+    public float x => bottom_left.x;
+    public float y => bottom_left.y;
+    public float width => top_right.x - bottom_left.x;
+    public float height => top_right.y - bottom_left.y;
+    public float left => bottom_left.x;
+    public float right => top_right.x;
+    public float top => top_right.y;
+    public float bottom => bottom_left.y;
 
     public Rectangle(float x = -0.5f, float y = -0.5f, float width = 1f, float height = 1f) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        bottom_left = new float2(x, y);
+        top_right = new float2(x + width, y + height);
     }
 
-    public static implicit operator Rectangle((float x, float y, float width, float height) tuple) {
-        return new Rectangle(tuple.x, tuple.y, tuple.width, tuple.height);
+    public Rectangle(in float2 bottom_left, in float2 top_right) {
+        this.bottom_left = bottom_left;
+        this.top_right = top_right;
     }
+
+    public Rectangle(in float2 bottom_left, in float size) {
+        this.bottom_left = bottom_left;
+        this.top_right = bottom_left + (size, size);
+    }
+
+    public static implicit operator Rectangle((float x, float y, float width, float height) rect)
+        => new Rectangle(rect.x, rect.y, rect.width, rect.height);
+
+    public static implicit operator Rectangle((float2 bottom_left, float2 top_right) rect)
+        => new Rectangle(rect.bottom_left, rect.top_right);
+
+    public static implicit operator Rectangle((float2 bottom_left, float size) rect)
+        => new Rectangle(rect.bottom_left, rect.size);
 
     public IEnumerable<Vector3> get_vertices() => get_vertices(1);
 
@@ -61,7 +81,13 @@ public class Rectangle: IShape {
         throw new NotImplementedException();
     }
 
-    public override string ToString() {
-        return $"Rectangle[x:{x}, y:{y}, width:{width}, height:{height}]";
-    }
+    public int CompareTo(Rectangle other)
+        => bottom_left == other.bottom_left
+            ? top_right.CompareTo(other.top_right)
+            : bottom_left.CompareTo(other.bottom_left);
+
+    public override int GetHashCode()
+        => HashCode.Combine(bottom_left.GetHashCode(), top_right.GetHashCode());
+
+    public override string ToString() => $"Rectangle[{bottom_left}:{top_right}]";
 }

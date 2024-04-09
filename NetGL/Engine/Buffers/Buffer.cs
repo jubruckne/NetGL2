@@ -72,10 +72,10 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         this.buffer = new NativeArray<T>(items);
     }
 
-    protected Buffer(BufferTarget target, int count) {
+    protected Buffer(BufferTarget target, int length) {
         this.target = target;
         this.handle = 0;
-        this.buffer = new NativeArray<T>(count);
+        this.buffer = new NativeArray<T>(length);
     }
 
     protected Buffer(BufferTarget target, in T data) {
