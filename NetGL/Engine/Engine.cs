@@ -47,12 +47,43 @@ public class Engine: GameWindow {
         Debug.println($"Renderer: {GL.GetString(StringName.Renderer)}");
         Debug.println($"ContextFlags: {(ContextFlagMask)GL.GetInteger(GetPName.ContextFlags)}");
         Debug.println();
+        Debug.assert_opengl();
 
-        Debug.println($"Extensions: {GL.GetString(StringNameIndexed.Extensions, 0)}");
+        Debug.println($"Extensions");
+        var ext_count = GL.GetInteger(GetPName.NumExtensions);
+        for (var i = 0; i < ext_count; i++)
+            Debug.println($"  Extension {i}: {GL.GetString(StringNameIndexed.Extensions, i)}");
         Debug.println();
+        Debug.assert_opengl();
+
         Debug.println($"MaxElementsVertices: {GL.GetInteger(GetPName.MaxElementsVertices)}");
         Debug.println($"MaxElementsIndices: {GL.GetInteger(GetPName.MaxElementsIndices)}");
         Debug.println();
+        Debug.assert_opengl();
+
+        Debug.println($"MaxTextureSize: {GL.GetInteger(GetPName.MaxTextureSize)}");
+        Debug.println($"MaxArrayTextureLayers: {GL.GetInteger(GetPName.MaxArrayTextureLayers)}");
+        Debug.println($"Max3DTextureSize: {GL.GetInteger(GetPName.Max3DTextureSize)}");
+        Debug.println($"MaxTextureBufferSize: {GL.GetInteger(GetPName.MaxTextureBufferSize):N0}");
+        Debug.println();
+        Debug.assert_opengl();
+
+        Debug.println($"MaxVertexTextureImageUnits: {GL.GetInteger(GetPName.MaxVertexTextureImageUnits)}");
+        Debug.println($"MaxCombinedTextureImageUnits: {GL.GetInteger(GetPName.MaxCombinedTextureImageUnits)}");
+        Debug.println($"MaxTextureImageUnits: {GL.GetInteger(GetPName.MaxTextureImageUnits)}");
+        Debug.println($"MaxTextureMaxAnisotropy: {GL.GetInteger(GetPName.MaxTextureMaxAnisotropy)}");
+        Debug.assert_opengl();
+
+        Debug.println($"MaxVertexAttribs: {GL.GetInteger(GetPName.MaxVertexAttribs)}");
+        Debug.println($"MaxVertexUniformComponents: {GL.GetInteger(GetPName.MaxVertexUniformComponents)}");
+        Debug.println($"MaxVertexUniformVectors: {GL.GetInteger(GetPName.MaxVertexUniformVectors)}");
+        Debug.println($"MaxVertexUniformBlocks: {GL.GetInteger(GetPName.MaxVertexUniformBlocks)}");
+
+        Debug.println($"MaxUniformBufferBindings: {GL.GetInteger(GetPName.MaxUniformBufferBindings)}");
+        Debug.println($"MaxUniformBlockSize: {GL.GetInteger(GetPName.MaxUniformBlockSize)}");
+        Debug.println($"MaxCombinedUniformBlocks: {GL.GetInteger(GetPName.MaxCombinedUniformBlocks)}");
+        Debug.println();
+        Debug.assert_opengl();
 
         GL.CullFace(CullFaceMode.Back);
         GL.Enable(EnableCap.CullFace);
@@ -154,6 +185,7 @@ public class Engine: GameWindow {
         planets_texture.create();
 
         planet_mat.ambient_texture = planets_texture;
+        planet_mat.ambient_texture.query_info();
 
 /*
         Entity ball = world.create_sphere_cube("Ball2", radius: 10f, segments:100, material: Material.Emerald);

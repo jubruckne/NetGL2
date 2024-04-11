@@ -59,7 +59,7 @@ public class VertexArrayIndexed: VertexArray {
     public readonly IIndexBuffer index_buffer;
     public readonly DrawRanges draw_ranges;
 
-    public VertexArrayIndexed(IVertexBuffer[] vertex_buffers, IIndexBuffer index_buffer, DrawRanges? draw_ranges, Material material): base(vertex_buffers, material) {
+    public VertexArrayIndexed(List<IVertexBuffer> vertex_buffers, IIndexBuffer index_buffer, DrawRanges? draw_ranges, Material material): base(vertex_buffers, material) {
         this.index_buffer = index_buffer;
 
         if (draw_ranges != null && draw_ranges.length > 1) {
@@ -76,7 +76,7 @@ public class VertexArrayIndexed: VertexArray {
     public VertexArrayIndexed(IVertexBuffer vertex_buffer, IIndexBuffer index_buffer, Material material)
         : this([vertex_buffer], index_buffer,null, material) {}
 
-    public VertexArrayIndexed(IVertexBuffer[] vertex_buffers, IIndexBuffer index_buffer, Material material)
+    public VertexArrayIndexed(List<IVertexBuffer> vertex_buffers, IIndexBuffer index_buffer, Material material)
         : this(vertex_buffers, index_buffer, null, material) {}
 
     public override void upload() {

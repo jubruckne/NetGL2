@@ -5,6 +5,14 @@ using NetGL.Vectors;
 namespace NetGL;
 
 public static class Triangulator {
+    public static float3 calculate_normal(in float3 p0, in float3 p1, in float3 p2) {
+        var edge1 = p1 - p0;
+        var edge2 = p2 - p0;
+        var norm  = vec.cross(edge1, edge2);
+        norm.normalize();
+        return norm;
+    }
+
     public static void calculate_normals(this VertexBuffer<float3, half3> vb, in ArrayView<Index<ushort>> indices) {
         var positions = vb.positions;
         var normals   = vb.normals;

@@ -26,7 +26,7 @@ public class TextureCubemapBuffer: Texture2DArrayBuffer {
             GL.TexImage2D(
                 TextureTarget.TextureCubeMapPositiveX + tex_idx,
                 level: 0,
-                internalformat:PixelInternalFormat.Rgba,
+                internalformat:PixelInternalFormat.CompressedRgb,
                 width,
                 height,
                 border:0,

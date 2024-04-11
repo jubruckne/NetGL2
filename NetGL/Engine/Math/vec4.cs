@@ -12,6 +12,13 @@ public partial struct vec4<T>:
     public T z;
     public T w;
 
+    public vec4(in vec3<T> xyz, T w) {
+        this.x = xyz.x;
+        this.y = xyz.y;
+        this.z = xyz.z;
+        this.w = w;
+    }
+
     public vec4(T x, T y, T z, T w) {
         this.x = x;
         this.y = y;

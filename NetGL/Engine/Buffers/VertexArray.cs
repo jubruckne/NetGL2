@@ -8,10 +8,10 @@ public class VertexArray: IBindable {
     public readonly PrimitiveType primitive_type;
     public Material material;
 
-    public readonly IVertexBuffer[] vertex_buffers;
+    public readonly List<IVertexBuffer> vertex_buffers;
     public IReadOnlyList<VertexAttribute> vertex_attributes { get; }
 
-    public VertexArray(IVertexBuffer[] vertex_buffers, Material material) {
+    public VertexArray(List<IVertexBuffer> vertex_buffers, Material material) {
         handle = 0;
 
         this.vertex_buffers = vertex_buffers;

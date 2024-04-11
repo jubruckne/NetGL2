@@ -35,7 +35,7 @@ public class Texture2DBuffer: TextureBuffer {
         GL.TexImage2D(
             target,
             level: 0,
-            PixelInternalFormat.Rgba,
+            PixelInternalFormat.CompressedRgb,
             width,
             height,
             border: 0,

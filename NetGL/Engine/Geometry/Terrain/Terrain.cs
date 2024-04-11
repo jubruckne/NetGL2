@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
@@ -23,27 +24,31 @@ using OpenTK.Mathematics;
 */
 
 public sealed class TerrainNoise: Noise {
-    private readonly SimplexLayer biome;
-
-    public TerrainNoise() {
-        biome = add_simplex_layer(0.001f, 35f);
-        //add_simplex_layer(0.002f, 35f);
-        //add_simplex_layer(0.01f, 2.5f);
-        add_value_layer(2.5f, 0.035f);
+    public TerrainNoise(): base(333) {
+        add_simplex_layer(0.001f, 115f);
+        add_simplex_layer(0.003f, 35f);
+        add_simplex_layer(0.01f, 7.5f);
+        add_value_layer(10.0f, 0.275f);
     }
 
     public override float sample(in float x, in float y) {
-        var b =  biome.generate(x, y);
-
-        if (b <= -0.25f)
-            return -0.25f;
-
-        return b * 50f;
-
-        Console.WriteLine(b);
-        return b;
+        return base.sample(x, y);
     }
 }
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct InstanceData {
+    public float2 offset;     // 8 x,z = position of the chunk
+    public short size;        // 2 width and height of the chunk
+    public short map_idx;     // 2 index into the heightmap (z)
+}
+
+// 3*4 = 12 bytes + 3 * 2 = 6 bytes = 18 bytes
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct VertexData {
+    public half height;      //  2 bytes
+    public half3 normal;     //  6 bytes
+}                            // 8 bytes
 
 public class Terrain: Entity {
     public readonly VertexArrayRenderer renderer;
@@ -54,9 +59,13 @@ public class Terrain: Entity {
     private readonly FirstPersonCamera camera;
 
     internal readonly TerrainNoise noise;
+    internal readonly TextureBuffer3D<(half height, half3 normal)> heightmaps;
+
     private readonly Material[] material_per_level;
     private readonly Dictionary<Rectangle, TerrainChunk> chunks = new();
     private readonly LodLevels lod_levels;
+    private readonly VertexBuffer<InstanceData> instance_buffer;
+
 
     internal Terrain(Entity? parent = null): base("Terrain", parent) {
         //const int detail_levels = 9;
@@ -68,7 +77,7 @@ public class Terrain: Entity {
 
         // lod_levels = LodLevels.create(detail_levels, tile_size_at_highest_level);
         lod_levels = LodLevels.create([
-            (16, 16),
+           // (16, 16),
             (32, 32),
             (64, 64),
             (128, 128),
@@ -77,10 +86,19 @@ public class Terrain: Entity {
             (1024, 4096)
         ]);
 
+        this.heightmaps = new(
+                              TextureBuffer3DType.Texture2DArray,
+                              96,
+                              96,
+                              96,
+                              PixelFormat.Rgba,
+                              PixelType.HalfFloat
+                             );
+
         // add separate material for each level
         material_per_level = new Material[lod_levels.count];
         for (var i = lod_levels.lowest.level; i <= lod_levels.highest.level; i++)
-            material_per_level[i] = Material.random;
+            material_per_level[i] = Material.Brass;
 
         renderer = this.add_vertex_array_renderer();
 
@@ -96,8 +114,8 @@ public class Terrain: Entity {
         query_chunks_within_radius(0, 0, 2048);
         Garbage.stop_measuring(this);
         var chunk = chunks.Values.First();
-        this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, tesselate: false));
-        //this.add_shader(Shader.from_file("terrain_shader", "terrain.vert.glsl", "terrain.frag.glsl"));
+        //this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, tesselate: false));
+        this.add_shader(Shader.from_file("terrain_shader", "terrain.vert.glsl", "terrain.frag.glsl"));
 
         /*
         foreach (var i in Enumerable.Range(1, 10)) {
@@ -110,15 +128,38 @@ public class Terrain: Entity {
         //TreePrinter.print(tree);
         //GC.Collect(6, GCCollectionMode.Default, true);
 
-
-
         renderer.render_settings.wireframe    = false;
         renderer.render_settings.depth_test   = true;
         renderer.render_settings.cull_face    = true;
         renderer.render_settings.front_facing = true;
 
-        Console.WriteLine("Chunks:" + chunks.Count);
+        var total = 0f;
 
+        instance_buffer = new(
+                              chunks.Count,
+                              new VertexAttribute<InstanceData>(
+                                                                "offset",
+                                                                2,
+                                                                VertexAttribPointerType.Float,
+                                                                divisor: 1
+                                                               )
+                             );
+
+        int index = 0;
+
+        foreach (var c in chunks.Values) {
+            instance_buffer[index].offset = (c.rectangle.bottom_left.x, c.rectangle.bottom_left.y);
+            instance_buffer[index].size = (short)c.rectangle.width;
+
+            foreach (var vb in c.vertex_array!.vertex_buffers) {
+                Console.WriteLine($"{c.rectangle}: {vb.total_size:N0}");
+                total += vb.total_size;
+            }
+
+            ++index;
+        }
+
+        Console.WriteLine($"Chunks: {chunks.Count}, total size: {total:N0}.");
 
         this.add_behavior(_ => update());
     }
@@ -160,12 +201,12 @@ public class Terrain: Entity {
 
                     split_chunk(position, radius, (x, y), (x + size, y + size), (short)(level + 1));
                 } else if(distance <= radius) {
-                    Debug.println(
-                                  $"Quad at ({center_x},{center_y}), distance={distance:N0}, lod={level}.",
-                                  ConsoleColor.Green
-                                 );
+                    //Debug.println(
+                    //              $"Quad at ({center_x},{center_y}), distance={distance:N0}, lod={level}.",
+                    //              ConsoleColor.Green
+                    //             );
                     var rect  = new Rectangle((x, y), size);
-                    var chunk = new TerrainChunk(this, rect, material_per_level[level]);
+                    var chunk = new TerrainChunk(this, rect, Material.random); // material_per_level[level]);
                     chunks.Add(rect, chunk);
                     chunk.create(priority: 0);
                 }

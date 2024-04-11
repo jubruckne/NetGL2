@@ -12,6 +12,7 @@ global using short3 = NetGL.Vectors.vec3<short>;
 global using byte3 = NetGL.Vectors.vec3<byte>;
 global using half2 = NetGL.Vectors.vec2<System.Half>;
 global using half3 = NetGL.Vectors.vec3<System.Half>;
+global using half4 = NetGL.Vectors.vec4<System.Half>;
 using System.Runtime.CompilerServices;
 
 namespace NetGL.Vectors;

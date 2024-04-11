@@ -37,6 +37,7 @@
   &lt;Assembly Path="/usr/local/share/dotnet/shared/Microsoft.NETCore.App/8.0.3/System.Security.Cryptography.dll" /&gt;
   &lt;Assembly Path="/Users/julia/.nuget/packages/system.io.hashing/8.0.0/lib/net8.0/System.IO.Hashing.dll" /&gt;
   &lt;Assembly Path="/Users/julia/.nuget/packages/commandlineparser/2.9.1/lib/netstandard2.0/CommandLine.dll" /&gt;
+  &lt;Assembly Path="/Users/julia/.nuget/packages/opentk.graphics/4.8.2/lib/netcoreapp3.1/OpenTK.Graphics.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/SolBuilderDuo/CustomGlobalProperties/=PreferredUILang/@EntryIndexedValue">en-US</s:String>
 	

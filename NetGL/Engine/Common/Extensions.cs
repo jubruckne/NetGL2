@@ -98,6 +98,33 @@ public static class TypeExtensions {
         return sizeof(T);
     }
 
+    public static int length_of_opengl(this PixelFormat pixel_format) {
+        return pixel_format switch {
+            PixelFormat.Rgba => 4,
+            PixelFormat.Bgra => 4,
+            PixelFormat.Rgb => 3,
+            PixelFormat.Red => 1,
+            _ => throw new NotImplementedException($"OpenGL pixel format {pixel_format} not implemented")
+        };
+    }
+
+    public static int size_of_opengl(this PixelType pixel_type, PixelFormat pixel_format)
+        => pixel_type.size_of_opengl() * pixel_format.length_of_opengl();
+
+    public static int size_of_opengl(this PixelType pixel_type) {
+        return pixel_type switch {
+            PixelType.UnsignedByte => 1,
+            PixelType.Byte => 1,
+            PixelType.UnsignedShort => 2,
+            PixelType.Short => 2,
+            PixelType.UnsignedInt => 4,
+            PixelType.Int => 4,
+            PixelType.HalfFloat => 2,
+            PixelType.Float => 4,
+            _ => throw new NotImplementedException($"OpenGL pixel type {pixel_type} not implemented")
+        };
+    }
+
     public static int std140_alignment(this Type field_type) {
         return field_type switch {
             _ when field_type == typeof(int) => 4,

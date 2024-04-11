@@ -16,14 +16,14 @@ public abstract class VertexAttribute {
     public int divisor { get; }
     public bool is_instanced => divisor >= 0;
 
-    protected VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false) {
+    protected VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false, int divisor = 0) {
         this.name = name;
         this.offset = -1;
         this.location = -1;
         this.count = count;
         this.pointer_type = pointer_type;
         this.normalized = normalized;
-        this.divisor = 0;
+        this.divisor = divisor;
     }
 
     public string glsl_type {
@@ -53,8 +53,8 @@ public class VertexAttribute<T>: VertexAttribute where T: unmanaged {
         return a;
     }
 
-    internal VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false) :
-        base(name, count, pointer_type, normalized) {
+    internal VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false, int divisor = 0) :
+        base(name, count, pointer_type, normalized, divisor) {
     }
 
     internal VertexAttribute(string name, int count, bool normalized = false) :

@@ -59,7 +59,7 @@ public abstract class Buffer: IBuffer {
 
 public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
     protected readonly NativeArray<T> buffer;
-    private readonly BufferTarget target;
+    protected readonly BufferTarget target;
 
     ~Buffer() {
         buffer.Dispose();
@@ -154,7 +154,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
 
     public override void create() => create(BufferUsageHint.StaticDraw);
 
-    public void create(in BufferUsageHint usage) {
+    public virtual void create(in BufferUsageHint usage) {
         Debug.assert(handle == 0);
         if (handle == 0)
             handle = GL.GenBuffer();

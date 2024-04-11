@@ -254,7 +254,7 @@ public class Material {
         { SolidBlue, "Solid Blue" },
         { Emerald, "Emerald" },
         { Jade, "Jade" },
-        { Obsidian, "Obsidian" },
+        //{ Obsidian, "Obsidian" },
         { Pearl, "Pearl" },
         { Ruby, "Ruby" },
         { Turquoise, "Turquoise" },

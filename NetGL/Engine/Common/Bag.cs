@@ -99,28 +99,28 @@ public class Bag<TItem>: IList<TItem>, IReadOnlyList<TItem>  {
     public Result<TItem> lookup(in ItemPredicate lookup) {
         var span = CollectionsMarshal.AsSpan(list);
         foreach (ref var item in span) {
-            if (lookup(ref item)) return Result<TItem>.success(in item);
+            if (lookup(ref item)) return Result.success(in item);
         }
 
-        return Result<TItem>.failure();
+        return Result.failure<TItem>();
     }
 
     public Result<TItem> lookup<T>(in T arg1, in ItemPredicate<T> lookup) {
         var span = CollectionsMarshal.AsSpan(list);
         foreach (ref var item in span) {
-            if (lookup(ref item, arg1)) return Result<TItem>.success(in item);
+            if (lookup(ref item, arg1)) return Result.success(in item);
         }
 
-        return Result<TItem>.failure();
+        return Result.failure<TItem>();
     }
 
     public Result<TItem> lookup<T1, T2>(in T1 arg1, in T2 arg2, in ItemPredicate<T1, T2> lookup) {
         var span = CollectionsMarshal.AsSpan(list);
         foreach (ref var item in span) {
-            if (lookup(ref item, arg1, arg2)) return Result<TItem>.success(in item);
+            if (lookup(ref item, arg1, arg2)) return Result.success(in item);
         }
 
-        return Result<TItem>.failure();
+        return Result.failure<TItem>();
     }
 
     public virtual bool contains(in TItem item) => list.Contains(item);

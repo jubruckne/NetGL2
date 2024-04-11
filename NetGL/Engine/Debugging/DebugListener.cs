@@ -21,24 +21,24 @@ public class DebugListener: TextWriter {
     public override void Write(string? message) => WriteLine(message);
 
     public override void WriteLine(string? message) {
-        if (message != null) {
-            if (log_source) {
-                if(DebugConsole.text_filter != "" && !message.Contains(DebugConsole.text_filter, StringComparison.OrdinalIgnoreCase))
-                    return;
+        if (string.IsNullOrEmpty(message)) return;
 
-                if (message.StartsWith('\n')) {
-                    std_console.WriteLine();
-                    message = message.TrimStart();
-                }
+        if (log_source) {
+            if(DebugConsole.text_filter != "" && !message.Contains(DebugConsole.text_filter, StringComparison.OrdinalIgnoreCase))
+                return;
 
-                var method = new StackTrace().GetFrame(3).GetMethod();
-                var source = $"{method.DeclaringType.Name}.{method.Name}";
-                Debug.println($"[{source}] {message}");
-                DebugConsole.log(source, message);
-            } else {
-                Debug.println(message);
-                DebugConsole.log(message);
+            if (message.StartsWith('\n')) {
+                std_console.WriteLine();
+                message = message.TrimStart();
             }
+
+            var method = new StackTrace().GetFrame(3).GetMethod();
+            var source = $"{method.DeclaringType.Name}.{method.Name}";
+            Debug.println($"[{source}] {message}");
+            DebugConsole.log(source, message);
+        } else {
+            Debug.println(message);
+            DebugConsole.log(message);
         }
     }
 

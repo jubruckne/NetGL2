@@ -29,9 +29,9 @@ public sealed class PerlinLayer: Layer {
         base(seed - 355875, FastNoiseLite.NoiseType.Perlin, frequency, amplitude) {}
 
     public override float generate(float x, float y)
-        => generator.SinglePerlin(x * frequency, y * frequency);
+        => generator.SinglePerlin(x * frequency, y * frequency) * amplitude;
 
-    public override float this[float x, float y] => generator.SinglePerlin(x * frequency, y * frequency);
+    public override float this[float x, float y] => generator.SinglePerlin(x * frequency, y * frequency) * amplitude;
 }
 
 public sealed class SimplexLayer: Layer {
@@ -39,9 +39,9 @@ public sealed class SimplexLayer: Layer {
         base(seed - 438050, FastNoiseLite.NoiseType.OpenSimplex2, frequency, amplitude) {}
 
     public override float generate(float x, float y)
-        => generator.SingleSimplex(x * frequency, y * frequency);
+        => generator.SingleSimplex(x * frequency, y * frequency) * amplitude;
 
-    public override float this[float x, float y] => generator.SingleSimplex(x * frequency, y * frequency);
+    public override float this[float x, float y] => generator.SingleSimplex(x * frequency, y * frequency) * amplitude;
 
 }
 
@@ -50,9 +50,9 @@ public sealed class ValueLayer: Layer {
         base(seed + 730236, FastNoiseLite.NoiseType.Value, frequency, amplitude) {}
 
     public override float generate(float x, float y)
-        => generator.SingleValue(x * frequency, y * frequency);
+        => generator.SingleValue(x * frequency, y * frequency) * amplitude;
 
-    public override float this[float x, float y] => generator.SingleValue(x * frequency, y * frequency);
+    public override float this[float x, float y] => generator.SingleValue(x * frequency, y * frequency) * amplitude;
 
 }
 
@@ -62,9 +62,9 @@ public sealed class CellularLayer: Layer {
     }
 
     public override float generate(float x, float y)
-        => generator.SingleCellular(x * frequency, y * frequency);
+        => generator.SingleCellular(x * frequency, y * frequency) * amplitude;
 
-    public override float this[float x, float y] => generator.SingleCellular(x * frequency, y * frequency);
+    public override float this[float x, float y] => generator.SingleCellular(x * frequency, y * frequency) * amplitude;
 }
 
 public class Noise {
@@ -79,8 +79,8 @@ public class Noise {
     public virtual float sample(in float x, in float y) {
         float sample = 0;
 
-        for(var l = 0; l < layers.Count - 1; ++l)
-            sample += layers[l].generate(x, y) * layers[l].amplitude;
+        for (var l = 0; l < layers.Count; ++l)
+            sample += layers[l].generate(x, y);
 
         return sample;
     }
@@ -88,8 +88,8 @@ public class Noise {
     public float sample(in Vector2 p) {
         float sample = 0;
 
-        for(var l = 0; l < layers.Count - 1; ++l)
-            sample += layers[l].generate(p.X, p.Y) * layers[l].amplitude;
+        for(var l = 0; l < layers.Count; ++l)
+            sample += layers[l].generate(p.X, p.Y);
 
         return sample;
     }

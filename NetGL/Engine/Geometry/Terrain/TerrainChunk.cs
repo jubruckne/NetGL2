@@ -1,3 +1,5 @@
+using OpenTK.Graphics.OpenGL4;
+
 namespace NetGL;
 
 public sealed class TerrainChunk {
@@ -21,7 +23,7 @@ public sealed class TerrainChunk {
     }
 
     private void upload(VertexArrayIndexed va) {
-        Debug.println(Thread.CurrentThread.Name ?? "invalid thread???");
+        //Debug.println(Thread.CurrentThread.Name ?? "invalid thread???");
         //Garbage.measure_begin();
 
         foreach(var b in va.vertex_buffers)
@@ -81,7 +83,10 @@ public sealed class TerrainChunk {
     private VertexArrayIndexed create() {
         var noise = terrain.noise;
 
-        var vb = new VertexBuffer<float3, half3>(vertex_count);
+        var vb = new VertexBuffer<float3, half3>(
+                                         vertex_count);
+
+                                        // new VertexAttribute<float3, half3>("normal", 3, VertexAttribPointerType.HalfFloat)
         var ib = get_shared_index_buffer();
 
         Debug.println(
@@ -95,6 +100,26 @@ public sealed class TerrainChunk {
         int vx;
         int vy;
 
+        var min_height = float.MaxValue;
+        var max_height = float.MinValue;
+
+        var heightmap = new TextureBuffer3D<(half height, half3 normal)>(TextureBuffer3DType.Texture2DArray,
+                                                     96,
+                                                     96,
+                                                     96,
+                                                     PixelFormat.Rgba,
+                                                     PixelType.HalfFloat
+                                                    );
+
+        // sample some random point to calculate height bias
+        float height_bias = 0f;
+        for (var i = 0; i < 16; ++i) {
+            var x = rectangle.left + rectangle.width * Random.Shared.NextSingle();
+            var y = rectangle.bottom + rectangle.height * Random.Shared.NextSingle();
+            height_bias += noise.sample(x, y);
+        }
+        height_bias /= 16;
+
         for (var i = 0; i < vertex_count; ++i) {
             vx = i % (chunk_quad_count + 1);
             vy = i / (chunk_quad_count + 1);
@@ -103,13 +128,37 @@ public sealed class TerrainChunk {
             py = rectangle.bottom + rectangle.height * vy / chunk_quad_count;
 
             vb[i].position = terrain.terrain_to_world_position(
-                                            px,
-                                            py,
-                                            noise.sample(px, py)
-                                           );
+                                                               px,
+                                                               py,
+                                                               noise.sample(px, py)
+                                                              );
+            vb[i].position.y -= height_bias;
+            if (vb[i].position.y < min_height) min_height = vb[i].position.y;
+            if (vb[i].position.y > max_height) max_height = vb[i].position.y;
+
+
+            // Sample the noise function around the point
+            float hL = noise.sample(px - rectangle.width / chunk_quad_count, py);
+            float hR = noise.sample(px + rectangle.width / chunk_quad_count, py);
+            float hD = noise.sample(px, py - rectangle.width / chunk_quad_count);
+            float hU = noise.sample(px, py + rectangle.width / chunk_quad_count);
+
+            // Calculate gradient
+            float gradient_x = hR - hL;
+            float gradient_y = hU - hD;
+
+            // Construct the normal vector (assuming z is up). Normalize to get unit length.
+            var normal = new float3(-gradient_x, -gradient_y, 2 * rectangle.width / chunk_quad_count);
+            normal.normalize();
+            vb[i].normal = (half3)normal;
+
+            heightmap[vx, vy, 0].height = (half)vb[i].position.y;
+            heightmap[vx, vy, 0].normal = vb[i].normal;
         }
 
-        vb.calculate_normals(ib.indices);
+        // vb.calculate_normals(ib.indices);
+
+        //Debug.println($"Chunk height range: {min_height:F0}:{max_height:F0}, height_bias: {height_bias:F1}", ConsoleColor.Magenta);
 
         var va = new VertexArrayIndexed(vb, ib, material);
 
