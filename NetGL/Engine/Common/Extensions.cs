@@ -98,6 +98,18 @@ public static class TypeExtensions {
         return sizeof(T);
     }
 
+    public static PixelType to_pixel_type<T>(this T d) where T: unmanaged, INumber<T> {
+        switch (d) {
+            case byte:  return PixelType.Byte;
+            case float: return PixelType.Float;
+            case half:  return PixelType.HalfFloat;
+            case int:   return PixelType.Int;
+            default:
+                Error.type_conversion_error<T, PixelType>(d);
+                return PixelType.Byte;
+        }
+    }
+
     public static int length_of_opengl(this PixelFormat pixel_format) {
         return pixel_format switch {
             PixelFormat.Rgba => 4,

@@ -133,70 +133,44 @@ public partial struct vec3<T>:
 
 public partial struct vec3<T> {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec3<T> operator+(in vec3<T> value) {
-        return value;
-    }
+    public static vec3<T> operator+(in vec3<T> value)
+        => value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec3<T> operator-(in vec3<T> value) {
-        return new vec3<T>().set(-value.x, -value.y, -value.z);
-    }
+    public static vec3<T> operator-(in vec3<T> value)
+        => new vec3<T>().set(-value.x, -value.y, -value.z);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec3<T> operator+(vec3<T> left, in vec3<T> right) {
-        left.x += right.x;
-        left.y += right.y;
-        left.z += right.z;
-        return left;
-    }
+    public static vec3<T> operator+(in vec3<T> left, in vec3<T> right)
+        => new vec3<T>().set(left.x + right.x, left.y + right.y, left.z + right.z);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec3<T> operator-(vec3<T> left, in vec3<T> right) {
-        left.x -= right.x;
-        left.y -= right.y;
-        left.z -= right.z;
-        return left;
-    }
+    public static vec3<T> operator-(in vec3<T> left, in vec3<T> right)
+        => new vec3<T>().set(left.x - right.x, left.y - right.y, left.z - right.z);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec3<T> operator*(vec3<T> left, in vec3<T> right) {
-        left.x *= right.x;
-        left.y *= right.y;
-        left.z *= right.y;
-        return left;
-    }
+    public static vec3<T> operator*(in vec3<T> left, in vec3<T> right)
+        => new vec3<T>().set(left.x * right.x, left.y * right.y, left.z * right.z);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec3<T> operator*(vec3<T> left, T right) {
-        left.x *= right;
-        left.y *= right;
-        left.z *= right;
-        return left;
-    }
+    public static vec3<T> operator*(in vec3<T> left, T right)
+        => new vec3<T>().set(left.x * right, left.y * right, left.z * right);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec3<T> operator/(vec3<T> left, in vec3<T> right) {
-        left.x /= right.x;
-        left.y /= right.y;
-        left.z /= right.z;
-        return left;
-    }
+    public static vec3<T> operator/(in vec3<T> left, in vec3<T> right)
+        => new vec3<T>().set(left.x / right.x, left.y / right.y, left.z / right.z);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec3<T> operator/(vec3<T> left, T right) {
-        left.x /= right;
-        left.y /= right;
-        left.z /= right;
-        return left;
-    }
+    public static vec3<T> operator/(in vec3<T> left, T right)
+        => new vec3<T>().set(left.x / right, left.y / right, left.z / right);
 
-    public static bool operator==(in vec3<T> left, in vec3<T> right) {
-        return left.x == right.x && left.y == right.y && left.z == right.z;
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator==(in vec3<T> left, in vec3<T> right)
+        => left.x == right.x && left.y == right.y && left.z == right.z;
 
-    public static bool operator!=(in vec3<T> left, in vec3<T> right) {
-        return left.x != right.x || left.y != right.y || left.z != right.z;
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator!=(in vec3<T> left, in vec3<T> right)
+        => left.x != right.x || left.y != right.y || left.z != right.z;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly T length() {

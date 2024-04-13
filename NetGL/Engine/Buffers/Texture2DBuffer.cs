@@ -54,6 +54,7 @@ public class Texture2DBuffer: TextureBuffer {
             Error.not_allocated(this);
 
         GL.BindTexture(target, handle);
+
         GL.TexSubImage2D(
             target,
             level: 0,

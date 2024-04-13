@@ -55,27 +55,37 @@ public struct vec2<T>:
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec2<T> operator-(vec2<T> left, in vec2<T> right) {
-        left.x -= right.x;
-        left.y -= right.y;
-        return left;
-    }
+    public static vec2<T> operator-(in vec2<T> left, in vec2<T> right)
+        => new (left.x - right.x, left.y - right.y);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec2<T> operator*(in vec2<T> left, T right)
+        => new (left.x * right, left.y * right);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec2<T> operator/(in vec2<T> left, T right)
+        => new (left.x / right, left.y / right);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator==(in vec2<T> left, in vec2<T> right)
         => left.x == right.x && left.y == right.y;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator!=(in vec2<T> left, in vec2<T> right)
         => left.x != right.x || left.y != right.y;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator half2(in vec2<T> other) =>
         new half2().set(other);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator float2(in vec2<T> other) =>
         new float2().set(other);
 
     public static explicit operator double2(in vec2<T> other) =>
         new double2().set(other);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator vec2<T>((T x, T y) vector)
         => new vec2<T>(vector.x, vector.y);
 

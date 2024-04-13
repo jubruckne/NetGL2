@@ -31,13 +31,25 @@ public readonly struct Rectangle: IShape, IComparable<Rectangle> {
     }
 
     public static implicit operator Rectangle((float x, float y, float width, float height) rect)
-        => new Rectangle(rect.x, rect.y, rect.width, rect.height);
+        => new(rect.x, rect.y, rect.width, rect.height);
 
     public static implicit operator Rectangle((float2 bottom_left, float2 top_right) rect)
-        => new Rectangle(rect.bottom_left, rect.top_right);
+        => new(rect.bottom_left, rect.top_right);
 
     public static implicit operator Rectangle((float2 bottom_left, float size) rect)
-        => new Rectangle(rect.bottom_left, rect.size);
+        => new(rect.bottom_left, rect.size);
+
+    public static Rectangle operator+(in Rectangle rectangle, in float2 offset)
+        => new(rectangle.bottom_left + offset, rectangle.top_right + offset);
+
+    public static Rectangle operator-(in Rectangle rectangle, in float2 offset)
+        => new(rectangle.bottom_left - offset, rectangle.top_right - offset);
+
+    public static Rectangle operator*(in Rectangle rectangle, float scale)
+        => new(rectangle.bottom_left * scale, rectangle.top_right * scale);
+
+    public static Rectangle operator/(in Rectangle rectangle, float scale)
+        => new(rectangle.bottom_left / scale, rectangle.top_right / scale);
 
     public IEnumerable<Vector3> get_vertices() => get_vertices(1);
 

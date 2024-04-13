@@ -23,6 +23,8 @@ public class Engine: GameWindow {
     private bool debugging;
     public static int frame;
 
+    private int query_primitives_generated_handle;
+
     public Engine(string title, int2 window_size, WindowState window_state = WindowState.Normal, bool debugging = false) :
         base(
             new() {
@@ -100,6 +102,8 @@ public class Engine: GameWindow {
             DebugConsole.initialize();
            // DebugConsole.text_filter = "ImGui";
         }
+
+        query_primitives_generated_handle = GL.GenQuery();
     }
 
     protected override void OnLoad() {
@@ -185,7 +189,6 @@ public class Engine: GameWindow {
         planets_texture.create();
 
         planet_mat.ambient_texture = planets_texture;
-        planet_mat.ambient_texture.query_info();
 
 /*
         Entity ball = world.create_sphere_cube("Ball2", radius: 10f, segments:100, material: Material.Emerald);
@@ -252,6 +255,7 @@ public class Engine: GameWindow {
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
         //Garbage.start_measuring();
+        GL.BeginQuery(QueryTarget.PrimitivesGenerated, query_primitives_generated_handle);
 
         base.OnUpdateFrame(e);
 
@@ -327,6 +331,12 @@ public class Engine: GameWindow {
 
         // Garbage.stop_measuring();
         SwapBuffers();
+
+        GL.EndQuery(QueryTarget.PrimitivesGenerated);
+        GL.GetQueryObject(query_primitives_generated_handle, GetQueryObjectParam.QueryResult, out int primitives_generated);
+
+        Debug.println($"Primitives generated: {primitives_generated}");
+
     }
 
     private void render_ui() {
@@ -387,9 +397,9 @@ public class Engine: GameWindow {
                 entity.name == "World" || entity.name == "Terrain"
                     ? ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen
                     : ImGuiTreeNodeFlags.Framed, entity.name)) {
-            ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Color.make(55, 65, 255).to_int());
-            ImGui.PushStyleColor(ImGuiCol.HeaderActive, Color.make(65, 55, 65, 255).to_int());
-            ImGui.PushStyleColor(ImGuiCol.Header, Color.make(30, 25, 28, 255).to_int());
+            ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Color.from_bytes(55, 65, 255).to_int());
+            ImGui.PushStyleColor(ImGuiCol.HeaderActive, Color.from_bytes(65, 55, 65, 255).to_int());
+            ImGui.PushStyleColor(ImGuiCol.Header, Color.from_bytes(30, 25, 28, 255).to_int());
             ImGui.Unindent();
 
             foreach (var comp in entity.components) {
@@ -414,6 +424,7 @@ public class Engine: GameWindow {
                                 180, "%.0f")) {
                             t.rotation.yaw_pitch_roll = rotationYawPitchRoll;
                         }
+
 
                         ImGui.Spacing();
 

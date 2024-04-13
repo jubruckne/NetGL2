@@ -10,6 +10,8 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
     public float speed = 2.5f;
     public float sensitivity = 0.5f;
     public readonly float field_of_view_degrees;
+    public readonly float near;
+    public readonly float far;
 
     internal FirstPersonCamera (
         in Entity entity,
@@ -17,7 +19,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         float field_of_view,
         float aspect_ratio,
         float near = 0.01f, 
-        float far = 1000f,
+        float far = 10000f,
         KeyboardState? keyboard_state = null,
         MouseState? mouse_state = null
         ): base(entity, viewport) {
@@ -25,6 +27,9 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
         this.mouse_state = mouse_state;
 
         this.field_of_view_degrees = field_of_view;
+        this.near = near;
+        this.far = far;
+
         camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(field_of_view.degree_to_radians(), aspect_ratio, near, far);
         camera_data.camera_matrix = Matrix4.Identity;
     }
@@ -92,7 +97,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
             transform.attitude.pitch = pitch_clamp[1];
 */
 
-        camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(60f.degree_to_radians(), viewport.aspect_ratio, 0.01f, 1000f);
+        camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(60f.degree_to_radians(), viewport.aspect_ratio, near, far);
         camera_data.camera_matrix = transform.calculate_look_at_matrix();
         //camera_data.game_time = Engine.game_time;
         camera_data.camera_position = transform.position;

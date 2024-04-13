@@ -36,12 +36,18 @@ public class Bag<TItem>: IList<TItem>, IReadOnlyList<TItem>  {
     public Bag(): this(4) {}
     public Bag(int capacity) => list = new(capacity);
     public Bag(ReadOnlySpan<TItem> items): this(items.Length) => add(items);
+    public Bag(Bag<TItem> items): this(items.length) => add(items);
 
     public int length => list.Count;
 
     public virtual void add(in TItem item) {
         list.Add(item);
         on_added?.Invoke(ref this[^1]);
+    }
+
+    public void add(in Bag<TItem> items) {
+        foreach (var item in items)
+            add(item);
     }
 
     public void add(ReadOnlySpan<TItem> items) {
@@ -179,6 +185,7 @@ public class NamedBag<TItem>: Bag<string, TItem> where TItem: notnull, INamed {
     public NamedBag(): this(4) {}
     public NamedBag(int capacity): base(static (ref readonly TItem item) => item.name ) {}
     public NamedBag(ReadOnlySpan<TItem> items): this(items.Length) => add(items);
+    public NamedBag(in NamedBag<TItem> items): this(items.length) => add(items);
 }
 
 public class Bag<TKey, TItem>: Bag<TItem> where TKey: IComparable<TKey> {

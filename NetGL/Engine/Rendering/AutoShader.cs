@@ -90,7 +90,7 @@ public class AutoShader: Shader {
 
         fragment_code.AppendLine("struct Material {");
         if(vertex_array.material.ambient_texture != null)
-            fragment_code.AppendLine($"  {vertex_array.material.ambient_texture.glsl_type} ambient_texture;");
+            fragment_code.AppendLine($"  {vertex_array.material.ambient_texture.sampler_name} ambient_texture;");
         else
             fragment_code.AppendLine("  vec3 ambient_color;");
 

@@ -5,27 +5,23 @@ using System.Runtime.CompilerServices;
 
 public interface IBindable {
     int handle { get; }
-    void bind();
-
-    //bool IEquatable<IBindable>.Equals(IBindable? other) => other?.handle == handle;
+    public void bind();
 }
 
 public interface IBindableIndexed {
     int handle { get; }
     int binding_point { get; }
 
-    void bind(int binding_point);
-
-    // bool IEquatable<IBindable>.Equals(IBindable? other) => other?.handle == handle;
+    public void bind(int binding_point);
 }
 
 public interface IBuffer {
     int length { get; }
-    Type item_type { get; }
-    int item_size{ get; }
-    int total_size { get; }
-    Buffer.Status status { get; }
-    int version { get; }
+    public Type item_type { get; }
+    public int item_size{ get; }
+    public int total_size { get; }
+    public Buffer.Status status { get; }
+    public int version { get; }
 }
 
 public abstract class Buffer: IBuffer {
@@ -59,7 +55,7 @@ public abstract class Buffer: IBuffer {
 
 public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
     protected readonly NativeArray<T> buffer;
-    protected readonly BufferTarget target;
+    private readonly BufferTarget target;
 
     ~Buffer() {
         buffer.Dispose();
@@ -98,7 +94,7 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
 
     public ArrayView<T> this[System.Range range]
         => buffer.get_view(range);
-    
+
     public void resize(int new_size) {
         if (new_size < 0)
             throw new ArgumentOutOfRangeException(nameof(new_size));

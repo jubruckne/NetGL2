@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
@@ -25,10 +26,10 @@ using OpenTK.Mathematics;
 
 public sealed class TerrainNoise: Noise {
     public TerrainNoise(): base(333) {
-        add_simplex_layer(0.001f, 115f);
-        add_simplex_layer(0.003f, 35f);
-        add_simplex_layer(0.01f, 7.5f);
-        add_value_layer(10.0f, 0.275f);
+        add_simplex_layer(0.001f, 25f);
+        add_simplex_layer(0.003f, 12f);
+        add_simplex_layer(0.01f, 3.5f);
+        add_cellular_layer(1.0f, 0.135f);
     }
 
     public override float sample(in float x, in float y) {
@@ -59,41 +60,35 @@ public class Terrain: Entity {
     private readonly FirstPersonCamera camera;
 
     internal readonly TerrainNoise noise;
-    internal readonly TextureBuffer3D<(half height, half3 normal)> heightmaps;
+    internal readonly Texture2D<float> heightmaps;
 
     private readonly Material[] material_per_level;
     private readonly Dictionary<Rectangle, TerrainChunk> chunks = new();
     private readonly LodLevels lod_levels;
     private readonly VertexBuffer<InstanceData> instance_buffer;
 
-
     internal Terrain(Entity? parent = null): base("Terrain", parent) {
-        //const int detail_levels = 9;
-        //const int tile_size_at_highest_level = 32;
+        const int detail_levels = 1;
+        const int tile_size_at_highest_level = 512;
 
         camera = get<FirstPersonCamera>(EntityRelationship.HierarchyWithChildrenRecursive);
 
         noise = new();
 
-        // lod_levels = LodLevels.create(detail_levels, tile_size_at_highest_level);
-        lod_levels = LodLevels.create([
-           // (16, 16),
-            (32, 32),
-            (64, 64),
-            (128, 128),
-            (256, 256),
-            (512, 512),
-            (1024, 4096)
-        ]);
+        lod_levels = LodLevels.create(detail_levels, tile_size_at_highest_level);
 
-        this.heightmaps = new(
-                              TextureBuffer3DType.Texture2DArray,
-                              96,
-                              96,
-                              96,
-                              PixelFormat.Rgba,
-                              PixelType.HalfFloat
-                             );
+        heightmaps = new Texture2D<float>(
+                                              4096,
+                                              4096,
+                                              PixelFormat.Red,
+                                              PixelType.Float
+                                             );
+        heightmaps.wrap_t = TextureWrapMode.ClampToEdge;
+        heightmaps.wrap_s = TextureWrapMode.ClampToEdge;
+        heightmaps.min_filter = TextureMinFilter.Linear;
+        heightmaps.mag_filter = TextureMagFilter.Linear;
+        heightmaps.internal_pixel_format = PixelInternalFormat.R32f;
+        heightmaps.create();
 
         // add separate material for each level
         material_per_level = new Material[lod_levels.count];
@@ -111,11 +106,22 @@ public class Terrain: Entity {
         chunks.Clear();
 
         Garbage.start_measuring(this);
-        query_chunks_within_radius(0, 0, 2048);
+        //query_chunks_within_radius(0, 0, 1024);
+
+        var rect  = new Rectangle((-256, -256), 512);
+        var mat = new Material(Material.Pearl);
+        mat.ambient_texture = heightmaps;
+        var chunk = new TerrainChunk(this, rect, mat); // material_per_level[level]);
+        chunks.Add(rect, chunk);
+        generate_heightmaps(0, rect);
+        chunk.create(priority: 0);
+
+
         Garbage.stop_measuring(this);
-        var chunk = chunks.Values.First();
+        heightmaps.query_info();
+        //var chunk = chunks.Values.First();
         //this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, tesselate: false));
-        this.add_shader(Shader.from_file("terrain_shader", "terrain.vert.glsl", "terrain.frag.glsl"));
+        var shader = this.add_shader(Shader.from_file("terrain_shader", "terrain.vert.glsl", "terrain.frag.glsl")).shader;
 
         /*
         foreach (var i in Enumerable.Range(1, 10)) {
@@ -128,7 +134,7 @@ public class Terrain: Entity {
         //TreePrinter.print(tree);
         //GC.Collect(6, GCCollectionMode.Default, true);
 
-        renderer.render_settings.wireframe    = false;
+        renderer.render_settings.wireframe    = true;
         renderer.render_settings.depth_test   = true;
         renderer.render_settings.cull_face    = true;
         renderer.render_settings.front_facing = true;
@@ -162,6 +168,21 @@ public class Terrain: Entity {
         Console.WriteLine($"Chunks: {chunks.Count}, total size: {total:N0}.");
 
         this.add_behavior(_ => update());
+    }
+
+    public void generate_heightmaps(int index, Rectangle area) {
+        for (var i = 0; i < heightmaps.width * heightmaps.height; ++i) {
+            var px = i % heightmaps.width;
+            var py = i / heightmaps.width;
+
+            heightmaps[py, px] =
+                noise.sample(
+                                    area.left + area.width * px / 96,
+                                    area.bottom + area.height * py / 96
+                                   );
+        }
+
+        heightmaps.update();
     }
 
     private void query_chunks_within_radius(float x, float y, int radius) {
@@ -208,6 +229,7 @@ public class Terrain: Entity {
                     var rect  = new Rectangle((x, y), size);
                     var chunk = new TerrainChunk(this, rect, Material.random); // material_per_level[level]);
                     chunks.Add(rect, chunk);
+                    generate_heightmaps(chunks.Count - 1, rect);
                     chunk.create(priority: 0);
                 }
             }

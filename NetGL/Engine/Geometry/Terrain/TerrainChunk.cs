@@ -3,7 +3,7 @@ using OpenTK.Graphics.OpenGL4;
 namespace NetGL;
 
 public sealed class TerrainChunk {
-    private const int chunk_quad_count = 255;
+    private const int chunk_quad_count = 10;
     private const int vertex_count = (chunk_quad_count + 1) * (chunk_quad_count + 1);
     private const int index_count = chunk_quad_count * chunk_quad_count * 2;
 
@@ -103,14 +103,6 @@ public sealed class TerrainChunk {
         var min_height = float.MaxValue;
         var max_height = float.MinValue;
 
-        var heightmap = new TextureBuffer3D<(half height, half3 normal)>(TextureBuffer3DType.Texture2DArray,
-                                                     96,
-                                                     96,
-                                                     96,
-                                                     PixelFormat.Rgba,
-                                                     PixelType.HalfFloat
-                                                    );
-
         // sample some random point to calculate height bias
         float height_bias = 0f;
         for (var i = 0; i < 16; ++i) {
@@ -127,10 +119,9 @@ public sealed class TerrainChunk {
             px = rectangle.left + rectangle.width * vx / chunk_quad_count;
             py = rectangle.bottom + rectangle.height * vy / chunk_quad_count;
 
-            vb[i].position = terrain.terrain_to_world_position(
-                                                               px,
+            vb[i].position = terrain.terrain_to_world_position(px,
                                                                py,
-                                                               noise.sample(px, py)
+                                                               0 //noise.sample(px, py)
                                                               );
             vb[i].position.y -= height_bias;
             if (vb[i].position.y < min_height) min_height = vb[i].position.y;
@@ -150,10 +141,11 @@ public sealed class TerrainChunk {
             // Construct the normal vector (assuming z is up). Normalize to get unit length.
             var normal = new float3(-gradient_x, -gradient_y, 2 * rectangle.width / chunk_quad_count);
             normal.normalize();
-            vb[i].normal = (half3)normal;
+            vb[i].normal = half3.zero; // (half3)normal;
 
-            heightmap[vx, vy, 0].height = (half)vb[i].position.y;
-            heightmap[vx, vy, 0].normal = vb[i].normal;
+            //heightmap[vx, vy, 0].height = (half)vb[i].position.y;
+            //heightmap[vx, vy, 0].normal = vb[i].normal;
+
         }
 
         // vb.calculate_normals(ib.indices);

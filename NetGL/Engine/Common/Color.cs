@@ -48,15 +48,10 @@ public struct Color {
         this.a = 1f;
     }
 
-    public static Color make(float r, float g, float b, float a) => new(r, g, b, a);
-    public static Color make(float r, float g, float b) => new(r, g, b, 1f);
-    public static Color make((float r, float g, float b) color) => new(color.r, color.g, color.b, 1);
-    public static Color make((float r, float g, float b, float a) color) => new(color.r, color.g, color.b, color.a);
-    public static Color make(byte r, byte g, byte b, byte a) => new(r / 256f, g / 256f, b / 256f, a / 256f);
-    public static Color make(System.Numerics.Vector3 color) => new(color.X, color.Y, color.Z, 1f);
-    public static Color make(System.Numerics.Vector4 color) => new(color.X, color.Y, color.Z, color.W);
+    public static Color from_bytes(byte r, byte g, byte b, byte a = byte.MaxValue)
+        => new Color(r / 255f, g / 255f, b / 255f, a / 255f);
 
-    public static Color make(uint rgba) {
+    public static Color from_uint(uint rgba) {
         float a = (rgba >> 24) & 0xFF;
         float b = (rgba >> 16) & 0xFF;
         float g = (rgba >> 8) & 0xFF;
@@ -70,7 +65,6 @@ public struct Color {
         ((uint)(b * 255f) << 16) |
         ((uint)(g * 255f) << 8) |
         (uint)(r * 255f);
-
 
     public static Color random_for<T>(in T obj) where T:notnull {
 /*        Random rnd = new(obj.GetHashCode());
@@ -88,11 +82,11 @@ public struct Color {
         return color;
     }
 
-    public static implicit operator Color(System.Numerics.Vector3 color) => make(color);
-    public static implicit operator Color(System.Numerics.Vector4 color) => make(color);
+    public static implicit operator Color(System.Numerics.Vector3 color) => new(color.X, color.Y, color.Z);
+    public static implicit operator Color(System.Numerics.Vector4 color) => new(color.X, color.Y, color.Z, color.W);
 
-    public static implicit operator Color((float r, float g, float b) color) => make(color);
-    public static implicit operator Color((float r, float g, float b, float a) color) => make(color);
+    public static implicit operator Color((float r, float g, float b) color) => new(color.r, color.g, color.b);
+    public static implicit operator Color((float r, float g, float b, float a) color) => new(color.r, color.g, color.b, color.a);
 
     public override string ToString() => $"({r},{g},{b},{a})";
 

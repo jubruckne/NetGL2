@@ -3,7 +3,7 @@ namespace NetGL;
 public class Material {
     public readonly string name;
     public Color ambient_color;
-    public TextureBuffer? ambient_texture;
+    public ITexture? ambient_texture;
     public Color diffuse_color;
     public Color specular_color;
     public float shininess;
@@ -16,6 +16,15 @@ public class Material {
         this.shininess = shininess;
     }
 
+    public Material(in Material from) {
+        name = from.name;
+        ambient_color = from.ambient_color;
+        ambient_texture = from.ambient_texture;
+        diffuse_color = from.diffuse_color;
+        specular_color = from.specular_color;
+        shininess = from.shininess;
+    }
+
     public Material(
         in string name,
         in (float r, float g, float b) ambient_color,
@@ -23,9 +32,9 @@ public class Material {
         in (float r, float g, float b) diffuse_color,
         in float shininess) {
         this.name = name;
-        this.ambient_color = Color.make(ambient_color);
-        this.specular_color = Color.make(specular_color);
-        this.diffuse_color = Color.make(diffuse_color);
+        this.ambient_color = ambient_color;
+        this.specular_color = specular_color;
+        this.diffuse_color = diffuse_color;
         this.shininess = shininess;
     }
 
