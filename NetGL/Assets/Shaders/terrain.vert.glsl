@@ -8,14 +8,12 @@ uniform mat4 camera;
 uniform mat4 model;
 uniform float game_time;
 
-struct Material {
-  sampler2D ambient_texture;
-  vec3 diffuse;
-  vec3 specular;
-  float shininess;
+struct Terrain {
+  sampler2D heightmap;
+  vec4 tile_color;
 };
 
-uniform Material material;
+uniform Terrain terrain;
 
 out VERTEX {
   vec4 position;
@@ -25,14 +23,11 @@ const float terrain_width = 4096;
 const float terrain_depth = 4096;
 
 void main() {
-  vec3 pos = position;
-  float u = clamp((pos.x + 2048) / terrain_width, 0.0, 1.0);
-  float v = clamp((pos.z + 2048) / terrain_depth, 0.0, 1.0);
+  vertex.position = vec4(position, 1.0);
+  float u = clamp((vertex.position.x + 2048) / terrain_width, 0.0, 1.0);
+  float v = clamp((vertex.position.z + 2048) / terrain_depth, 0.0, 1.0);
 
-  float height = texture(material.ambient_texture, vec2(u, v)).r * 0.01;
+  vertex.position.y = texture(terrain.heightmap, vec2(u, v)).r * 0.01;
 
-  pos.y = height;
-
-  vertex.position = vec4(pos, 1) * model * camera * projection;
-  gl_Position = vertex.position;
+  gl_Position = vertex.position * model * camera * projection;
 }

@@ -61,6 +61,7 @@ public class Terrain: Entity {
 
     internal readonly TerrainNoise noise;
     internal readonly Texture2D<float> heightmaps;
+    private readonly Shader shader;
 
     private readonly Material[] material_per_level;
     private readonly Dictionary<Rectangle, TerrainChunk> chunks = new();
@@ -108,9 +109,13 @@ public class Terrain: Entity {
         Garbage.start_measuring(this);
         //query_chunks_within_radius(0, 0, 1024);
 
+        shader = this.add_shader(Shader.from_file("terrain_shader", "terrain.vert.glsl", "terrain.frag.glsl")).shader;
+
         var rect  = new Rectangle((-256, -256), 512);
-        var mat = new Material(Material.Pearl);
-        mat.ambient_texture = heightmaps;
+        Materials.Material mat = new("Terrain", shader);
+        mat.add_texture("heightmap", heightmaps);
+        mat.add_color("tile_color", Color.White);
+
         var chunk = new TerrainChunk(this, rect, mat); // material_per_level[level]);
         chunks.Add(rect, chunk);
         generate_heightmaps(0, rect);
@@ -121,7 +126,6 @@ public class Terrain: Entity {
         heightmaps.query_info();
         //var chunk = chunks.Values.First();
         //this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, tesselate: false));
-        var shader = this.add_shader(Shader.from_file("terrain_shader", "terrain.vert.glsl", "terrain.frag.glsl")).shader;
 
         /*
         foreach (var i in Enumerable.Range(1, 10)) {
@@ -227,7 +231,11 @@ public class Terrain: Entity {
                     //              ConsoleColor.Green
                     //             );
                     var rect  = new Rectangle((x, y), size);
-                    var chunk = new TerrainChunk(this, rect, Material.random); // material_per_level[level]);
+                    Materials.Material mat = new("Terrain", this.shader);
+                    mat.add_texture("heightmap", heightmaps);
+                    mat.add_color("tile_color", Color.random_for(rect));
+
+                    var chunk = new TerrainChunk(this, rect, mat); // material_per_level[level]);
                     chunks.Add(rect, chunk);
                     generate_heightmaps(chunks.Count - 1, rect);
                     chunk.create(priority: 0);

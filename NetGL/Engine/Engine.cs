@@ -7,6 +7,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using Image = NetGL.Image;
 using Vector2 = System.Numerics.Vector2;
 using Vector3 = System.Numerics.Vector3;
 
@@ -85,6 +86,11 @@ public class Engine: GameWindow {
         Debug.println($"MaxUniformBlockSize: {GL.GetInteger(GetPName.MaxUniformBlockSize)}");
         Debug.println($"MaxCombinedUniformBlocks: {GL.GetInteger(GetPName.MaxCombinedUniformBlocks)}");
         Debug.println();
+
+        Debug.println($"MaxTessGenLevel: {GL.GetInteger(GetPName.MaxTessGenLevel)}");
+        Debug.println($"MaxPatchVertices: {GL.GetInteger(GetPName.MaxPatchVertices)}");
+        Debug.println();
+
         Debug.assert_opengl();
 
         GL.CullFace(CullFaceMode.Back);
@@ -104,6 +110,7 @@ public class Engine: GameWindow {
         }
 
         query_primitives_generated_handle = GL.GenQuery();
+        GL.BeginQuery(QueryTarget.PrimitivesGenerated, query_primitives_generated_handle);
     }
 
     protected override void OnLoad() {
@@ -129,12 +136,12 @@ public class Engine: GameWindow {
         );*/
 
         TextureCubemapBuffer cubemap = new(
-                                           AssetManager.load_from_file<Texture>("right.jpg"),
-                                           AssetManager.load_from_file<Texture>("left.jpg"),
-                                           AssetManager.load_from_file<Texture>("top.jpg"),
-                                           AssetManager.load_from_file<Texture>("bottom.jpg"),
-                                           AssetManager.load_from_file<Texture>("front.jpg"),
-                                           AssetManager.load_from_file<Texture>("back.jpg")
+                                           AssetManager.load_from_file<Image>("right.jpg"),
+                                           AssetManager.load_from_file<Image>("left.jpg"),
+                                           AssetManager.load_from_file<Image>("top.jpg"),
+                                           AssetManager.load_from_file<Image>("bottom.jpg"),
+                                           AssetManager.load_from_file<Image>("front.jpg"),
+                                           AssetManager.load_from_file<Image>("back.jpg")
                                           );
         cubemap.create();
 
@@ -185,7 +192,7 @@ public class Engine: GameWindow {
 */
 
         var planet_mat = new Material("planet", Color.Black, Color.White, Color.White, 2.5f);
-        Texture2DBuffer planets_texture = new Texture2DBuffer(AssetManager.load_from_file<Texture>("8k_jupiter.jpg"));
+        Texture2DBuffer planets_texture = new Texture2DBuffer(AssetManager.load_from_file<Image>("8k_jupiter.jpg"));
         planets_texture.create();
 
         planet_mat.ambient_texture = planets_texture;
@@ -255,7 +262,6 @@ public class Engine: GameWindow {
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
         //Garbage.start_measuring();
-        GL.BeginQuery(QueryTarget.PrimitivesGenerated, query_primitives_generated_handle);
 
         base.OnUpdateFrame(e);
 
@@ -331,12 +337,6 @@ public class Engine: GameWindow {
 
         // Garbage.stop_measuring();
         SwapBuffers();
-
-        GL.EndQuery(QueryTarget.PrimitivesGenerated);
-        GL.GetQueryObject(query_primitives_generated_handle, GetQueryObjectParam.QueryResult, out int primitives_generated);
-
-        Debug.println($"Primitives generated: {primitives_generated}");
-
     }
 
     private void render_ui() {
@@ -377,6 +377,11 @@ public class Engine: GameWindow {
                             scale_max: frame_times.maximum(),
                             new Vector2(240, 80)
                            );
+
+        GL.EndQuery(QueryTarget.PrimitivesGenerated);
+        GL.GetQueryObject(query_primitives_generated_handle, GetQueryObjectParam.QueryResult, out int primitives_generated);
+        GL.BeginQuery(QueryTarget.PrimitivesGenerated, query_primitives_generated_handle);
+        ImGui.Text($"Primitives drawn: {primitives_generated}");
 
         DebugConsole.draw();
 

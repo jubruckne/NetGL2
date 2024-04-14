@@ -2,14 +2,14 @@ namespace NetGL;
 
 using StbImageSharp;
 
-public class Texture: IAssetType<Texture> {
+public class Image: IAssetType<Image> {
     public readonly int width;
     public readonly int height;
     public readonly byte[] image_data;
 
     public static string path => "Textures";
 
-    public static Texture load_from_file(string path) {
+    public static Image load_from_file(string path) {
         int width;
         int height;
         byte[] image_data;
@@ -28,10 +28,10 @@ public class Texture: IAssetType<Texture> {
             height = image.Height;
         }
 
-        return new Texture(width, height, image_data);
+        return new Image(width, height, image_data);
     }
 
-    public Texture(int width, int height, in byte[] image_data) {
+    public Image(int width, int height, in byte[] image_data) {
         this.width = width;
         this.height = height;
         this.image_data = image_data;

@@ -1,28 +1,30 @@
-#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-
 namespace NetGL;
 
-public readonly ref struct Union<T1, T2> {
-    private readonly int tag;
-    private readonly ref T1 t1;
-    private readonly ref T2 t2;
+public readonly struct Union<T1, T2> where T1: class where T2: class {
+    public readonly object value;
 
-    public Union(ref readonly T1 value) {
-        tag = 0;
-        t1 = value;
+    public Union(T1 value) {
+        this.value = value;
     }
 
-    public Union(ref readonly T2 value) {
-        tag = 1;
-        t2 = value;
+    public Union(T2 value) {
+        this.value = value;
     }
 
-    public T match<T>(Func<T1, T> case1, Func<T2, T> case2) {
-        return tag switch {
-            1 => case1(t1),
-            2 => case2(t2),
-            _ => throw new InvalidOperationException("Union not initialized properly.")
-        };
+    public bool type_of<T>() => value is T;
+
+    public bool match<T>(out T value) {
+        if (this.value is T v) {
+            value = v;
+            return true;
+        }
+        value = default!;
+        return false;
     }
+
+    public static implicit operator Union<T1, T2>(in T1 value) => new(value);
+    public static implicit operator Union<T1, T2>(in T2 value) => new(value);
+
+    public static implicit operator T1?(Union<T1, T2> value) => value.value as T1;
+    public static implicit operator T2?(Union<T1, T2> value) => value.value as T2;
 }

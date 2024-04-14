@@ -4,7 +4,7 @@ namespace NetGL;
 
 using OpenTK.Graphics.OpenGL4;
 
-public abstract class TextureBuffer: Buffer, ITexture {
+public abstract class TextureBuffer: Buffer {
     protected readonly TextureTarget target;
 
     public int width { get; protected init; }
@@ -225,44 +225,32 @@ public class Texture2DArray<T>: Texture<T>
     }
 }
 
-public interface ITexture {
-    PixelFormat pixel_format { get; }
-    PixelType pixel_type { get; }
-    int texture_unit { get; }
-    string sampler_name { get; }
-
-    void bind(int texture_unit);
-    void bind();
-}
-
-public abstract class Texture<T>: Buffer, ITexture, IBuffer
-    where T: unmanaged {
-    public int texture_unit { get; private set; }
-
-    public abstract string sampler_name { get; }
-
-    public PixelFormat pixel_format { get; }
-    public PixelType pixel_type { get; }
-
+public abstract class Texture {
+    public PixelFormat pixel_format { get; init;  }
+    public PixelType pixel_type { get; init; }
     public PixelInternalFormat internal_pixel_format { get; set; }
 
-    public TextureWrapMode wrap_s = TextureWrapMode.ClampToEdge;
-    public TextureWrapMode wrap_t = TextureWrapMode.ClampToEdge;
-
-    public TextureMinFilter min_filter = TextureMinFilter.Linear;
-    public TextureMagFilter mag_filter = TextureMagFilter.Linear;
-
-    protected readonly NativeArray<T> buffer;
     protected readonly TextureTarget target;
 
-    ~Texture() {
-        buffer.Dispose();
-    }
+    public TextureWrapMode wrap_s { get; set; } = TextureWrapMode.ClampToEdge;
+    public TextureWrapMode wrap_t { get; set; } = TextureWrapMode.ClampToEdge;
 
-    protected Texture(TextureTarget target, int length, PixelFormat pixel_format, PixelType pixel_type) {
-        Debug.assert(pixel_type.size_of_opengl(pixel_format) == Unsafe.SizeOf<T>());
+    public TextureMinFilter min_filter { get; set; } = TextureMinFilter.Linear;
+    public TextureMagFilter mag_filter { get; set; } = TextureMagFilter.Linear;
 
-        this.handle       = 0;
+    public int texture_unit { get; protected set; }
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+    public abstract string sampler_name { get; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
+    public int version { get; protected set; }
+    public Buffer.Status status { get; protected set; }
+
+    public void bind() => bind(texture_unit);
+
+    public abstract void bind(int texture_unit);
+
+    protected Texture(TextureTarget target, PixelFormat pixel_format, PixelType pixel_type) {
         this.target       = target;
         this.pixel_format = pixel_format;
         this.pixel_type   = pixel_type;
@@ -285,19 +273,28 @@ public abstract class Texture<T>: Buffer, ITexture, IBuffer
                 break;
             default: throw new ArgumentOutOfRangeException();
         }
+    }
+}
 
+public abstract class Texture<T>: Texture, IDisposable
+    where T: unmanaged {
+    protected int handle;
 
+    protected readonly NativeArray<T> buffer;
+
+    ~Texture() {
+        Dispose(false);
+    }
+
+    protected Texture(TextureTarget target, int length, PixelFormat pixel_format, PixelType pixel_type)
+        : base(target, pixel_format, pixel_type) {
+        Debug.assert_equal(pixel_type.size_of_opengl(pixel_format), Unsafe.SizeOf<T>());
+
+        this.handle       = 0;
         this.buffer = new NativeArray<T>(length, true);
     }
 
-    public override int length => buffer.length;
-    public override Type item_type => typeof(T);
-    public override int total_size => buffer.total_size;
-    public override int item_size => Unsafe.SizeOf<T>();
-
-    public void bind() => bind(texture_unit);
-
-    public void bind(int texture_unit) {
+    public override void bind(int texture_unit) {
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");
 
@@ -306,6 +303,9 @@ public abstract class Texture<T>: Buffer, ITexture, IBuffer
         GL.ActiveTexture(TextureUnit.Texture0 + texture_unit);
         GL.BindTexture(target, handle);
     }
+
+    public abstract void create();
+    public abstract void update();
 
     public void query_info() {
         bind(0);
@@ -329,7 +329,6 @@ public abstract class Texture<T>: Buffer, ITexture, IBuffer
         GL.GetTexLevelParameter(target, 0, GetTextureParameter.TextureAlphaSize, out int alpha_size);
         Console.WriteLine($"alpha_size: {alpha_size}");
 
-
         Console.WriteLine();
         GL.GetTexLevelParameter(target, 0, GetTextureParameter.TextureCompressed, out int compressed);
         Console.WriteLine($"compressed: {compressed}");
@@ -342,4 +341,20 @@ public abstract class Texture<T>: Buffer, ITexture, IBuffer
 
         Debug.assert_opengl();
     }
+
+    private void Dispose(bool disposing) {
+        if (disposing) {
+            buffer.Dispose();
+        }
+    }
+
+    public void Dispose() {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    public int length => buffer.length;
+    public Type item_type => typeof(T);
+    public int item_size => Unsafe.SizeOf<T>();
+    public int total_size => item_size * length;
 }

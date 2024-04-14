@@ -308,6 +308,38 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     //public void set_model_matrix(in Matrix4 matrix) => set_uniform("model", matrix);
     public void set_game_time(in float game_time) => set_uniform("game_time", game_time);
 
+    public void set_material(Materials.Material material) {
+        foreach (var input in material.inputs) {
+            var name = $"{material.name.ToLower()}.{input.name.ToLower()}";
+            if (input.match<Texture>(out var tex)) {
+                Console.WriteLine($"Binding texture: {name}");
+                tex.bind(0);
+                set_uniform(name, 0);
+            } else {
+                throw new NotImplementedException();
+            }
+        }
+
+        foreach (var property in material.properties) {
+            var name = $"{material.name.ToLower()}.{property.name.ToLower()}";
+            Console.WriteLine($"Setting property: {name}");
+            switch (property) {
+                case Property<float> f:
+                    set_uniform(name, f.value);
+                    break;
+                case Property<int> i:
+                    set_uniform(name, i.value);
+                    break;
+                case Property<Color> c:
+                    set_uniform(name, c.value);
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+    }
+
+
     public void set_material(Material material) {
         set_uniform("material.ambient_color", material.ambient_color.reinterpret_ref<Color, OpenTK.Mathematics.Vector3>());
         set_uniform("material.diffuse", material.diffuse_color.reinterpret_ref<Color, OpenTK.Mathematics.Vector3>());

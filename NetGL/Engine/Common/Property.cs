@@ -9,6 +9,8 @@ public abstract class Property: INamed {
     protected Property(string name) {
         this.name = name;
     }
+
+    public abstract bool match<T>(out T value);
 }
 
 public sealed class Property<T>: Property {
@@ -28,6 +30,16 @@ public sealed class Property<T>: Property {
         }
     }
 
+    public override bool match<TMatch>(out TMatch value) {
+        if(this.value is TMatch m) {
+            value = m;
+            return true;
+        }
+
+        value = default!;
+        return false;
+    }
+
     public static implicit operator T(Property<T?> property) {
         if (property.value != null) return property.value;
         throw new InvalidOperationException("Property value is null");
@@ -40,6 +52,16 @@ public sealed class ReadOnlyProperty<T>: Property where T: unmanaged {
     }
 
     public T value { get; }
+
+    public override bool match<TMatch>(out TMatch value) {
+        if(this.value is TMatch m) {
+            value = m;
+            return true;
+        }
+
+        value = default!;
+        return false;
+    }
 
     public static implicit operator T(ReadOnlyProperty<T> property) => property.value;
 }

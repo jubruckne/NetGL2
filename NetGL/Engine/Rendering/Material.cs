@@ -3,7 +3,7 @@ namespace NetGL;
 public class Material {
     public readonly string name;
     public Color ambient_color;
-    public ITexture? ambient_texture;
+    public TextureBuffer? ambient_texture;
     public Color diffuse_color;
     public Color specular_color;
     public float shininess;

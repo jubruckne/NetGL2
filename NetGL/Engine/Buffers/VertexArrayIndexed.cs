@@ -59,7 +59,7 @@ public class VertexArrayIndexed: VertexArray {
     public readonly IIndexBuffer index_buffer;
     public readonly DrawRanges draw_ranges;
 
-    public VertexArrayIndexed(List<IVertexBuffer> vertex_buffers, IIndexBuffer index_buffer, DrawRanges? draw_ranges, Material material): base(vertex_buffers, material) {
+    public VertexArrayIndexed(List<IVertexBuffer> vertex_buffers, IIndexBuffer index_buffer, DrawRanges? draw_ranges, Union<Material, Materials.Material> material): base(vertex_buffers, material) {
         this.index_buffer = index_buffer;
 
         if (draw_ranges != null && draw_ranges.length > 1) {
@@ -73,7 +73,7 @@ public class VertexArrayIndexed: VertexArray {
     public VertexArrayIndexed(IVertexBuffer vertex_buffer, IIndexBuffer index_buffer, DrawRanges? draw_ranges, Material material)
         : this([vertex_buffer], index_buffer, draw_ranges, material) {}
 
-    public VertexArrayIndexed(IVertexBuffer vertex_buffer, IIndexBuffer index_buffer, Material material)
+    public VertexArrayIndexed(IVertexBuffer vertex_buffer, IIndexBuffer index_buffer, Union<Material, Materials.Material> material)
         : this([vertex_buffer], index_buffer,null, material) {}
 
     public VertexArrayIndexed(List<IVertexBuffer> vertex_buffers, IIndexBuffer index_buffer, Material material)

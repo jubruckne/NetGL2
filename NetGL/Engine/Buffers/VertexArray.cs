@@ -6,17 +6,19 @@ public class VertexArray: IBindable {
     public int handle { get; protected set; }
 
     public readonly PrimitiveType primitive_type;
-    public Material material;
+    public readonly Material? material;
+    public readonly Materials.Material? material2;
 
     public readonly List<IVertexBuffer> vertex_buffers;
     public IReadOnlyList<VertexAttribute> vertex_attributes { get; }
 
-    public VertexArray(List<IVertexBuffer> vertex_buffers, Material material) {
+    public VertexArray(List<IVertexBuffer> vertex_buffers, Union<Material, Materials.Material> material) {
         handle = 0;
 
         this.vertex_buffers = vertex_buffers;
         this.primitive_type = PrimitiveType.Triangles;
         this.material = material;
+        this.material2 = material;
 
         int location = 0;
         vertex_attributes = new List<VertexAttribute>();

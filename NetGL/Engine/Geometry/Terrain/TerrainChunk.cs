@@ -9,13 +9,13 @@ public sealed class TerrainChunk {
 
     public readonly Terrain terrain;
     public readonly Rectangle rectangle;
-    private readonly Material material;
+    private readonly Materials.Material material;
 
     public bool ready { get; private set; }
     public VertexArrayIndexed? vertex_array { get; private set; }
     public static IndexBuffer<ushort>? shared_index_buffer;
 
-    public TerrainChunk(in Terrain terrain, in Rectangle rectangle, Material material) {
+    public TerrainChunk(in Terrain terrain, in Rectangle rectangle, Materials.Material material) {
         this.rectangle = rectangle;
         this.terrain = terrain;
         this.ready = false;

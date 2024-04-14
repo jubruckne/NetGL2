@@ -17,17 +17,15 @@ struct DirectionalLight {
 
 uniform DirectionalLight[2] directional_light;
 
-struct Material {
-    sampler2D ambient_texture;
-    vec3 diffuse;
-    vec3 specular;
-    float shininess;
+struct Terrain {
+    sampler2D heightmap;
+    vec4 tile_color;
 };
 
-uniform Material material;
+uniform Terrain terrain;
 
 out vec4 frag_color;
 
 void main() {
-    frag_color = vec4(material.diffuse, 1);
+    frag_color = terrain.tile_color;
 }

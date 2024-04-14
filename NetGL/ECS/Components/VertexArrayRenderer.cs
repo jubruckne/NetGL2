@@ -17,6 +17,7 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
                                                 front_facing: true,
                                                 scissor_test: false
                                                );
+
     public Light[] lights { get; set; }
 
     internal VertexArrayRenderer(in Entity entity, List<VertexArray> vertex_arrays) {
@@ -67,8 +68,12 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
             if (enabled) {
                 va.bind();
 
-                va.material.ambient_texture?.bind(0);
-                shader.set_material(va.material);
+                if (va.material != null) {
+                    va.material.ambient_texture?.bind(0);
+                    shader.set_material(va.material);
+                } else if(va.material2 != null) {
+                    shader.set_material(va.material2);
+                }
 
                 if (shader.has_tesselation_shader)
                     va.draw_patches();

@@ -10,13 +10,13 @@ public class Model {
     public readonly string name;
     public readonly IList<VertexArray> vertex_arrays;
     public readonly IReadOnlyList<Material> materials;
-    public readonly IReadOnlyList<Texture> textures;
+    public readonly IReadOnlyList<Image> textures;
 
     private Model(string name) {
         this.name = name;
         vertex_arrays = new List<VertexArray>();
         materials = new List<Material>();
-        textures = new List<Texture>();
+        textures = new List<Image>();
     }
 
     private void add_vertex_array(in VertexArray va) => ((List<VertexArray>)vertex_arrays).Add(va);

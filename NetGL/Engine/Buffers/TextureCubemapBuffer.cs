@@ -3,8 +3,8 @@ namespace NetGL;
 using OpenTK.Graphics.OpenGL4;
 
 public class TextureCubemapBuffer: Texture2DArrayBuffer {
-    public TextureCubemapBuffer(in Texture right, in Texture left, in Texture top, in Texture bottom, in Texture front,
-        in Texture back)
+    public TextureCubemapBuffer(in Image right, in Image left, in Image top, in Image bottom, in Image front,
+        in Image back)
         : base(TextureTarget.TextureCubeMap, [right, left, bottom, top, front, back]) {
     }
 

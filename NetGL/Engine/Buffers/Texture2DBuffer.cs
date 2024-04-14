@@ -3,22 +3,22 @@ namespace NetGL;
 using OpenTK.Graphics.OpenGL4;
 
 public class Texture2DBuffer: TextureBuffer {
-    private readonly Texture texture;
+    private readonly Image _image;
 
     public override int length => 1;
     public override int item_size { get; }
     public override Type item_type { get; }
     public override int total_size { get; }
 
-    public Texture2DBuffer(in Texture texture) : base(TextureTarget.Texture2D) {
+    public Texture2DBuffer(in Image image) : base(TextureTarget.Texture2D) {
         handle = 0;
 
-        width = texture.width;
-        height = texture.height;
-        item_size = texture.image_data.Length;
-        item_type = texture.image_data.GetType();
-        total_size = texture.image_data.Length;
-        this.texture = texture;
+        width = image.width;
+        height = image.height;
+        item_size = image.image_data.Length;
+        item_type = image.image_data.GetType();
+        total_size = image.image_data.Length;
+        this._image = image;
     }
 
     public override void create() {
@@ -41,7 +41,7 @@ public class Texture2DBuffer: TextureBuffer {
             border: 0,
             PixelFormat.Rgba,
             PixelType.UnsignedByte,
-            texture.image_data
+            _image.image_data
         );
 
         GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
@@ -64,7 +64,7 @@ public class Texture2DBuffer: TextureBuffer {
             height,
             PixelFormat.Rgba,
             PixelType.UnsignedByte,
-            texture.image_data
+            _image.image_data
         );
 
         GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);

@@ -3,14 +3,14 @@ namespace NetGL;
 using OpenTK.Graphics.OpenGL4;
 
 public class Texture2DArrayBuffer: TextureBuffer {
-    protected readonly Texture[] textures;
+    protected readonly Image[] textures;
 
     public override int length { get; }
     public override int item_size { get; }
     public override Type item_type { get; }
     public override int total_size { get; }
 
-    protected Texture2DArrayBuffer(TextureTarget target, in Texture[] textures): base(target) {
+    protected Texture2DArrayBuffer(TextureTarget target, in Image[] textures): base(target) {
         handle = 0;
 
         length = textures.Length;
@@ -22,7 +22,7 @@ public class Texture2DArrayBuffer: TextureBuffer {
         this.textures = textures;
     }
 
-    public Texture2DArrayBuffer(in Texture[] textures): this(TextureTarget.Texture2DArray, textures) {}
+    public Texture2DArrayBuffer(in Image[] textures): this(TextureTarget.Texture2DArray, textures) {}
 
     public override void create() {
         if (handle == 0)

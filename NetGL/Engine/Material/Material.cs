@@ -1,42 +1,72 @@
-using System.Text;
-using ImGuiNET;
-using NetGL.ECS;
-
 namespace NetGL.Materials;
+
+using System.Text;
+using ECS;
 
 public partial class Material: INamed {
     public string name { get; }
     public Shader shader { get; }
+    public NamedBag<Property> inputs { get; }
     public NamedBag<Property> properties { get; }
 
     public Material(in string name, in Shader shader) {
         this.name = name;
         this.shader = shader;
         this.properties = [];
+        this.inputs = [];
     }
 
     public Material(in string name, in Material from) {
         this.name = name;
         shader = from.shader;
         properties = new(from.properties);
+        inputs = new(from.inputs);
+    }
+
+    public void add_texture<T>(string name, T texture) where T: Texture {
+        var item = new Property<T>(name, texture);
+        inputs.add(item);
+    }
+
+    public void add_color(string name, Color color) {
+        var item = new Property<Color>(name, color);
+        properties.add(item);
     }
 
     public string get_declaration() {
         var sb = new StringBuilder();
-        sb.AppendLine($"struct {name} {{");
+
+        foreach (var property in inputs) {
+            var glsl_type = property switch {
+                Property<Texture2D<float4>> tex => tex.value!.sampler_name,
+                Property<Texture2D<uint>> tex   => tex.value.sampler_name,
+                Property<Texture2D<float>> tex  => tex.value.sampler_name,
+                Property<Texture2D<byte>> tex   => tex.value.sampler_name,
+                Property<Texture2D<half>> tex   => tex.value.sampler_name,
+                _                              => throw new NotImplementedException()
+            };
+
+            sb.AppendLine($"uniform {glsl_type} {name.ToLower()}_{property.name};");
+        }
+
+        sb.AppendLine();
+
+        sb.AppendLine($"struct {name.ToLower()}_t {{");
         foreach (var property in properties) {
             var glsl_type = property switch {
-                Property<float>        => "float",
-                Property<int>          => "int",
-                Property<Color>        => "vec4",
-                Property<ITexture> tex => tex.value.sampler_name,
-                _                      => throw new NotImplementedException()
+                Property<float>                 => "float",
+                Property<int>                   => "int",
+                Property<Color>                 => "vec4",
+                _                               => throw new NotImplementedException()
             };
 
             sb.AppendLine($"    {glsl_type} {property.name};");
         }
-
         sb.AppendLine("}");
+
+        sb.AppendLine($"uniform {name.ToLower()}_t {name.ToLower()};");
+
+
         return sb.ToString();
     }
 
@@ -75,9 +105,9 @@ public partial class Material {
             set => ((Property<Color>)properties["specular_color"]).value = value;
         }
 
-        public ITexture? ambient_texture {
-            get => ((Property<ITexture>)properties["ambient_texture"]).value ?? null;
-            set => ((Property<ITexture>)properties["ambient_texture"]).value = value;
+        public Texture? ambient_texture {
+            get => ((Property<Texture>)properties["ambient_texture"]).value ?? null;
+            set => ((Property<Texture>)properties["ambient_texture"]).value = value;
         }
 
         public Default(in string name, in Shader shader): base(in name, in shader) {
@@ -85,7 +115,7 @@ public partial class Material {
             properties.add(new Property<Color>("ambient_color", Color.White));
             properties.add(new Property<Color>("diffuse_color", Color.White));
             properties.add(new Property<Color>("specular_color", Color.White));
-            properties.add(new Property<Texture>("ambient_texture"));
+            properties.add(new Property<Image>("ambient_texture"));
         }
 
         public Default(in string name,
@@ -99,7 +129,7 @@ public partial class Material {
             properties.add(new Property<Color>("ambient_color", ambient_color));
             properties.add(new Property<Color>("diffuse_color", diffuse_color));
             properties.add(new Property<Color>("specular_color", specular_color));
-            properties.add(new Property<Texture>("ambient_texture"));
+            properties.add(new Property<Image>("ambient_texture"));
         }
     }
 }
