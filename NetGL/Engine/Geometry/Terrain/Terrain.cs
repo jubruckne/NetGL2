@@ -109,7 +109,15 @@ public class Terrain: Entity {
         Garbage.start_measuring(this);
         //query_chunks_within_radius(0, 0, 1024);
 
-        shader = this.add_shader(Shader.from_file("terrain_shader", "terrain.vert.glsl", "terrain.frag.glsl")).shader;
+        /*
+
+         '''glsl
+            #version 330 core
+
+
+         */
+
+        shader = this.add_shader(Shader.from_file("name","terrain.vert.glsl", "terrain.frag.glsl", "terrain.tessctrl.glsl", "terrain.tesseval.glsl")).shader;//, "terrain.frag.glsl", tess_control: "", tess_eval: "terrain.tesseval.glsl")).shader;
 
         var rect  = new Rectangle((-256, -256), 512);
         Materials.Material mat = new("Terrain", shader);

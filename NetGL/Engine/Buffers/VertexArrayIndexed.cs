@@ -3,7 +3,7 @@ namespace NetGL;
 using OpenTK.Graphics.OpenGL4;
 using System.Collections;
 
-public class VertexArrayIndexed: VertexArray {
+public sealed class VertexArrayIndexed: VertexArray {
     public class DrawRanges: IEnumerable<DrawRanges.DrawRange> {
         public readonly record struct DrawRange {
             public readonly int first_index;
@@ -35,7 +35,7 @@ public class VertexArrayIndexed: VertexArray {
             counts        = new int[length];
             base_vertices = new int[length];
 
-            for (int i = 0; i < length; i++) {
+            for (var i = 0; i < length; i++) {
                 indices[i]       = list[i].first_index;
                 counts[i]        = list[i].draw_count;
                 base_vertices[i] = list[i].base_vertex;
@@ -100,28 +100,6 @@ public class VertexArrayIndexed: VertexArray {
         return $"vert:{vertex_buffers.sum(static buffer => buffer.length):N0}, ind:{index_buffer.length:N0}";
     }
 
-    public override void draw_patches() {
-        //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
-        Debug.assert(false);
-        GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
-
-        if (draw_ranges.length <= 1) {
-            GL.DrawElements(PrimitiveType.Patches, index_buffer.length * 3, index_buffer.draw_element_type, 0);
-        } else {
-            GL.MultiDrawElementsBaseVertex(
-                                           PrimitiveType.Patches,
-                                           draw_ranges.counts,
-                                           index_buffer.draw_element_type,
-                                           draw_ranges.indices,
-                                           draw_ranges.length,
-                                           draw_ranges.base_vertices
-                                          );
-        }
-
-        Debug.assert_opengl();
-    }
-
-
     public override void draw() {
         //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
         if (draw_ranges.length <= 1) {
@@ -137,17 +115,6 @@ public class VertexArrayIndexed: VertexArray {
                                            draw_ranges.length,
                                            draw_ranges.base_vertices
                                            );
-            /*
-             Debug.println(draw_ranges, ConsoleColor.Yellow);
-            foreach (var dr in draw_ranges) {
-                GL.DrawElementsBaseVertex(
-                                          primitive_type,
-                                          dr.draw_count * 3,
-                                          index_buffer.draw_element_type,
-                                          dr.first_index * 3,
-                                          dr.base_vertex
-                                         );
-            }*/
         }
 
         Debug.assert_opengl();

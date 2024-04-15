@@ -3,6 +3,8 @@ namespace NetGL;
 using OpenTK.Graphics.OpenGL4;
 
 public class VertexArray: IBindable {
+    public enum Type {Points = PrimitiveType.Points, LineStrip = PrimitiveType.LineStrip, Triangles = PrimitiveType.Triangles, Patches = PrimitiveType.Patches}
+
     public int handle { get; protected set; }
 
     public readonly PrimitiveType primitive_type;
@@ -12,11 +14,23 @@ public class VertexArray: IBindable {
     public readonly List<IVertexBuffer> vertex_buffers;
     public IReadOnlyList<VertexAttribute> vertex_attributes { get; }
 
-    public VertexArray(List<IVertexBuffer> vertex_buffers, Union<Material, Materials.Material> material) {
+    public VertexArray(IVertexBuffer vertex_buffer, Union<Material, Materials.Material> material): this([vertex_buffer], material) {}
+
+    public VertexArray(List<IVertexBuffer> vertex_buffers, Union<Material, Materials.Material> material): this(
+         Type.Triangles,
+         vertex_buffers,
+         material
+        ) {}
+
+    public VertexArray(Type type, IVertexBuffer vertex_buffer, Union<Material, Materials.Material> material):
+        this(type, [vertex_buffer], material) {}
+
+    public VertexArray(Type type, List<IVertexBuffer> vertex_buffers, Union<Material, Materials.Material> material) {
         handle = 0;
 
         this.vertex_buffers = vertex_buffers;
-        this.primitive_type = PrimitiveType.Triangles;
+        this.primitive_type = (PrimitiveType)type;
+
         this.material = material;
         this.material2 = material;
 
@@ -35,7 +49,7 @@ public class VertexArray: IBindable {
         }
     }
 
-    public virtual void bind() {
+    public void bind() {
         if (handle == 0)
             throw new NotSupportedException("no handle has been allocated yet!");
 
@@ -55,21 +69,25 @@ public class VertexArray: IBindable {
 
     protected void upload_attribute_pointers() {
         foreach (var attribute in vertex_attributes) {
-            Debug.assert_not_null(attribute.buffer);
             attribute.buffer!.bind();
-/*
-            Console.WriteLine("Vertex attributes: ");
-            Console.WriteLine($"  stride = {attribute.buffer.item_size}");
 
-            Console.WriteLine(attribute.buffer.item_type);
-            Console.WriteLine($"VertexAttribPointer({attribute.location}, {attribute.count}, {attribute.pointer_type}, {attribute.normalized}, {attribute.buffer.item_size}, {attribute.offset})");
-           */
+            if(primitive_type == PrimitiveType.Patches) {
+                Console.WriteLine("\nVertex attributes: ");
+                Console.WriteLine($"  {attribute.buffer.item_type.get_type_name()}: stride = {attribute.buffer.item_size}");
+                Console.WriteLine(
+                                  $"VertexAttribPointer({attribute.location}, {attribute.count}, {attribute.pointer_type}, {attribute.normalized}, {attribute.buffer.item_size}, {attribute.offset})"
+                                 );
+                Console.WriteLine();
+            }
             GL.VertexAttribPointer(attribute.location, attribute.count, attribute.pointer_type, attribute.normalized, attribute.buffer.item_size, attribute.offset);
             GL.EnableVertexAttribArray(attribute.location);
             if(attribute.is_instanced)
                 GL.VertexAttribDivisor(attribute.location, attribute.divisor);
 
         }
+
+        if(primitive_type == PrimitiveType.Patches)
+            GL.PatchParameter(PatchParameterInt.PatchVertices, 4);
 
         Debug.assert_opengl();
     }
@@ -79,13 +97,35 @@ public class VertexArray: IBindable {
     }
 
     public virtual void draw() {
-        foreach (var buffer in vertex_buffers) {
-            GL.DrawArrays(primitive_type, 0, buffer.length);
-        }
-    }
+        if (handle == 0)
+            throw new NotSupportedException("no handle has been allocated yet!");
 
-    public virtual void draw_patches() {
-        throw new NotImplementedException();
+        GL.GetInteger(GetPName.VertexArrayBinding, out int vertex_array);
+        Debug.assert_equal(handle, vertex_array);
+
+        Console.WriteLine($"VertexArray.draw ({primitive_type}, {vertex_buffers[0].length:N0})");
+        switch (primitive_type) {
+            case PrimitiveType.Patches:
+                vertex_buffers[0].bind();
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+                Debug.assert_opengl();
+
+                Debug.assert_equal(vertex_buffers.Count, 1);
+
+                Console.WriteLine(this.vertex_attributes.array_to_string());
+                Console.WriteLine(vertex_buffers[0]);
+
+                GL.DrawArrays(primitive_type, 0, 4);
+
+                Debug.assert_opengl();
+                return;
+            case PrimitiveType.Triangles or PrimitiveType.Points or PrimitiveType.LineStrip: {
+                GL.DrawArrays(primitive_type, 0, vertex_buffers[0].length);
+                return;
+            }
+        }
+
+        throw new NotSupportedException();
     }
 
     public bool has_normals {

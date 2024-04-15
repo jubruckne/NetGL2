@@ -75,10 +75,7 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
                     shader.set_material(va.material2);
                 }
 
-                if (shader.has_tesselation_shader)
-                    va.draw_patches();
-                else
-                    va.draw();
+                va.draw();
             }
         }
 

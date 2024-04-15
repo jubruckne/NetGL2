@@ -137,6 +137,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
         var tess_eval_shader_handle = -1;
         if (tess_eval_program != "") {
+            has_tesselation_shader = true;
             // Console.WriteLine("compiling tesselation control shader...");
             tess_eval_shader_handle = GL.CreateShader(ShaderType.TessEvaluationShader);
             GL.ShaderSource(tess_eval_shader_handle, tess_eval_program);
