@@ -29,7 +29,7 @@ public class Model {
 
         var va = new VertexArrayIndexed(vb, ib, material);
 
-        va.upload();
+        va.create();
 
         var model = new Model(shape_generator.ToString() ?? "Shape");
         model.add_vertex_array(va);
@@ -81,7 +81,7 @@ public class Model {
             ib.create();
 
             var va = new VertexArrayIndexed(vb, ib, materials[mesh.MaterialIndex]);
-            va.upload();
+            va.create();
 
             result.add_vertex_array(va);
         }

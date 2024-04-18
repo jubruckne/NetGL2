@@ -2,17 +2,18 @@
 
 layout (vertices=4) out;
 
-void main(){
-    // pass attributes through
-    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+uniform float tesselationLevelInner = 1.0;
+uniform float tesselationLevelOuter = 1.0;
 
-    if (gl_InvocationID == 0){
-        gl_TessLevelOuter[0] = 4;
-        gl_TessLevelOuter[1] = 4;
-        gl_TessLevelOuter[2] = 4;
-        gl_TessLevelOuter[3] = 4;
+out vec4 tcPos[];
 
-        gl_TessLevelInner[0] = 4;
-        gl_TessLevelInner[1] = 4;
-    }
+void main()
+{
+    tcPos[gl_InvocationID] = gl_in[gl_InvocationID].gl_Position;
+    gl_TessLevelOuter[0] = tesselationLevelOuter;
+    gl_TessLevelOuter[1] = tesselationLevelOuter;
+    gl_TessLevelOuter[2] = tesselationLevelOuter;
+    gl_TessLevelOuter[3] = tesselationLevelOuter;
+    gl_TessLevelInner[0] = tesselationLevelInner;
+    gl_TessLevelInner[1] = tesselationLevelInner;
 }

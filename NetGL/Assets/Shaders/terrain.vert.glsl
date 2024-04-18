@@ -1,20 +1,19 @@
-#version 410
+#version 410 core
 
-layout (location = 0) in vec3 position;
+layout (location = 0) in ivec2 position;
+layout (location = 1) in vec2 offset;
+layout (location = 2) in float size;
 
 uniform mat4 projection;
 uniform mat4 camera;
 uniform mat4 model;
 
-const float terrain_width = 4096;
-const float terrain_depth = 4096;
+uniform sampler2D heightmap;
 
-void main() {
-  vec3 pos = position;
-  float u = clamp((pos.x + 2048) / terrain_width, 0.0, 1.0);
-  float v = clamp((pos.z + 2048) / terrain_depth, 0.0, 1.0);
+void main()
+{
+  vec4 pos = vec4(offset.x + (position.x * size), 0, offset.y + (position.y * size), 1.0);
+  pos.y = texture(heightmap, pos.xz).r;
 
-  pos.y = 0; //texture(terrain.heightmap, vec2(u, v)).r * 0.01;
-
-  gl_Position = vec4(pos, 1.0) * model * camera * projection;
+  gl_Position = pos * model * camera * projection;
 }

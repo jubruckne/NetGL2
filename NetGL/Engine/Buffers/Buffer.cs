@@ -148,9 +148,9 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         GL.BindBuffer(target, handle);
     }
 
-    public override void create() => create(BufferUsageHint.StaticDraw);
+    public sealed override void create() => create(BufferUsageHint.StaticDraw);
 
-    public virtual void create(in BufferUsageHint usage) {
+    public virtual void create(BufferUsageHint usage) {
         Debug.assert(handle == 0);
         if (handle == 0)
             handle = GL.GenBuffer();

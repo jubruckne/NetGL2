@@ -6,6 +6,7 @@ using OpenTK.Graphics.OpenGL4;
 
 public interface IVertexBuffer: IBuffer, IBindable {
     ReadOnlyMap<string, VertexAttribute> attribute_definitions { get; }
+    void create(BufferUsageHint usage);
     void create();
     void update();
 }
@@ -13,6 +14,11 @@ public interface IVertexBuffer: IBuffer, IBindable {
 public delegate void Update<TPosition, TNormal, TAttributes>(int index, ref TPosition position, ref TNormal normal, ref TAttributes attribute);
 public delegate void Update<TPosition, TNormal>(int index, ref TPosition position, ref TNormal normal);
 public delegate void Update<TVertex>(int index, ref TVertex vertex);
+
+public static class VertexBuffer {
+    public static void unbind()
+        => GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+}
 
 public class VertexBuffer<T>: Buffer<T>, IVertexBuffer where T: unmanaged {
     public ReadOnlyMap<string, VertexAttribute> attribute_definitions { get; } = new Map<string, VertexAttribute>();
@@ -33,7 +39,7 @@ public class VertexBuffer<T>: Buffer<T>, IVertexBuffer where T: unmanaged {
             this.attribute_definitions.writeable().add(attrib.name, attrib);
         }
 
-        Debug.assert((offset, Unsafe.SizeOf<T>()), offset == Unsafe.SizeOf<T>());
+        Debug.assert_equal(offset, Unsafe.SizeOf<T>());
     }
 
     public ArrayView<T> vertices => get_view();
@@ -50,7 +56,6 @@ public class VertexBuffer<TPosition, TNormal>: VertexBuffer<VertexBuffer<TPositi
         public TPosition position;
         public TNormal normal;
 
-        [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vertex(TPosition position, TNormal normal) {
             this.position = position;
@@ -121,14 +126,12 @@ public class VertexBuffer<TPosition, TNormal, TAttributes>: VertexBuffer<VertexB
         public TNormal normal;
         public TAttributes attributes;
 
-        [SkipLocalsInit]
         public Vertex(TPosition position, TNormal normal) {
             this.position = position;
             this.normal   = normal;
             this.attributes = default;
         }
 
-        [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vertex(TPosition position, TNormal normal, TAttributes attributes) {
             this.position   = position;

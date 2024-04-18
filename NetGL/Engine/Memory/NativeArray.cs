@@ -22,7 +22,7 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
             Error.index_out_of_range(length);
         }
 
-        this.data = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes, 64);
+        this.data = (IntPtr)NativeMemory.AlignedAlloc((UIntPtr)bytes, 16);
         this.length = length;
         if(zero_out) zero();
     }
@@ -37,14 +37,12 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
     /// <param name="index">index</param>
     /// <returns>The item of specific index</returns>
     public T this[int index] {
-        [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (index < 0 || index >= length) Error.index_out_of_range(index);
             return ((T*)data)[index];
         }
 
-        [SkipLocalsInit]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
             if (index < 0 || index >= length) Error.index_out_of_range(index);
@@ -52,14 +50,12 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
         }
     }
 
-    [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T by_ref(int index) {
         if (index < 0 || index >= length) Error.index_out_of_range(index);
         return ref ((T*)data)[index];
     }
 
-    [SkipLocalsInit]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref C by_ref<C>(int index) where C: unmanaged {
         if (sizeof(T) != sizeof(C)) Error.type_conversion_error<T, C>(this[index]);

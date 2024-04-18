@@ -1,55 +1,27 @@
-using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using OpenTK.Graphics.OpenGL4;
-
 namespace NetGL;
 
 using ECS;
 using OpenTK.Mathematics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using OpenTK.Graphics.OpenGL4;
 
-/*
-    Vertex
-        Shared buffer (4 bytes)
-            half x,
-            half y
-        Per-Chunk buffer (10 bytes)
-            float height,
-            half3 normal
-    Instance buffer (6 bytes)
-            int16 offset_x
-            int16 offset_y
-            int16 scale
-            (width and height implicitly defined 96x96)
-*/
-
-public sealed class TerrainNoise: Noise {
-    public TerrainNoise(): base(333) {
-        add_simplex_layer(0.001f, 25f);
-        add_simplex_layer(0.003f, 12f);
-        add_simplex_layer(0.01f, 3.5f);
-        add_cellular_layer(1.0f, 0.135f);
-    }
-
-    public override float sample(in float x, in float y) {
-        return base.sample(x, y);
-    }
-}
-
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
+[StructLayout(LayoutKind.Sequential, Pack = 1, Size = 6)]
 public struct InstanceData {
-    public float2 offset;     // 8 x,z = position of the chunk
-    public short size;        // 2 width and height of the chunk
-    public short map_idx;     // 2 index into the heightmap (z)
+    public short2 offset;
+    public half size;
+    public static implicit operator InstanceData((short x, short y, half size) v) => new() { offset = (v.x, v.y), size = v.size };
+
+    public override string ToString()
+        => $"offset={offset}, size={size}";
 }
 
-// 3*4 = 12 bytes + 3 * 2 = 6 bytes = 18 bytes
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
+[StructLayout(LayoutKind.Sequential, Pack = 1, Size = 2)]
 public struct VertexData {
-    public half height;      //  2 bytes
-    public half3 normal;     //  6 bytes
-}                            // 8 bytes
+    public byte x;
+    public byte z;
+    public static implicit operator VertexData((byte x, byte z) v) => new() { x = v.x, z = v.z };
+}
 
 public class Terrain: Entity {
     public readonly VertexArrayRenderer renderer;
@@ -60,13 +32,16 @@ public class Terrain: Entity {
     private readonly FirstPersonCamera camera;
 
     internal readonly TerrainNoise noise;
-    internal readonly Texture2D<float> heightmaps;
     private readonly Shader shader;
 
     private readonly Material[] material_per_level;
     private readonly Dictionary<Rectangle, TerrainChunk> chunks = new();
     private readonly LodLevels lod_levels;
+
     private readonly VertexBuffer<InstanceData> instance_buffer;
+    private readonly VertexBuffer<VertexData> vertex_buffer;
+    private readonly IndexBuffer<short> index_buffer;
+    private readonly Heightmap heightmap;
 
     internal Terrain(Entity? parent = null): base("Terrain", parent) {
         const int detail_levels = 1;
@@ -78,6 +53,25 @@ public class Terrain: Entity {
 
         lod_levels = LodLevels.create(detail_levels, tile_size_at_highest_level);
 
+
+        vertex_buffer = create_vertex_buffer();
+        instance_buffer = create_instance_buffer();
+        index_buffer = create_index_buffer();
+        heightmap = create_heightmap();
+        HeightmapAsset.save_to_file(heightmap, "heightmap");
+
+
+        shader = this.add_shader(Shader.from_file("terrain","terrain.vert.glsl", "terrain.frag.glsl")).shader;
+        Materials.Material mat = new("Terrain", shader);
+        mat.add_texture("heightmap", heightmap.texture);
+
+        var vertex_array = new VertexArrayIndexed([vertex_buffer, instance_buffer], index_buffer, mat);
+        vertex_array.create();
+        renderer = this.add_vertex_array_renderer();
+
+
+        renderer.vertex_arrays.Add(vertex_array, true);
+/*
         heightmaps = new Texture2D<float>(
                                               4096,
                                               4096,
@@ -89,7 +83,7 @@ public class Terrain: Entity {
         heightmaps.min_filter = TextureMinFilter.Linear;
         heightmaps.mag_filter = TextureMagFilter.Linear;
         heightmaps.internal_pixel_format = PixelInternalFormat.R32f;
-        heightmaps.create();
+        //heightmaps.create();
 
         // add separate material for each level
         material_per_level = new Material[lod_levels.count];
@@ -98,40 +92,28 @@ public class Terrain: Entity {
 
         renderer = this.add_vertex_array_renderer();
 
-/*
-        tree = new(64, max_level, allocate_chunk);
-        var chunk = tree.request_node(0, 0, max_level);
-        tree.request_node(-200, 0, max_level);
-        tree.request_node(2100, 3200, 0);
-*/
         chunks.Clear();
 
         Garbage.start_measuring(this);
         //query_chunks_within_radius(0, 0, 1024);
 
-        /*
-
-         '''glsl
-            #version 330 core
-
-
-         */
-
         shader = this.add_shader(Shader.from_file("name","terrain.vert.glsl", "terrain.frag.glsl", "terrain.tessctrl.glsl", "terrain.tesseval.glsl")).shader;//, "terrain.frag.glsl", tess_control: "", tess_eval: "terrain.tesseval.glsl")).shader;
 
         var rect  = new Rectangle((-256, -256), 512);
         Materials.Material mat = new("Terrain", shader);
-        mat.add_texture("heightmap", heightmaps);
-        mat.add_color("tile_color", Color.White);
+       // mat.add_texture("heightmap", heightmaps);
+       // mat.add_color("tile_color", Color.White);
 
         var chunk = new TerrainChunk(this, rect, mat); // material_per_level[level]);
         chunks.Add(rect, chunk);
         generate_heightmaps(0, rect);
         chunk.create(priority: 0);
 
+        VertexArray.unbind();
+
 
         Garbage.stop_measuring(this);
-        heightmaps.query_info();
+        //heightmaps.query_info();
         //var chunk = chunks.Values.First();
         //this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, tesselate: false));
 
@@ -151,6 +133,7 @@ public class Terrain: Entity {
         renderer.render_settings.cull_face    = true;
         renderer.render_settings.front_facing = true;
 
+        /*
         var total = 0f;
 
         instance_buffer = new(
@@ -178,23 +161,110 @@ public class Terrain: Entity {
         }
 
         Console.WriteLine($"Chunks: {chunks.Count}, total size: {total:N0}.");
-
-        this.add_behavior(_ => update());
+*/
+        //this.add_behavior(_ => update());
     }
 
-    public void generate_heightmaps(int index, Rectangle area) {
-        for (var i = 0; i < heightmaps.width * heightmaps.height; ++i) {
-            var px = i % heightmaps.width;
-            var py = i / heightmaps.width;
+    private Heightmap create_heightmap(int texture_size = 4096, int world_size = 4096) {
+        var map = new Heightmap(texture_size,
+                                Rectangle.centered_at((0, 0), world_size)
+                               );
 
-            heightmaps[py, px] =
+        var area = new Rectangle(0, 0, world_size, world_size);
+
+        for (var i = 0; i < texture_size * texture_size; ++i) {
+            var px = i % texture_size;
+            var py = i / texture_size;
+
+            map.texture[py, px] =
                 noise.sample(
-                                    area.left + area.width * px / 96,
-                                    area.bottom + area.height * py / 96
-                                   );
+                             area.left + area.width * px / world_size,
+                             area.bottom + area.height * py / world_size
+                            );
         }
 
-        heightmaps.update();
+        map.texture.create();
+
+        return map;
+    }
+
+    private VertexBuffer<InstanceData> create_instance_buffer(int tile_count = 32, int tile_size = 10, float world_size = 100) {
+        var ib = new VertexBuffer<InstanceData>(
+                                                tile_count*tile_count,
+                                                new VertexAttribute<short2>(
+                                                                                 "offset",
+                                                                                 2,
+                                                                                 VertexAttribPointerType.UnsignedShort,
+                                                                                 divisor: 1
+                                                                                ),
+                                                new VertexAttribute<half>(
+                                                                                 "size",
+                                                                                 1,
+                                                                                 VertexAttribPointerType.HalfFloat,
+                                                                                 divisor: 1
+                                                                                )
+                                               );
+
+        for(var x = 0; x < tile_count; x++) {
+            for(var y = 0; y < tile_count; y++) {
+                ib[x * tile_count + y] = ((short)(x * world_size), (short)(y * world_size),
+                                          (half)(1.0f / tile_size * world_size));
+            }
+        }
+
+        ib.create();
+        return ib;
+    }
+
+    private IndexBuffer<short> create_index_buffer(byte tile_size = 10) {
+        var ib = new IndexBuffer<short>(tile_size * tile_size * 2);
+
+        var pos = 0;
+
+        for (byte i = 0; i < tile_size; i++) {
+            for (byte j = 0; j < tile_size; j++) {
+                // Add the first triangle
+                ib[pos].p2 = (short)(i * (tile_size + 1) + j);
+                ib[pos].p1 = (short)((i + 1) * (tile_size + 1) + j);
+                ib[pos].p0 = (short)(i * (tile_size + 1) + j + 1);
+                ++pos;
+
+                // Add the second triangle
+                ib[pos].p2 = (short)(i * (tile_size + 1) + j + 1);
+                ib[pos].p1 = (short)((i + 1) * (tile_size + 1) + j);
+                ib[pos].p0 = (short)((i + 1) * (tile_size + 1) + j + 1);
+                ++pos;
+            }
+        }
+
+        Console.WriteLine($"Index Buffer created: length={ib.length}, max_vtx={ib.calculate_vertex_range()}");
+
+        ib.create();
+        return ib;
+    }
+
+    private VertexBuffer<VertexData> create_vertex_buffer(byte tile_size = 10) {
+        var vb = new VertexBuffer<VertexData>(
+                                              (tile_size + 1) * (tile_size + 1),
+                                              new VertexAttribute<VertexData>(
+                                                                              "position",
+                                                                              2,
+                                                                              VertexAttribPointerType.Byte,
+                                                                              false
+                                                                             )
+                                             );
+
+
+        var pos = 0;
+        for (byte i = 0; i <= tile_size; i++) {
+            for (byte j = 0; j <= tile_size; j++) {
+                vb[pos++] = (i, j);
+            }
+        }
+
+        vb.create();
+
+        return vb;
     }
 
     private void query_chunks_within_radius(float x, float y, int radius) {
@@ -238,6 +308,7 @@ public class Terrain: Entity {
                     //              $"Quad at ({center_x},{center_y}), distance={distance:N0}, lod={level}.",
                     //              ConsoleColor.Green
                     //             );
+                    /*
                     var rect  = new Rectangle((x, y), size);
                     Materials.Material mat = new("Terrain", this.shader);
                     mat.add_texture("heightmap", heightmaps);
@@ -247,6 +318,7 @@ public class Terrain: Entity {
                     chunks.Add(rect, chunk);
                     generate_heightmaps(chunks.Count - 1, rect);
                     chunk.create(priority: 0);
+                    */
                 }
             }
         }

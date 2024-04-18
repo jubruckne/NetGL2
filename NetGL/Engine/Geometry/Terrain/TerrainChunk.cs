@@ -3,7 +3,7 @@ namespace NetGL;
 using OpenTK.Graphics.OpenGL4;
 
 public sealed class TerrainChunk {
-    private const int quad_count = 64;
+    private const int quad_count = 1;
     private const int vertex_count = (quad_count + 1) * (quad_count + 1);
     private const int index_count = quad_count * quad_count * 2;
 
@@ -30,7 +30,7 @@ public sealed class TerrainChunk {
             if (b.status != Buffer.Status.Uploaded)
                 b.create();
 
-        va.upload();
+        va.create();
 
         if (vertex_array != null) {
             Debug.assert(false); // TODO: properly remove old vertex array
@@ -80,11 +80,11 @@ public sealed class TerrainChunk {
     private VertexArray create() {
         var noise = terrain.noise;
 
-        var vb = new VertexBuffer<float3>(
+        var vb = new VertexBuffer<float2>(
                                           quad_count * quad_count * 4,
-                                          new VertexAttribute<float3>(
+                                          new VertexAttribute<float2>(
                                                                       "position",
-                                                                      3,
+                                                                      2,
                                                                       VertexAttribPointerType.Float,
                                                                       false
                                                                      )
@@ -98,6 +98,7 @@ public sealed class TerrainChunk {
                       ConsoleColor.Magenta
                      );*
                      */
+/*
         float px;
         float py;
 
@@ -115,53 +116,63 @@ public sealed class TerrainChunk {
             height_bias += noise.sample(x, y);
         }
         height_bias /= 16;
+        if (false) {
 
-        for (var i = 0; i < quad_count * quad_count; ++i) {
-            vx = i % (quad_count + 1);
-            vy = i / (quad_count + 1);
+            for (var i = 0; i < quad_count * quad_count; ++i) {
+                vx = i % (quad_count + 1);
+                vy = i / (quad_count + 1);
 
-            var p_bottom_left = new float2(
-                                           rectangle.left + rectangle.width * vx / quad_count,
-                                           rectangle.bottom + rectangle.height * vy / quad_count
-                                          );
-            var p_bottom_right= new float2(
-                                           rectangle.left + rectangle.width * (vx + 1) / quad_count,
-                                           rectangle.bottom + rectangle.height * vy / quad_count
-                                          );
-            var p_top_left    = new float2(
-                                           rectangle.left + rectangle.width * vx / quad_count,
-                                           rectangle.bottom + rectangle.height * (vy + 1) / quad_count
-                                          );
-            var p_top_right = new float2(
-                                         rectangle.left + rectangle.width * (vx + 1) / quad_count,
-                                         rectangle.bottom + rectangle.height * (vy + 1) / quad_count
-                                        );
+                var p_bottom_left = new float2(
+                                               rectangle.left + rectangle.width * vx / quad_count,
+                                               rectangle.bottom + rectangle.height * vy / quad_count
+                                              );
+                var p_bottom_right = new float2(
+                                                rectangle.left + rectangle.width * (vx + 1) / quad_count,
+                                                rectangle.bottom + rectangle.height * vy / quad_count
+                                               );
+                var p_top_left = new float2(
+                                            rectangle.left + rectangle.width * (vx + 1) / quad_count,
+                                            rectangle.bottom + rectangle.height * (vy + 1) / quad_count
+                                           );
+                var p_top_right = new float2(
+                                             rectangle.left + rectangle.width * vx / quad_count,
+                                             rectangle.bottom + rectangle.height * (vy + 1) / quad_count
+                                            );
 
-            vb[i*4+0] = terrain.terrain_to_world_position(
-                                                               p_bottom_left.x,
-                                                               p_bottom_left.y,
-                                                               0 //noise.sample(px, py)
-                                                              );
-            vb[i*4+1] = terrain.terrain_to_world_position(
-                                                               p_bottom_right.x,
-                                                               p_bottom_right.y,
-                                                               0 //noise.sample(px, py)
-                                                              );
-            vb[i*4+2] = terrain.terrain_to_world_position(
-                                                                 p_top_left.x,
-                                                                 p_top_left.y,
-                                                                 0 //noise.sample(px, py)
-                                                                );
-            vb[i*4+3] = terrain.terrain_to_world_position(
-                                                                 p_top_right.x,
-                                                                 p_top_right.y,
-                                                                 0 //noise.sample(px, py)
-                                                                );
-            /*vb[i].normal = half3.unit_y;
-            vb[i+1].normal = half3.unit_y;
-            vb[i+2].normal = half3.unit_y;
-            vb[i+3].normal = half3.unit_y;
-*/
+                vb[i * 4 + 0] = p_bottom_left;
+                vb[i * 4 + 1] = p_bottom_right;
+                vb[i * 4 + 2] = p_top_left;
+                vb[i * 4 + 3] = p_top_right;
+
+
+                /*
+
+                vb[i*4+0] = terrain.terrain_to_world_position(
+                                                                   p_bottom_left.x,
+                                                                   p_bottom_left.y,
+                                                                   0 //noise.sample(px, py)
+                                                                  );
+                vb[i*4+1] = terrain.terrain_to_world_position(
+                                                                   p_bottom_right.x,
+                                                                   p_bottom_right.y,
+                                                                   0 //noise.sample(px, py)
+                                                                  );
+                vb[i*4+2] = terrain.terrain_to_world_position(
+                                                                     p_top_left.x,
+                                                                     p_top_left.y,
+                                                                     0 //noise.sample(px, py)
+                                                                    );
+                vb[i*4+3] = terrain.terrain_to_world_position(
+                                                                     p_top_right.x,
+                                                                     p_top_right.y,
+                                                                     0 //noise.sample(px, py)
+                                                                    );
+                                                                    */
+                /*vb[i].normal = half3.unit_y;
+                vb[i+1].normal = half3.unit_y;
+                vb[i+2].normal = half3.unit_y;
+                vb[i+3].normal = half3.unit_y;
+    */
 /*
             vb[i].position.y -= height_bias;
             if (vb[i].position.y < min_height) min_height = vb[i].position.y;
@@ -185,13 +196,19 @@ public sealed class TerrainChunk {
 
             //heightmap[vx, vy, 0].height = (half)vb[i].position.y;
             //heightmap[vx, vy, 0].normal = vb[i].normal;
-            */
 
-        }
+            }
+        */
 
         // vb.calculate_normals(ib.indices);
 
         //Debug.println($"Chunk height range: {min_height:F0}:{max_height:F0}, height_bias: {height_bias:F1}", ConsoleColor.Magenta);
+
+        vb[0].set(0, 0);
+        vb[1].set(1, 0);
+        vb[2].set(1, 1);
+        vb[3].set(0, 1);
+
 
         var va = new VertexArray(VertexArray.Type.Patches, vb, material);
         return va;

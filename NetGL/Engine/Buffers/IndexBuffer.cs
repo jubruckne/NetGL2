@@ -30,6 +30,8 @@ public static class IndexBuffer {
         };
     }
 
+    public static void unbind()
+        => GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
 }
 
 [StructLayout(LayoutKind.Sequential)]

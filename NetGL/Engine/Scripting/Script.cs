@@ -3,25 +3,23 @@ using Microsoft.CodeAnalysis.Scripting;
 
 namespace NetGL;
 
-public class Script: IAssetType<Script> {
-    public static string path => "Scripts";
-
+public class Script {
     private readonly string code;
-    private readonly Script<Engine> executable;
+    private readonly Script<global::Engine> executable;
 
     public Script(string code) {
         this.code = code;
         this.executable = compile();
     }
 
-    private Script<Engine> compile() {
+    private Script<global::Engine> compile() {
         try {
             var scriptOptions = ScriptOptions.Default
                 .AddImports("System")
                 .AddReferences(typeof(Console).Assembly)
-                .AddReferences(typeof(Engine).Assembly);
+                .AddReferences(typeof(global::Engine).Assembly);
 
-            return CSharpScript.Create<Engine>(code, scriptOptions, typeof(Engine));
+            return CSharpScript.Create<global::Engine>(code, scriptOptions, typeof(global::Engine));
         }
         catch (CompilationErrorException e) {
             Console.WriteLine($"Script execution error: {string.Join("\n", e.Diagnostics)}");
@@ -29,11 +27,7 @@ public class Script: IAssetType<Script> {
         }
     }
 
-    public void run(Engine engine) {
+    public void run(global::Engine engine) {
         executable.RunAsync(engine).Wait();
-    }
-
-    static Script IAssetType<Script>.load_from_file(string filename) {
-        return new Script(File.ReadAllText(filename));
     }
 }

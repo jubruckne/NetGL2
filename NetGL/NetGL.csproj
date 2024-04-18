@@ -12,8 +12,10 @@
         <Platforms>ARM64</Platforms>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>./generated</CompilerGeneratedFilesOutputPath>
-        <Optimize>true</Optimize>
-        <WholeProgramOptimization>true</WholeProgramOptimization>
+        <Optimize>false</Optimize>
+        <WholeProgramOptimization>false</WholeProgramOptimization>
+        <DebugType>portable</DebugType>
+        <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
     <ItemGroup>
@@ -70,6 +72,10 @@
       <EmbeddedResource Remove="Assets\Temp\**" />
       <EmbeddedResource Remove="Libraries\MagicPhysX\**" />
       <EmbeddedResource Remove="Libraries\Jitter2\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Assets\Heightmaps\" />
     </ItemGroup>
     
 </Project>

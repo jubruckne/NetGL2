@@ -6,7 +6,7 @@ public class AutoShader: Shader {
     private AutoShader(in string name) : base(name) { }
 
     static AutoShader() {
-        foreach (var file in AssetManager.get_files<Shader>("generated"))
+        foreach (var file in ShaderAsset.get_files("generated"))
             File.Delete(file);
     }
 
@@ -159,8 +159,8 @@ public class AutoShader: Shader {
             shader.compile_from_text(
                                      vertex_code.ToString(),
                                      fragment_code.ToString(),
-                                     tess_control_program: File.ReadAllText(AssetManager.asset_path<Shader>("tessctrl.glsl")),
-                                     tess_eval_program: File.ReadAllText(AssetManager.asset_path<Shader>("tesseval.glsl"))
+                                     tess_control_program: File.ReadAllText(ShaderAsset.resolve_file_name("tessctrl.glsl")),
+                                     tess_eval_program: File.ReadAllText(ShaderAsset.resolve_file_name("tesseval.glsl"))
                                      );
         else
             shader.compile_from_text(vertex_code.ToString(), fragment_code.ToString());
@@ -169,8 +169,8 @@ public class AutoShader: Shader {
     }
 
     private static void save_to_file(string name, string vertex_code, string fragment_code) {
-        string vertex_file = AssetManager.asset_path<Shader>($"generated/{name}.vert.glsl");
-        string fragment_file  = AssetManager.asset_path<Shader>($"generated/{name}.frag.glsl");
+        string vertex_file = ShaderAsset.resolve_file_name($"generated/{name}.vert.glsl");
+        string fragment_file  = ShaderAsset.resolve_file_name($"generated/{name}.frag.glsl");
 
         File.WriteAllText(vertex_file, vertex_code);
         File.WriteAllText(fragment_file, fragment_code);

@@ -44,7 +44,8 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
         RenderState.bind(render_settings);
 
         //shader.set_model_matrix(model_matrix);
-        shader.model_matrix.data = model_matrix;
+        if(shader.model_matrix is not null)
+            shader.model_matrix.data = model_matrix;
 
         if (shader.uniform_buffer_camera_data is not null) {
             var m = camera.camera_data;

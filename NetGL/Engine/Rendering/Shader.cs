@@ -35,13 +35,7 @@ public readonly struct UniformBlockDef: INamed {
     string INamed.name => this.name;
 }
 
-public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
-    static string IAssetType<Shader>.path => "Shaders";
-
-    static Shader IAssetType<Shader>.load_from_file(string path) {
-        throw new NotImplementedException();
-    }
-
+public class Shader: IBindable, IEquatable<Shader> {
     int IBindable.handle => this.handle;
 
     public UniformVariable<Matrix4> model_matrix { get; private set; }
@@ -164,31 +158,25 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
 
         LinkProgram(handle);
 
-
         GL.DetachShader(handle, vertex_shader_handle);
-
-        if(tess_control_shader_handle != -1)
-            GL.DetachShader(handle, tess_control_shader_handle);
-
-        if(tess_eval_shader_handle != -1)
-            GL.DetachShader(handle, tess_eval_shader_handle);
-
-        if(geometry_shader_handle != -1)
-            GL.DetachShader(handle, geometry_shader_handle);
-
-        GL.DetachShader(handle, fragment_shader_handle);
-
         GL.DeleteShader(vertex_shader_handle);
 
-        if (tess_control_shader_handle != -1)
+        if (tess_control_shader_handle != -1) {
+            GL.DetachShader(handle, tess_control_shader_handle);
             GL.DeleteShader(tess_control_shader_handle);
+        }
 
-        if (tess_eval_shader_handle != -1)
+        if (tess_eval_shader_handle != -1) {
+            GL.DetachShader(handle, tess_eval_shader_handle);
             GL.DeleteShader(tess_eval_shader_handle);
+        }
 
-        if(geometry_shader_handle != -1)
+        if (geometry_shader_handle != -1) {
+            GL.DetachShader(handle, geometry_shader_handle);
             GL.DeleteShader(geometry_shader_handle);
+        }
 
+        GL.DetachShader(handle, fragment_shader_handle);
         GL.DeleteShader(fragment_shader_handle);
 
         Debug.assert_opengl();
@@ -243,33 +231,33 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     }
 
     private void compile_from_file(string vertex_program, string fragment_program, string geometry_program="", string tess_control_program="", string tess_eval_program="") {
-        if (File.Exists(AssetManager.asset_path<Shader>(vertex_program)))
-            vertex_program = AssetManager.asset_path<Shader>(vertex_program);
+        if (File.Exists(ShaderAsset.resolve_file_name(vertex_program)))
+            vertex_program = ShaderAsset.resolve_file_name(vertex_program);
         Console.WriteLine(vertex_program);
         vertex_program = File.ReadAllText(vertex_program);
 
-        if (File.Exists(AssetManager.asset_path<Shader>(fragment_program)))
-            fragment_program = AssetManager.asset_path<Shader>(fragment_program);
+        if (File.Exists(ShaderAsset.resolve_file_name(fragment_program)))
+            fragment_program = ShaderAsset.resolve_file_name(fragment_program);
         Console.WriteLine(fragment_program);
         fragment_program = File.ReadAllText(fragment_program);
 
         if(geometry_program != "") {
-            if (File.Exists(AssetManager.asset_path<Shader>(geometry_program)))
-                geometry_program = AssetManager.asset_path<Shader>(geometry_program);
+            if (File.Exists(ShaderAsset.resolve_file_name(geometry_program)))
+                geometry_program = ShaderAsset.resolve_file_name(geometry_program);
             Console.WriteLine(geometry_program);
             geometry_program = File.ReadAllText(geometry_program);
         }
 
         if(tess_control_program != "") {
-            if (File.Exists(AssetManager.asset_path<Shader>(tess_control_program)))
-                tess_control_program = AssetManager.asset_path<Shader>(tess_control_program);
+            if (File.Exists(ShaderAsset.resolve_file_name(tess_control_program)))
+                tess_control_program = ShaderAsset.resolve_file_name(tess_control_program);
             Console.WriteLine(tess_control_program);
             tess_control_program = File.ReadAllText(tess_control_program);
         }
 
         if(tess_eval_program != "") {
-            if (File.Exists(AssetManager.asset_path<Shader>(tess_eval_program)))
-                tess_eval_program = AssetManager.asset_path<Shader>(tess_eval_program);
+            if (File.Exists(ShaderAsset.resolve_file_name(tess_eval_program)))
+                tess_eval_program = ShaderAsset.resolve_file_name(tess_eval_program);
             Console.WriteLine(tess_eval_program);
             tess_eval_program = File.ReadAllText(tess_eval_program);
         }
@@ -419,7 +407,7 @@ public class Shader: IAssetType<Shader>, IBindable, IEquatable<Shader> {
     public int get_uniform_location(string name) => uniform_locations[name];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void set_uniform(string name, int data) {
+    internal void set_uniform(string name, int data) {
         GL.ProgramUniform1(handle, uniform_locations.GetValueOrDefault(name, -1), data);
     }
 

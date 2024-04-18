@@ -59,7 +59,7 @@ public sealed class VertexArrayIndexed: VertexArray {
     public readonly IIndexBuffer index_buffer;
     public readonly DrawRanges draw_ranges;
 
-    public VertexArrayIndexed(List<IVertexBuffer> vertex_buffers, IIndexBuffer index_buffer, DrawRanges? draw_ranges, Union<Material, Materials.Material> material): base(vertex_buffers, material) {
+    public VertexArrayIndexed(List<IVertexBuffer> vertex_buffers, IIndexBuffer index_buffer, DrawRanges? draw_ranges, Union<Material, Materials.Material>? material = default): base(vertex_buffers, material) {
         this.index_buffer = index_buffer;
 
         if (draw_ranges != null && draw_ranges.length > 1) {
@@ -73,13 +73,13 @@ public sealed class VertexArrayIndexed: VertexArray {
     public VertexArrayIndexed(IVertexBuffer vertex_buffer, IIndexBuffer index_buffer, DrawRanges? draw_ranges, Material material)
         : this([vertex_buffer], index_buffer, draw_ranges, material) {}
 
-    public VertexArrayIndexed(IVertexBuffer vertex_buffer, IIndexBuffer index_buffer, Union<Material, Materials.Material> material)
+    public VertexArrayIndexed(IVertexBuffer vertex_buffer, IIndexBuffer index_buffer, Union<Material, Materials.Material>? material = default)
         : this([vertex_buffer], index_buffer,null, material) {}
 
-    public VertexArrayIndexed(List<IVertexBuffer> vertex_buffers, IIndexBuffer index_buffer, Material material)
+    public VertexArrayIndexed(List<IVertexBuffer> vertex_buffers, IIndexBuffer index_buffer, Union<Material, Materials.Material>? material)
         : this(vertex_buffers, index_buffer, null, material) {}
 
-    public override void upload() {
+    public override void create(BufferUsageHint usage) {
         if (handle == 0)
             handle = GL.GenVertexArray();
 
@@ -87,13 +87,13 @@ public sealed class VertexArrayIndexed: VertexArray {
 
         index_buffer.bind();
 
-        upload_attribute_pointers();
+        create_attribute_pointers();
 
-        GL.BindVertexArray(0);
+        VertexArray.unbind();
+        IndexBuffer.unbind();
+        VertexBuffer.unbind();
 
         Debug.assert_opengl();
-
-        //Console.WriteLine();
     }
 
     public override string ToString() {
@@ -102,7 +102,15 @@ public sealed class VertexArrayIndexed: VertexArray {
 
     public override void draw() {
         //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
-        if (draw_ranges.length <= 1) {
+        if (has_instance_buffer) {
+            GL.DrawElementsInstanced(
+                                     primitive_type,
+                                     index_buffer.length * 3,
+                                     index_buffer.draw_element_type,
+                                     IntPtr.Zero,
+                                     instance_buffer!.length
+                                    );
+        } else if (draw_ranges.length <= 1) {
             GL.DrawElements(primitive_type, index_buffer.length * 3, index_buffer.draw_element_type, 0);
         } else {
             Debug.assert(false);

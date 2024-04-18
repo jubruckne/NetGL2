@@ -357,4 +357,6 @@ public abstract class Texture<T>: Texture, IDisposable
     public Type item_type => typeof(T);
     public int item_size => Unsafe.SizeOf<T>();
     public int total_size => item_size * length;
+
+    internal ReadOnlySpan<T> as_readonly_span() => buffer.as_span();
 }

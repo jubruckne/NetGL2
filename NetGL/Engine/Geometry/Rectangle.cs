@@ -15,40 +15,44 @@ public readonly struct Rectangle: IShape, IComparable<Rectangle> {
     public float top => top_right.y;
     public float bottom => bottom_left.y;
 
-    public Rectangle(float x = -0.5f, float y = -0.5f, float width = 1f, float height = 1f) {
+    public float2 center => (bottom_left + top_right) * 0.5f;
+
+    public Rectangle(float x, float y, float width, float height) {
         bottom_left = new float2(x, y);
         top_right = new float2(x + width, y + height);
     }
 
-    public Rectangle(in float2 bottom_left, in float2 top_right) {
+    public Rectangle(float2 bottom_left, float2 top_right) {
         this.bottom_left = bottom_left;
         this.top_right = top_right;
     }
 
+    public static Rectangle centered_at(float2 center, float size) {
+        float half_size = size * 0.5f;
+        return new Rectangle(center.x - half_size, center.y - half_size, size, size);
+    }
+/*
     public Rectangle(in float2 bottom_left, in float size) {
         this.bottom_left = bottom_left;
         this.top_right = bottom_left + (size, size);
     }
-
+*/
     public static implicit operator Rectangle((float x, float y, float width, float height) rect)
         => new(rect.x, rect.y, rect.width, rect.height);
 
     public static implicit operator Rectangle((float2 bottom_left, float2 top_right) rect)
         => new(rect.bottom_left, rect.top_right);
 
-    public static implicit operator Rectangle((float2 bottom_left, float size) rect)
-        => new(rect.bottom_left, rect.size);
-
-    public static Rectangle operator+(in Rectangle rectangle, in float2 offset)
+    public static Rectangle operator+(Rectangle rectangle, float2 offset)
         => new(rectangle.bottom_left + offset, rectangle.top_right + offset);
 
-    public static Rectangle operator-(in Rectangle rectangle, in float2 offset)
+    public static Rectangle operator-(Rectangle rectangle, float2 offset)
         => new(rectangle.bottom_left - offset, rectangle.top_right - offset);
 
-    public static Rectangle operator*(in Rectangle rectangle, float scale)
+    public static Rectangle operator*(Rectangle rectangle, float scale)
         => new(rectangle.bottom_left * scale, rectangle.top_right * scale);
 
-    public static Rectangle operator/(in Rectangle rectangle, float scale)
+    public static Rectangle operator/(Rectangle rectangle, float scale)
         => new(rectangle.bottom_left / scale, rectangle.top_right / scale);
 
     public IEnumerable<Vector3> get_vertices() => get_vertices(1);

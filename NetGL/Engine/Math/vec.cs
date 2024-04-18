@@ -9,10 +9,14 @@ global using int4 = NetGL.Vectors.vec4<int>;
 global using ushort3 = NetGL.Vectors.vec3<ushort>;
 global using short2 = NetGL.Vectors.vec2<short>;
 global using short3 = NetGL.Vectors.vec3<short>;
+global using sbyte2 = NetGL.Vectors.vec2<sbyte>;
+global using sbyte3 = NetGL.Vectors.vec3<sbyte>;
+global using byte2 = NetGL.Vectors.vec2<byte>;
 global using byte3 = NetGL.Vectors.vec3<byte>;
 global using half2 = NetGL.Vectors.vec2<System.Half>;
 global using half3 = NetGL.Vectors.vec3<System.Half>;
 global using half4 = NetGL.Vectors.vec4<System.Half>;
+
 using System.Runtime.CompilerServices;
 
 namespace NetGL.Vectors;

@@ -14,7 +14,7 @@ public abstract class VertexAttribute {
     public VertexAttribPointerType pointer_type { get; }
     public bool normalized { get; }
     public int divisor { get; }
-    public bool is_instanced => divisor >= 0;
+    public bool is_instanced => divisor > 0;
 
     protected VertexAttribute(string name, int count, VertexAttribPointerType pointer_type, bool normalized = false, int divisor = 0) {
         this.name = name;
@@ -46,7 +46,7 @@ public class VertexAttribute<T>: VertexAttribute where T: unmanaged {
     public override int size_of => Unsafe.SizeOf<T>();
 
     public override VertexAttribute copy() {
-        var a = new VertexAttribute<T>(name, count, pointer_type, normalized) {
+        var a = new VertexAttribute<T>(name, count, pointer_type, normalized, divisor) {
             offset = offset,
             location = location
         };

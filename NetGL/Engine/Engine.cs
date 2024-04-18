@@ -17,6 +17,7 @@ public class Engine: GameWindow {
     private readonly RevolvingList<float> frame_times = new(60);
     public static float game_time;
 
+    private Shader shader;
     private float cursor_state_last_switch = 1f;
     private double frame_time;
     private int frame_count;
@@ -136,12 +137,12 @@ public class Engine: GameWindow {
         );*/
 
         TextureCubemapBuffer cubemap = new(
-                                           AssetManager.load_from_file<Image>("right.jpg"),
-                                           AssetManager.load_from_file<Image>("left.jpg"),
-                                           AssetManager.load_from_file<Image>("top.jpg"),
-                                           AssetManager.load_from_file<Image>("bottom.jpg"),
-                                           AssetManager.load_from_file<Image>("front.jpg"),
-                                           AssetManager.load_from_file<Image>("back.jpg")
+                                           ImageAsset.load_from_file("right.jpg"),
+                                           ImageAsset.load_from_file("left.jpg"),
+                                           ImageAsset.load_from_file("top.jpg"),
+                                           ImageAsset.load_from_file("bottom.jpg"),
+                                           ImageAsset.load_from_file("front.jpg"),
+                                           ImageAsset.load_from_file("back.jpg")
                                           );
         cubemap.create();
 
@@ -192,7 +193,7 @@ public class Engine: GameWindow {
 */
 
         var planet_mat = new Material("planet", Color.Black, Color.White, Color.White, 2.5f);
-        Texture2DBuffer planets_texture = new Texture2DBuffer(AssetManager.load_from_file<Image>("8k_jupiter.jpg"));
+        Texture2DBuffer planets_texture = new Texture2DBuffer(ImageAsset.load_from_file("8k_jupiter.jpg"));
         planets_texture.create();
 
         planet_mat.ambient_texture = planets_texture;
@@ -246,14 +247,14 @@ public class Engine: GameWindow {
         }
 
         GL.Enable(EnableCap.ProgramPointSize);
-
-        AssetManager.load_all_files<Script>();
+/*
+        ScriptAsset..load_all_files<Script>();
         foreach (var script in AssetManager.get_all<Script>())
             script.run(this);
-
+*/
         Debug.assert_opengl();
 
-        TreePrinter.print(world);
+        //TreePrinter.print(world);
 
         CursorState = CursorState.Normal;
 
@@ -298,6 +299,7 @@ public class Engine: GameWindow {
         world.update(game_time, delta_time);
         //Garbage.stop_measuring();
     }
+    private readonly int instanceSqrt = 100;
 
     protected override void OnRenderFrame(FrameEventArgs e) {
         //Garbage.start_measuring();
@@ -381,7 +383,7 @@ public class Engine: GameWindow {
         GL.EndQuery(QueryTarget.PrimitivesGenerated);
         GL.GetQueryObject(query_primitives_generated_handle, GetQueryObjectParam.QueryResult, out int primitives_generated);
         GL.BeginQuery(QueryTarget.PrimitivesGenerated, query_primitives_generated_handle);
-        ImGui.Text($"Primitives drawn: {primitives_generated}");
+        ImGui.Text($"Primitives drawn: {primitives_generated:N0}");
 
         DebugConsole.draw();
 
@@ -491,10 +493,10 @@ public class Engine: GameWindow {
                             }
 
                             foreach (var vb in va.vertex_buffers)
-                                ImGui.Text($"Length: {vb.length:N0}, Size: {vb.total_size:N0}");
+                                ImGui.Text($"A: Length: {vb.length:N0}, Size: {vb.total_size:N0}");
 
                             if(va is VertexArrayIndexed vai)
-                                ImGui.Text($"Length: {vai.index_buffer.length:N0}, Size: {vai.index_buffer.total_size:N0}");
+                                ImGui.Text($"I: Length: {vai.index_buffer.length:N0}, Size: {vai.index_buffer.total_size:N0}");
 
 
                             ImGui.Spacing();
