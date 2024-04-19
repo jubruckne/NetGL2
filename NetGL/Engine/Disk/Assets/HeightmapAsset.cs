@@ -1,17 +1,18 @@
 namespace NetGL;
 
-public class HeightmapAsset: Asset<HeightmapAsset, Heightmap>, IAssetType<Heightmap> {
+public class HeightmapAsset: Asset<HeightmapAsset, Heightmap>, IAsset<Heightmap> {
     public static string path => "Heightmaps";
 
-    static Heightmap IAssetType<Heightmap>.load_from_file(string filename) {
+    private HeightmapAsset(string name, Heightmap data): base(name, data) {}
+
+    public static void serialize(Heightmap asset, AssetWriter writer) {
+        writer.write("name", asset.name);
+        writer.write("bounds", asset.bounds);
+        writer.write("texture_size", asset.texture_size);
+        writer.write("data", asset.texture.as_readonly_span());
+    }
+
+    public static Heightmap deserialize(AssetWriter reader) {
         throw new NotImplementedException();
     }
-
-    public static void save_to_file(Heightmap heightmap, string filename) {
-        using var writer = AssetWriter.open(resolve_file_name(filename));
-        writer.write(heightmap.bounds.center.ToString(), heightmap.texture.as_readonly_span());
-        writer.close();
-    }
-
-    public HeightmapAsset(string name, Heightmap data): base(name, data) {}
 }

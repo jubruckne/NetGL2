@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
+using BulletSharp;
 
 namespace NetGL;
 
@@ -22,7 +24,8 @@ internal unsafe struct FileHeader {
         hash = 0;
         fixed(void* p = padding) {
             Span<byte> padding_bytes = new(p, 20);
-            padding_bytes.Fill(32);
+            padding_bytes.Fill((byte)' ');
+
         }
     }
 
@@ -50,7 +53,7 @@ internal unsafe struct ChunkHeader {
 
         fixed(void* p = this.name) {
             var span = new Span<byte>(p, 48);
-            span.Fill(32);
+            span.Fill((byte)' ');
             utf8Bytes.CopyTo(span);
         }
         this.size = size;
@@ -79,6 +82,12 @@ public class AssetWriter: IDisposable {
         stream.Write(header_bytes);
     }
 
+    public void write(string name, string data)
+        => write(name, System.Text.Encoding.UTF8.GetBytes(data).AsSpan());
+
+    public void write<T>(string name, T data) where T: unmanaged
+        => write(name, new ReadOnlySpan<T>(ref data));
+
     public void write<T>(string name, Span<T> data) where T: unmanaged {
         ReadOnlySpan<T> span = data;
         write(name, span);
@@ -87,9 +96,6 @@ public class AssetWriter: IDisposable {
     public void write<T>(string name, ReadOnlySpan<T> data) where T: unmanaged {
         if(this.stream == null)
             throw new InvalidOperationException("Asset writer is already closed.");
-
-        if(name.Length > 16)
-            throw new ArgumentException("Chunk name is too long.", nameof(name));
 
         var type = hash32(typeof(T).get_type_name());
 
@@ -102,12 +108,11 @@ public class AssetWriter: IDisposable {
         if(stream == null)
             throw new InvalidOperationException("Asset writer is already closed.");
 
-        if(name.Length > 16)
+        if(name.Length > 64)
             throw new ArgumentException("Chunk name is too long.", nameof(name));
 
         ChunkHeader header = new (name, type, (uint)data.Length, hash32(data));
         stream.Write(MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref header, 1)));
-
         stream.Write(data);
         chunk_headers.Add(header);
     }

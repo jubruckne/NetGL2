@@ -1,17 +1,18 @@
+using NetGL.ECS;
+
 namespace NetGL;
 
-public interface IAssetType {
+public interface IAsset {
     static abstract string path { get; }
 }
 
-public interface IAssetType<T>: IAssetType {
-    static abstract T load_from_file(string filename);
-    static abstract void save_to_file(T asset, string filename);
+public interface IAsset<T>: IAsset {
+    static abstract void serialize(T asset, AssetWriter writer);
+    static abstract T deserialize(AssetWriter reader);
 }
 
-public abstract class Asset {
+public static class Asset {
     public static readonly string asset_root = "";
-    public static string get_temp_file_name(string filename) => $"{asset_root}/Temp/{filename}";
 
     static Asset() {
         var current = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
@@ -28,26 +29,26 @@ public abstract class Asset {
             break;
         }
 
-        if(asset_root == "")
-            throw new DirectoryNotFoundException($"Assets directory not found ({AppDomain.CurrentDomain.BaseDirectory})!");
-    }
-
-    public readonly string name;
-
-    protected Asset(string name) {
-        this.name = name;
+        if (asset_root == "")
+            throw new DirectoryNotFoundException(
+                                                 $"Assets directory not found ({AppDomain.CurrentDomain.BaseDirectory})!"
+                                                );
     }
 }
 
-public abstract class Asset<TAssetType, TAsset>: Asset where TAssetType: IAssetType<TAsset> {
-    public readonly TAsset data;
+public class Asset<TAsset, T> where TAsset: IAsset<T> {
+    public static string get_temp_file_name(string filename) => $"{Asset.asset_root}/Temp/{filename}";
 
-    protected Asset(string name, TAsset data): base(name) {
+    public readonly string name;
+    public readonly T data;
+
+    protected Asset(string name, T data) {
+        this.name = name;
         this.data = data;
     }
 
-    public static string resolve_file_name() => $"{asset_root}/{TAssetType.path}/";
-    public static string resolve_file_name(string filename) => $"{asset_root}/{TAssetType.path}/{filename}";
+    public static string resolve_file_name() => $"{Asset.asset_root}/{TAsset.path}/";
+    public static string resolve_file_name(string filename) => $"{Asset.asset_root}/{TAsset.path}/{filename}";
 
     public static IReadOnlyList<string> get_files()
         => Directory.GetFiles(resolve_file_name());
@@ -55,8 +56,13 @@ public abstract class Asset<TAssetType, TAsset>: Asset where TAssetType: IAssetT
     public static IReadOnlyList<string> get_files(string directory)
         => Directory.GetFiles(resolve_file_name(directory));
 
-    public static implicit operator TAsset(Asset<TAssetType, TAsset> asset) => asset.data;
+    public static void save_to_file(T asset, string filename) {
+        using var writer = AssetWriter.open(resolve_file_name(filename));
+        TAsset.serialize(asset, writer);
+        writer.close();
+    }
 }
+
 /*
 public static class AssetManager {
     public static readonly string asset_root = "";

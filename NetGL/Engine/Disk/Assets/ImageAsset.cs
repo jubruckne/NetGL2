@@ -2,10 +2,10 @@ using StbImageSharp;
 
 namespace NetGL;
 
-public class ImageAsset: Asset<ImageAsset, Image>, IAssetType<Image> {
+public class ImageAsset: Asset<ImageAsset, Image>, IAsset<Image> {
     public static string path => "Textures";
 
-    public ImageAsset(string name, in Image data): base(name, data) {}
+    private ImageAsset(string name, in Image data): base(name, data) {}
 
     public static Image load_from_file(string filename) {
         int    width;
@@ -31,7 +31,11 @@ public class ImageAsset: Asset<ImageAsset, Image>, IAssetType<Image> {
         return new Image(width, height, image_data);
     }
 
-    public static void save_to_file(Image asset, string filename) {
+    public static void serialize(Image asset, AssetWriter writer) {
+        throw new NotImplementedException();
+    }
+
+    public static Image deserialize(AssetWriter reader) {
         throw new NotImplementedException();
     }
 }
