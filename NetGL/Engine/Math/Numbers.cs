@@ -185,7 +185,7 @@ public static class Numbers {
         where T: IBinaryInteger<T>
         => T.RotateLeft(value, exp);
 
-    public static T clamp<T>(this T value, in T min, in T max) where T: INumber<T> {
+    public static T clamp<T>(this T value, T min, T max) where T: INumber<T> {
         Debug.assert(min < max);
 
         if (value < min)

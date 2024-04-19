@@ -8,7 +8,7 @@ public interface IAsset {
 
 public interface IAsset<T>: IAsset {
     static abstract void serialize(T asset, AssetWriter writer);
-    static abstract T deserialize(AssetWriter reader);
+    static abstract T deserialize(AssetReader reader);
 }
 
 public static class Asset {
@@ -47,6 +47,16 @@ public class Asset<TAsset, T> where TAsset: IAsset<T> {
         this.data = data;
     }
 
+    public static void serialize_to_file(T asset, string filename) {
+        using var writer = AssetWriter.open(resolve_file_name(filename));
+        TAsset.serialize(asset, writer);
+    }
+
+    public static T deserialize_from_file(string filename) {
+        using var reader = AssetReader.open(resolve_file_name(filename));
+        return TAsset.deserialize(reader);
+    }
+
     public static string resolve_file_name() => $"{Asset.asset_root}/{TAsset.path}/";
     public static string resolve_file_name(string filename) => $"{Asset.asset_root}/{TAsset.path}/{filename}";
 
@@ -55,12 +65,6 @@ public class Asset<TAsset, T> where TAsset: IAsset<T> {
 
     public static IReadOnlyList<string> get_files(string directory)
         => Directory.GetFiles(resolve_file_name(directory));
-
-    public static void save_to_file(T asset, string filename) {
-        using var writer = AssetWriter.open(resolve_file_name(filename));
-        TAsset.serialize(asset, writer);
-        writer.close();
-    }
 }
 
 /*

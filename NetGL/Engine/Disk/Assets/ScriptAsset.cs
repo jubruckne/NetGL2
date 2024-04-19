@@ -13,7 +13,7 @@ public class ScriptAsset: Asset<ScriptAsset, Script>, IAsset<Script> {
         throw new NotImplementedException();
     }
 
-    public static Script deserialize(AssetWriter reader) {
+    public static Script deserialize(AssetReader reader) {
         throw new NotImplementedException();
     }
 }

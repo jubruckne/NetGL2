@@ -9,7 +9,7 @@ public class ShaderAsset: Asset<ShaderAsset, Shader>, IAsset<Shader> {
         throw new NotImplementedException();
     }
 
-    public static Shader deserialize(AssetWriter reader) {
+    public static Shader deserialize(AssetReader reader) {
         throw new NotImplementedException();
     }
 }

@@ -9,7 +9,7 @@ public class TerrainAsset: Asset<TerrainAsset, Terrain>, IAsset<Terrain> {
         throw new NotImplementedException();
     }
 
-    public static Terrain deserialize(AssetWriter reader) {
+    public static Terrain deserialize(AssetReader reader) {
         throw new NotImplementedException();
     }
 }

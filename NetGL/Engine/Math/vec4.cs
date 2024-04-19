@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace NetGL.Vectors;
 
@@ -42,6 +43,16 @@ public partial struct vec4<T>:
         this.y = y;
         this.z = z;
         this.w = w;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public vec4<T> set<P>(P x, P y, P z, P w)
+        where P: unmanaged, INumberBase<P> {
+        this.x = T.CreateSaturating(x);
+        this.y = T.CreateSaturating(y);
+        this.z = T.CreateSaturating(z);
+        this.w = T.CreateSaturating(w);
+        return this;
     }
 
     public static implicit operator vec4<T>((T x, T y, T z, T w) vector) =>

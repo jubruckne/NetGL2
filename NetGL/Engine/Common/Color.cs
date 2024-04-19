@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using NetGL.Vectors;
 
 namespace NetGL;
 
@@ -66,20 +67,20 @@ public struct Color {
         ((uint)(g * 255f) << 8) |
         (uint)(r * 255f);
 
-    public static Color random_for<T>(in T obj) where T:notnull {
+    public static Color random_for<T>(T obj) where T:notnull {
 /*        Random rnd = new(obj.GetHashCode());
         float r = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
         float g = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
         float b = 0.2f + float.Pow(rnd.NextSingle() * 0.6f, 2);
         */
 
-        var color = new Color(
-            obj.hash<T, byte>(40, 135, 1445332),
-            obj.hash<T, byte>(40, 135, 92432),
-            obj.hash<T, byte>(40, 135, -4233)
-            );
+        var color = (vec4_8_8_8_8<byte>)obj.GetHashCode();
 
-        return color;
+        return new Color(
+                         color.r.clamp((byte)40, (byte)135),
+                         color.g.clamp((byte)40, (byte)135),
+                         color.b.clamp((byte)40, (byte)135)
+                        );
     }
 
     public static implicit operator Color(System.Numerics.Vector3 color) => new(color.X, color.Y, color.Z);

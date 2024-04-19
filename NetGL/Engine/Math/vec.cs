@@ -13,6 +13,7 @@ global using sbyte2 = NetGL.Vectors.vec2<sbyte>;
 global using sbyte3 = NetGL.Vectors.vec3<sbyte>;
 global using byte2 = NetGL.Vectors.vec2<byte>;
 global using byte3 = NetGL.Vectors.vec3<byte>;
+global using byte4 = NetGL.Vectors.vec4<byte>;
 global using half2 = NetGL.Vectors.vec2<System.Half>;
 global using half3 = NetGL.Vectors.vec3<System.Half>;
 global using half4 = NetGL.Vectors.vec4<System.Half>;

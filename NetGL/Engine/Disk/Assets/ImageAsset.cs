@@ -35,7 +35,7 @@ public class ImageAsset: Asset<ImageAsset, Image>, IAsset<Image> {
         throw new NotImplementedException();
     }
 
-    public static Image deserialize(AssetWriter reader) {
+    public static Image deserialize(AssetReader reader) {
         throw new NotImplementedException();
     }
 }

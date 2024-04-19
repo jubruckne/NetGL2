@@ -58,7 +58,7 @@ public class Terrain: Entity {
         instance_buffer = create_instance_buffer();
         index_buffer = create_index_buffer();
         heightmap = create_heightmap();
-        HeightmapAsset.save_to_file(heightmap, "heightmap");
+        HeightmapAsset.serialize_to_file(heightmap, "heightmap.jl");
 
 
         shader = this.add_shader(Shader.from_file("terrain","terrain.vert.glsl", "terrain.frag.glsl")).shader;

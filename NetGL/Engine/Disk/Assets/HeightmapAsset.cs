@@ -12,7 +12,7 @@ public class HeightmapAsset: Asset<HeightmapAsset, Heightmap>, IAsset<Heightmap>
         writer.write("data", asset.texture.as_readonly_span());
     }
 
-    public static Heightmap deserialize(AssetWriter reader) {
-        throw new NotImplementedException();
+    public static Heightmap deserialize(AssetReader reader) {
+        return new Heightmap(0, new Rectangle());
     }
 }
