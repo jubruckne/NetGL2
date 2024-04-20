@@ -82,12 +82,7 @@ public sealed class TerrainChunk {
 
         var vb = new VertexBuffer<float2>(
                                           quad_count * quad_count * 4,
-                                          new VertexAttribute<float2>(
-                                                                      "position",
-                                                                      2,
-                                                                      VertexAttribPointerType.Float,
-                                                                      false
-                                                                     )
+                                          VertexAttribute.float2("position")
                                          );
 
                                         // new VertexAttribute<float3, half3>("normal", 3, VertexAttribPointerType.HalfFloat)

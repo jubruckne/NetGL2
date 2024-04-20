@@ -12,25 +12,27 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 namespace NetGL;
 
 public static class OpenTKExtensions {
-    public static VertexAttribPointerType to_vertex_attribute_pointer_type<T>(this T d) where T: unmanaged {
+    public static (Type type_of, int size_of, VertexAttribPointerType type, int count)
+        to_vertex_attribute_pointer_type<T>(this T d)
+        where T: unmanaged {
         return d switch {
-            float                       => VertexAttribPointerType.Float,
-            byte                        => VertexAttribPointerType.UnsignedByte,
-            short                       => VertexAttribPointerType.Short,
-            double                      => VertexAttribPointerType.Double,
-            int                         => VertexAttribPointerType.Int,
-            ushort                      => VertexAttribPointerType.UnsignedShort,
-            uint                        => VertexAttribPointerType.UnsignedInt,
-            Half                        => VertexAttribPointerType.HalfFloat,
-            sbyte                       => VertexAttribPointerType.Byte,
-            System.Numerics.Vector3     => VertexAttribPointerType.Float,
-            OpenTK.Mathematics.Vector3  => VertexAttribPointerType.Float,
-            OpenTK.Mathematics.Vector3h => VertexAttribPointerType.HalfFloat,
-            OpenTK.Mathematics.Vector3i => VertexAttribPointerType.Int,
-            OpenTK.Mathematics.Vector3d => VertexAttribPointerType.Double,
-            Vectors.vec3<float>      => VertexAttribPointerType.Float,
-            Vectors.vec3<double>     => VertexAttribPointerType.Double,
-            Vectors.vec3<Half>       => VertexAttribPointerType.HalfFloat,
+            float                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 1),
+            byte                        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.UnsignedByte, 1),
+            short                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Short, 1),
+            double                      => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Double, 1),
+            int                         => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Int, 1),
+            ushort                      => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.UnsignedShort, 1),
+            uint                        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.UnsignedInt, 1),
+            Half                        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.HalfFloat, 1),
+            sbyte                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Byte, 1),
+            System.Numerics.Vector3     => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 3),
+            OpenTK.Mathematics.Vector3  => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 3),
+            OpenTK.Mathematics.Vector3h => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.HalfFloat, 3),
+            OpenTK.Mathematics.Vector3i => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Int, 3),
+            OpenTK.Mathematics.Vector3d => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Double, 3),
+            Vectors.vec3<float>         => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 3),
+            Vectors.vec3<double>        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Double, 3),
+            Vectors.vec3<Half>          => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.HalfFloat, 3),
             _                           => Error.type_conversion_error<T, VertexAttribPointerType>(d)
         };
     }
@@ -93,10 +95,6 @@ public static class TypeExtensions {
         return type.Name;
     }
 
-
-    public static unsafe int size_of<T>(this T obj) where T : unmanaged {
-        return sizeof(T);
-    }
 
     public static PixelType to_pixel_type<T>(this T d) where T: unmanaged, INumber<T> {
         switch (d) {

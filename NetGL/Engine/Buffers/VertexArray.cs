@@ -46,10 +46,10 @@ public class VertexArray: IBindable {
                 var a = attrib.copy();
                 Debug.assert(a.offset >= 0);
                 a.location = location;
-                a.buffer = buffer;
+                a.source_buffer = buffer;
                 location++;
                 if(a.is_instanced)
-                    instance_buffer = a.buffer;
+                    instance_buffer = a.source_buffer;
 
                 ((List<VertexAttribute>)vertex_attributes).Add(a);
             }
@@ -85,18 +85,18 @@ public class VertexArray: IBindable {
             GL.PatchParameter(PatchParameterInt.PatchVertices, 4);
 
         foreach (var attribute in vertex_attributes) {
-            attribute.buffer!.bind();
+            attribute.source_buffer!.bind();
             GL.EnableVertexAttribArray(attribute.location);
 
             if(primitive_type == PrimitiveType.Patches) {
                 Console.WriteLine("\nVertex attributes: ");
-                Console.WriteLine($"  {attribute.buffer.item_type.get_type_name()}: stride = {attribute.buffer.item_size}");
+                Console.WriteLine($"  {attribute.source_buffer.item_type.get_type_name()}: stride = {attribute.source_buffer.item_size}");
                 Console.WriteLine(
-                                  $"VertexAttribPointer({attribute.location}, {attribute.count}, {attribute.pointer_type}, {attribute.normalized}, {attribute.buffer.item_size}, {attribute.offset})"
+                                  $"VertexAttribPointer({attribute.location}, {attribute.count}, {attribute.pointer_type}, {attribute.normalized}, {attribute.source_buffer.item_size}, {attribute.offset})"
                                  );
                 Console.WriteLine();
             }
-            GL.VertexAttribPointer(attribute.location, attribute.count, attribute.pointer_type, attribute.normalized, attribute.buffer.item_size, attribute.offset);
+            GL.VertexAttribPointer(attribute.location, attribute.count, attribute.pointer_type, attribute.normalized, attribute.source_buffer.item_size, attribute.offset);
 
             if (attribute.is_instanced) {
                 GL.VertexAttribDivisor(attribute.location, attribute.divisor);

@@ -190,19 +190,9 @@ public class Terrain: Entity {
 
     private VertexBuffer<InstanceData> create_instance_buffer(int tile_count = 32, int tile_size = 10, float world_size = 100) {
         var ib = new VertexBuffer<InstanceData>(
-                                                tile_count*tile_count,
-                                                new VertexAttribute<short2>(
-                                                                                 "offset",
-                                                                                 2,
-                                                                                 VertexAttribPointerType.UnsignedShort,
-                                                                                 divisor: 1
-                                                                                ),
-                                                new VertexAttribute<half>(
-                                                                                 "size",
-                                                                                 1,
-                                                                                 VertexAttribPointerType.HalfFloat,
-                                                                                 divisor: 1
-                                                                                )
+                                                tile_count * tile_count,
+                                                VertexAttribute.short2("offset", divisor: 1),
+                                                VertexAttribute.scalar<half>("size", divisor: 1)
                                                );
 
         for(var x = 0; x < tile_count; x++) {
@@ -246,12 +236,11 @@ public class Terrain: Entity {
     private VertexBuffer<VertexData> create_vertex_buffer(byte tile_size = 10) {
         var vb = new VertexBuffer<VertexData>(
                                               (tile_size + 1) * (tile_size + 1),
-                                              new VertexAttribute<VertexData>(
-                                                                              "position",
-                                                                              2,
-                                                                              VertexAttribPointerType.Byte,
-                                                                              false
-                                                                             )
+                                              VertexAttribute.buffer<VertexData>(
+                                                   "position",
+                                                   VertexAttribPointerType.Byte,
+                                                   2
+                                                  )
                                              );
 
 
