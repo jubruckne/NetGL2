@@ -57,6 +57,6 @@ internal class Garbage: IDisposable {
     public void Dispose() {
         stopwatch.Stop();
         var allocations = GC.GetAllocatedBytesForCurrentThread() - allocations_before;
-        Debug.println($"{name}: duration={stopwatch.Elapsed.Microseconds / 100.0:N2} ms, allocated={allocations:N0} bytes");
+        Debug.println($"{name}: duration = {stopwatch.Elapsed.Milliseconds:N0} ms, allocated = {allocations:N0} bytes");
     }
 }

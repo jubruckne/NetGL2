@@ -3,9 +3,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
 
-public class Heightmap: INamed, IDisposable {
-    public string name =>  $"Heightmap_{texture_size}x{texture_size}_({bounds.x}, {bounds.y})_({bounds.width}, {bounds.height})";
-
+public class Heightmap: IDisposable {
     public Rectangle bounds { get; }
     public int texture_size { get; }
     public Texture2D<float> texture { get; }

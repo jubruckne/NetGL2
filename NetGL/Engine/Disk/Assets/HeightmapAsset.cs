@@ -6,13 +6,22 @@ public class HeightmapAsset: Asset<HeightmapAsset, Heightmap>, IAsset<Heightmap>
     private HeightmapAsset(string name, Heightmap data): base(name, data) {}
 
     public static void serialize(Heightmap asset, AssetWriter writer) {
-        writer.write("name", asset.name);
-        writer.write("bounds", asset.bounds);
-        writer.write("texture_size", asset.texture_size);
-        writer.write("data", asset.texture.as_readonly_span());
+        writer.write_chunk("bounds", asset.bounds);
+        writer.write_chunk("texture_size", asset.texture_size);
+        writer.write_chunk("data", asset.texture.as_readonly_span());
     }
 
     public static Heightmap deserialize(AssetReader reader) {
-        return new Heightmap(0, new Rectangle());
+        foreach(var chunk in reader.chunks)
+            Console.WriteLine($"HeightmapAsset.deserialize: chunk: {chunk}");
+
+        var texture_size = reader.read_chunk<int>("texture_size");
+        var bounds = reader.read_chunk<Rectangle>("bounds");
+
+        var heightmap = new Heightmap(texture_size, bounds);
+
+        reader.read_chunk("data", heightmap.texture.as_span());
+
+        return heightmap;
     }
 }

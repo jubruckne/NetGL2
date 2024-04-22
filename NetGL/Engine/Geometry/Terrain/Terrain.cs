@@ -53,12 +53,19 @@ public class Terrain: Entity {
 
         lod_levels = LodLevels.create(detail_levels, tile_size_at_highest_level);
 
-
         vertex_buffer = create_vertex_buffer();
         instance_buffer = create_instance_buffer();
         index_buffer = create_index_buffer();
-        heightmap = create_heightmap();
-        HeightmapAsset.serialize_to_file(heightmap, "heightmap.jl");
+
+        Garbage.start_measuring(this);
+
+        //heightmap = create_heightmap();
+        //HeightmapAsset.serialize_to_file(heightmap, "heightmap.jl");
+
+        heightmap = HeightmapAsset.deserialize_from_file("heightmap.jl");
+
+        Garbage.stop_measuring(this);
+
 
 
         shader = this.add_shader(Shader.from_file("terrain","terrain.vert.glsl", "terrain.frag.glsl")).shader;
@@ -191,8 +198,8 @@ public class Terrain: Entity {
     private VertexBuffer<InstanceData> create_instance_buffer(int tile_count = 32, int tile_size = 10, float world_size = 100) {
         var ib = new VertexBuffer<InstanceData>(
                                                 tile_count * tile_count,
-                                                VertexAttribute.short2("offset", divisor: 1),
-                                                VertexAttribute.scalar<half>("size", divisor: 1)
+                                                VertexAttribute.create_instanced<short2>("offset", divisor: 1),
+                                                VertexAttribute.create_instanced<half>("size", divisor: 1)
                                                );
 
         for(var x = 0; x < tile_count; x++) {
@@ -236,11 +243,7 @@ public class Terrain: Entity {
     private VertexBuffer<VertexData> create_vertex_buffer(byte tile_size = 10) {
         var vb = new VertexBuffer<VertexData>(
                                               (tile_size + 1) * (tile_size + 1),
-                                              VertexAttribute.buffer<VertexData>(
-                                                   "position",
-                                                   VertexAttribPointerType.Byte,
-                                                   2
-                                                  )
+                                              VertexAttribute.create<VertexData>("position")
                                              );
 
 

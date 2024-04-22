@@ -6,98 +6,98 @@ namespace NetGL;
 public readonly struct HashCode32 {
     private readonly uint hash;
 
-    // 8 bit for type hash, 24 bit for value hash
-    private byte type_hash => (byte)(hash >> 24);
-    private uint value_hash => hash & 0x00FFFFFF;
+    public static readonly HashCode32 zero = new(0);
 
-    private HashCode32(uint type, uint value)
-        => hash = ((type << 24) ^ (type << 16) ^ (type << 8) ^ type) | value;
+    private HashCode32(uint hash)
+        => this.hash = hash;
 
     public static HashCode32 of<T>(T data) where T: unmanaged
-        => new(Murmur.hash32(typeof(T).FullName), Murmur.hash32(data));
+        => new(Murmur.hash32(typeof(T).FullName, (uint)Unsafe.SizeOf<T>()) ^ Murmur.hash32(data));
 
     public static HashCode32 of(string str)
-        => new(Murmur.hash32("string"), Murmur.hash32(str));
+        => new(Murmur.hash32(typeof(string).FullName, (uint)str.Length) ^ Murmur.hash32(str));
 
     public static HashCode32 of<T>(ReadOnlySpan<T> data)
         where T: unmanaged
-        => new(Murmur.hash32($"{typeof(T).FullName}[]"), Murmur.hash32(MemoryMarshal.AsBytes(data)));
-
-    public bool is_type<T>() where T: unmanaged
-        => type_hash == HashCode32.of(new T()).type_hash;
-
-    public bool verify<T>(T data) where T: unmanaged
-        => type_hash == Murmur.hash32(typeof(T).FullName) && value_hash == Murmur.hash32(data);
-
-    public bool verify(string str)
-        => type_hash == Murmur.hash32("string") && value_hash == Murmur.hash32(str);
-
-    public bool verify<T>(ReadOnlySpan<T> data)
-        where T: unmanaged
-        => type_hash == Murmur.hash32($"{typeof(T).FullName}[]")
-           && value_hash == Murmur.hash32(MemoryMarshal.AsBytes(data));
+        => new(Murmur.hash32(typeof(T[]).FullName, (uint)data.Length) ^ Murmur.hash32(MemoryMarshal.AsBytes(data)));
 
     public static bool operator ==(HashCode32 left, HashCode32 right) => left.hash == right.hash;
     public static bool operator !=(HashCode32 left, HashCode32 right) => left.hash != right.hash;
 
-    public override string ToString()
-        => $"{type_hash:X4}-{value_hash:X4}";
+    public override string ToString() {
+        var high = hash >> 16;
+        var low  = hash & 0xFFFF;
+        return $"{high:X}-{low:X}";
+    }
 }
 
 public readonly struct HashCode64 {
     private readonly ulong hash;
 
-    private uint type_hash => (uint)(hash >> 32);
-    private uint value_hash => (uint)hash;
+    public static readonly HashCode64 zero = new(0);
 
-    private HashCode64(uint type, uint value)
-        => hash = ((ulong)type << 32) | value;
+    private HashCode64(ulong hash)
+        => this.hash = hash;
 
-    public static HashCode64 of<T>(T data) where T: unmanaged
-        => new(Murmur.hash32(typeof(T).FullName), Murmur.hash32(data));
+    public static HashCode64 of(string str) {
+        var low  = Murmur.hash32(typeof(string).FullName);
+        var high = Murmur.hash32(str);
+        return new(((ulong)low << 32) | high);
+    }
 
-    public static HashCode64 of(string str)
-        => new(Murmur.hash32("string"), Murmur.hash32(str));
+    public static HashCode64 of<T>(T data)
+        where T: unmanaged {
+        var low = Murmur.hash32(typeof(T).FullName);
+        var high = Murmur.hash32(data);
+        return new(((ulong)low << 32) | high);
+    }
 
     public static HashCode64 of<T>(ReadOnlySpan<T> data)
-        where T: unmanaged
-        => new(Murmur.hash32($"{typeof(T).FullName}[]"), Murmur.hash32(MemoryMarshal.AsBytes(data)));
-
-    public bool is_type<T>() where T: unmanaged
-        => type_hash == HashCode64.of(new T()).type_hash;
-
-    public bool verify<T>(T data) where T: unmanaged
-        => type_hash == Murmur.hash32(typeof(T).FullName) && value_hash == Murmur.hash32(data);
-
-    public bool verify(string str)
-        => type_hash == Murmur.hash32("string") && value_hash == Murmur.hash32(str);
-
-    public bool verify<T>(ReadOnlySpan<T> data)
-        where T: unmanaged
-        => type_hash == Murmur.hash32($"{typeof(T).FullName}[]")
-           && value_hash == Murmur.hash32(MemoryMarshal.AsBytes(data));
+        where T: unmanaged {
+        var low  = Murmur.hash32(typeof(T[]).FullName, (uint)data.Length);
+        var high = Murmur.hash32(MemoryMarshal.AsBytes(data));
+        return new(((ulong)low << 32) | high);
+    }
 
     public static bool operator ==(HashCode64 left, HashCode64 right) => left.hash == right.hash;
     public static bool operator !=(HashCode64 left, HashCode64 right) => left.hash != right.hash;
 
-    public override string ToString()
-        => $"{type_hash:X8}-{value_hash:X8}";
+    public override string ToString() {
+        var high = (uint)(hash >> 32);
+        var low  = (uint)(hash & 0xFFFFFFFF);
+        return $"{high:X}-{low:X}";
+    }
 }
 
-public static class Murmur {
-    private const uint seed = 4203733937;
-    public static uint hash32<T>(T data)
-        where T: unmanaged {
-        var span = MemoryMarshal.CreateReadOnlySpan(ref data, 1);
-        return hash32(MemoryMarshal.AsBytes(span));
+file static class Murmur {
+    private const uint default_seed = 4203733937;
+
+    public static uint type_hash<T>(ref readonly T data) where T: notnull {
+        string type_name = "";
+
+        if (data is string str)
+            type_name = $"{typeof(T).FullName}[{str.Length}]";
+        else if (data is Array arr)
+            type_name = $"{typeof(T).FullName}[{arr.Length}]";
+        else if (typeof(T).IsArray)
+            type_name = $"{typeof(T).FullName}[{Unsafe.SizeOf<T>()}]";
+
+        return hash32(type_name);
+        //   return hash32(name, (uint)str.Length) ^ hash32(str);
     }
 
-    public static uint hash32(ReadOnlySpan<char> bytes)
-        => hash32(MemoryMarshal.AsBytes(bytes));
+    public static uint hash32<T>(T data, uint seed = default_seed)
+        where T: unmanaged {
+        var span = MemoryMarshal.CreateReadOnlySpan(ref data, 1);
+        return hash32(MemoryMarshal.AsBytes(span), seed);
+    }
 
-    public static uint hash32(ReadOnlySpan<byte> bytes) {
+    public static uint hash32(ReadOnlySpan<char> bytes, uint seed = default_seed)
+        => hash32(MemoryMarshal.AsBytes(bytes), seed);
+
+    public static uint hash32(ReadOnlySpan<byte> bytes, uint seed = default_seed) {
         var length    = bytes.Length;
-        var h1        = seed;
+        var h1 = seed;
         var remainder = length & 3;
         var position  = length - remainder;
         for (var start = 0; start < position; start += 4)

@@ -10,18 +10,18 @@ internal unsafe struct ChunkHeader {
     public string name {
         get {
             fixed(void* p = _name) {
-                return System.Text.Encoding.ASCII.GetString((byte*)p, 48);
+                return System.Text.Encoding.ASCII.GetString((byte*)p, 48).Trim();
             }
         }
     }
 
     public readonly uint size;
+    public readonly uint offset;
     public readonly HashCode64 hash;
 
     [SuppressMessage("ReSharper", "PrivateFieldCanBeConvertedToLocalVariable")]
-    private readonly uint __padding = uint.MaxValue;
 
-    public ChunkHeader(string name, uint size, HashCode64 hash) {
+    public ChunkHeader(string name, uint size, uint offset, HashCode64 hash) {
         Debug.assert_equal(sizeof(ChunkHeader), 64);
 
         this.hash = hash;
@@ -33,5 +33,6 @@ internal unsafe struct ChunkHeader {
             ascii_bytes.CopyTo(span);
         }
         this.size = size;
+        this.offset = offset;
     }
 }

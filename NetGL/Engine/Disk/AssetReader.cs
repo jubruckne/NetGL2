@@ -22,10 +22,8 @@ public class AssetReader: IDisposable {
         for (var i = 0; i < header.chunk_count; i++) {
             var chunk_header = read<ChunkHeader>();
             chunk_headers.Add(chunk_header.name, chunk_header);
+            stream.Seek(chunk_header.size, SeekOrigin.Current);
         }
-
-        ReadOnlySpan<byte> header_bytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref header, 1));
-        stream.Write(header_bytes);
     }
 
     public void read_chunk<T>(string name, Span<T> data)
@@ -37,13 +35,31 @@ public class AssetReader: IDisposable {
         if(!chunk_headers.TryGetValue(name, out var header))
             throw new KeyNotFoundException($"Chunk '{name}' not found in asset file.");
 
-        if(!header.hash.is_type<T>())
-            throw new InvalidDataException($"Chunk '{name}' has invalid type.");
+        if (data.Length * Unsafe.SizeOf<T>() != header.size)
+            throw new ArgumentException("Data buffer size does not match chunk size.", nameof(data));
 
-        stream.Seek(header.size, SeekOrigin.Current);
+        stream.Seek(header.offset, SeekOrigin.Begin);
+
         read(data);
-        if (!header.hash.verify((ReadOnlySpan<T>)data)) ;
+        Console.WriteLine(name + " hash: " + header.hash + " new hash: " + HashCode64.of<T>(data));
+
+        var verification_hash = HashCode64.of<T>(data);
+        if (header.hash != verification_hash)
             throw new InvalidDataException($"Chunk '{name}' failed hash verification.");
+    }
+
+    public unsafe string read_chunk(string name) {
+        if(!chunk_headers.TryGetValue(name, out var header))
+            throw new KeyNotFoundException($"Chunk '{name}' not found in asset file.");
+
+        scoped var buffer =
+            header.size <= 16
+            ? stackalloc byte[(int)header.size]
+            : new byte[header.size];
+
+        read_chunk(name, buffer);
+
+        return System.Text.Encoding.UTF8.GetString(buffer);
     }
 
     public T read_chunk<T>(string name) where T: unmanaged {
@@ -53,12 +69,11 @@ public class AssetReader: IDisposable {
         if(!chunk_headers.TryGetValue(name, out var header))
             throw new KeyNotFoundException($"Chunk '{name}' not found in asset file.");
 
-        if(!header.hash.is_type<T>())
-            throw new InvalidDataException($"Chunk '{name}' has invalid type.");
+        Console.WriteLine(name + " hash: " + header.hash);
 
-        stream.Seek(header.size, SeekOrigin.Current);
+        stream.Seek(header.offset, SeekOrigin.Begin);
         var data = read<T>();
-        if(!header.hash.verify(data))
+        if(!header.hash.verify<T>(data))
             throw new InvalidDataException($"Chunk '{name}' failed hash verification.");
         return data;
     }
@@ -81,7 +96,7 @@ public class AssetReader: IDisposable {
 
         var byte_buffer = MemoryMarshal.AsBytes(buffer);
 
-        var size   = Marshal.SizeOf<T>();
+        var size   = Marshal.SizeOf<T>() * buffer.Length;
         var length = stream.Read(byte_buffer);
         if(length != size)
             throw new EndOfStreamException("Failed to read data from file.");
@@ -100,50 +115,5 @@ public class AssetReader: IDisposable {
     void IDisposable.Dispose() {
         if(stream != null)
             close();
-    }
-
-    private static uint hash32(ReadOnlySpan<char> bytes, uint seed = 4203733937)
-        => hash32(MemoryMarshal.AsBytes(bytes), seed);
-
-    private static uint hash32(ReadOnlySpan<byte> bytes, uint seed = 4203733937) {
-        var length    = bytes.Length;
-        var h1        = seed;
-        var remainder = length & 3;
-        var position  = length - remainder;
-        for (var start = 0; start < position; start += 4)
-            h1 = (uint) ((int) RotateLeft(h1 ^ RotateLeft(BitConverter.ToUInt32(bytes.Slice(start, 4)) * 3432918353U,15) * 461845907U, 13) * 5 - 430675100);
-
-        if (remainder > 0) {
-            uint num = 0;
-            switch (remainder) {
-                case 1:
-                    num ^= (uint) bytes[position];
-                    break;
-                case 2:
-                    num ^= (uint) bytes[position + 1] << 8;
-                    goto case 1;
-                case 3:
-                    num ^= (uint) bytes[position + 2] << 16;
-                    goto case 2;
-            }
-
-            h1 ^= RotateLeft(num * 3432918353U, 15) * 461845907U;
-        }
-
-        h1 = FMix(h1 ^ (uint) length);
-
-        return h1;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static uint RotateLeft(uint x, byte r) {
-        return x << (int) r | x >> 32 - (int) r;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static uint FMix(uint h) {
-        h = (uint) (((int) h ^ (int) (h >> 16)) * -2048144789);
-        h = (uint) (((int) h ^ (int) (h >> 13)) * -1028477387);
-        return h ^ h >> 16;
     }
 }

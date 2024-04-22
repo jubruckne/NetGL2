@@ -32,6 +32,7 @@ public class VertexBuffer<T>: Buffer<T>, IVertexBuffer where T: unmanaged {
     }
 
     private void attribute_def_init(in VertexAttribute[] attribute_definitions) {
+        Console.WriteLine($"\n\nattribute_def_init: {typeof(T).Name}");
         var offset = 0;
         foreach (var attrib in attribute_definitions) {
             Console.WriteLine($"attrib: {attrib.name}, offset: {offset} size_of: {attrib.size_of}");
@@ -71,8 +72,8 @@ public class VertexBuffer<TPosition, TNormal>: VertexBuffer<VertexBuffer<TPositi
         : base(
                positions.Length,
                [
-                   VertexAttribute.vec3<TPosition>("position"),
-                   VertexAttribute.vec3<TNormal>("normal"),
+                   VertexAttribute.create<TPosition>("position"),
+                   VertexAttribute.create<TNormal>("normal"),
                ]
               ) {
         var writer = vertices.new_writer();
@@ -86,8 +87,8 @@ public class VertexBuffer<TPosition, TNormal>: VertexBuffer<VertexBuffer<TPositi
         : base(
                vertices,
                [
-                   VertexAttribute.vec3<TPosition>("position"),
-                   VertexAttribute.vec3<TNormal>("normal"),
+                   VertexAttribute.create<TPosition>("position"),
+                   VertexAttribute.create<TNormal>("normal"),
                ]
               ) {}
 
@@ -95,8 +96,8 @@ public class VertexBuffer<TPosition, TNormal>: VertexBuffer<VertexBuffer<TPositi
         : base(
                count,
                [
-                   VertexAttribute.vec3<TPosition>("position"),
-                   VertexAttribute.vec3<TNormal>("normal"),
+                   VertexAttribute.create<TPosition>("position"),
+                   VertexAttribute.create<TNormal>("normal"),
                ]
               ) {}
 
@@ -148,8 +149,8 @@ public class VertexBuffer<TPosition, TNormal, TAttributes>: VertexBuffer<VertexB
         : base(
                vertices,
                [
-                   VertexAttribute.vec3<TPosition>("position"),
-                   VertexAttribute.vec3<TNormal>("normal"),
+                   VertexAttribute.create<TPosition>("position"),
+                   VertexAttribute.create<TNormal>("normal"),
                    ..attribute_definitions
                ]
               ) {}
@@ -158,8 +159,8 @@ public class VertexBuffer<TPosition, TNormal, TAttributes>: VertexBuffer<VertexB
         : base(
                count,
                [
-                   VertexAttribute.vec3<TPosition>("position"),
-                   VertexAttribute.vec3<TNormal>("normal"),
+                   VertexAttribute.create<TPosition>("position"),
+                   VertexAttribute.create<TNormal>("normal"),
                    ..attribute_definitions
                ]
               ) {}

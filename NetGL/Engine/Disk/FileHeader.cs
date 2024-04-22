@@ -6,7 +6,7 @@ namespace NetGL;
 internal unsafe struct FileHeader {
     public readonly uint signature;
     public readonly uint chunk_count;
-    public readonly uint hash;
+    public readonly HashCode32 hash;
 
     public fixed byte padding[20];
 
@@ -16,7 +16,7 @@ internal unsafe struct FileHeader {
         const int magic = 'J' | ('L' << 8);
         signature = (uint)((magic << 16) | version);
         chunk_count    = 0;
-        hash           = 0;
+        hash = HashCode32.zero;
         fixed(void* p = padding) {
             Span<byte> padding_bytes = new(p, 20);
             padding_bytes.Fill((byte)' ');
@@ -24,7 +24,7 @@ internal unsafe struct FileHeader {
         }
     }
 
-    public FileHeader(ushort version, uint chunk_count, uint hash): this(version) {
+    public FileHeader(ushort version, uint chunk_count, HashCode32 hash): this(version) {
         this.chunk_count = chunk_count;
         this.hash        = hash;
     }
