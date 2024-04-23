@@ -156,6 +156,9 @@ public static class Numbers {
         return values[which];
     }
 
+    public static int random_sample(this int number)
+        => Random.Shared.Next(number - 1);
+
     public static T nearest_multiple<T>(this T number, in T multiple) where T: IFloatingPoint<T>
         => T.Round(number / multiple) * multiple;
 

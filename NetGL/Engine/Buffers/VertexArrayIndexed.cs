@@ -102,13 +102,13 @@ public sealed class VertexArrayIndexed: VertexArray {
 
     public override void draw() {
         //Console.WriteLine($"IndexedVertexArray.draw ({primitive_type}, {index_buffer.length * 3}, {index_buffer.draw_element_type}, 0)");
-        if (has_instance_buffer) {
+        if (instance_buffer != null) {
             GL.DrawElementsInstanced(
                                      primitive_type,
                                      index_buffer.length * 3,
                                      index_buffer.draw_element_type,
                                      IntPtr.Zero,
-                                     instance_buffer!.length
+                                     instance_buffer.length
                                     );
         } else if (draw_ranges.length <= 1) {
             GL.DrawElements(primitive_type, index_buffer.length * 3, index_buffer.draw_element_type, 0);

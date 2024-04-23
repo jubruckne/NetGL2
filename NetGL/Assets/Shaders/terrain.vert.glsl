@@ -1,6 +1,6 @@
 #version 410 core
 
-layout (location = 0) in ivec2 position;
+layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 offset;
 layout (location = 2) in float size;
 
@@ -10,10 +10,14 @@ uniform mat4 model;
 
 uniform sampler2D heightmap;
 
+out vec3 vs_color;
+
 void main()
 {
   vec4 pos = vec4(offset.x + (position.x * size), 0, offset.y + (position.y * size), 1.0);
-  pos.y = texture(heightmap, pos.xz).r;
+  pos.y = texture(heightmap, (vec2(pos.x, pos.z) + vec2(2048, 2048)) / 4096.0).r * 3.5;
 
   gl_Position = pos * model * camera * projection;
+
+  vs_color = 1/ (pos.xzy / 2048.0);
 }

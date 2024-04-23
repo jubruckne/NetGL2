@@ -19,7 +19,7 @@ public readonly struct HashCode32 {
 
     public static HashCode32 of<T>(ReadOnlySpan<T> data)
         where T: unmanaged
-        => new(Murmur.hash32(typeof(T[]).FullName, (uint)data.Length) ^ Murmur.hash32(MemoryMarshal.AsBytes(data)));
+        => new(Murmur.hash32(typeof(T[]).FullName, (uint)(data.Length * Unsafe.SizeOf<T>())) ^ Murmur.hash32(MemoryMarshal.AsBytes(data)));
 
     public static bool operator ==(HashCode32 left, HashCode32 right) => left.hash == right.hash;
     public static bool operator !=(HashCode32 left, HashCode32 right) => left.hash != right.hash;
@@ -40,21 +40,21 @@ public readonly struct HashCode64 {
         => this.hash = hash;
 
     public static HashCode64 of(string str) {
-        var low  = Murmur.hash32(typeof(string).FullName);
+        var low  = Murmur.hash32(typeof(string).FullName, (uint)str.Length);
         var high = Murmur.hash32(str);
         return new(((ulong)low << 32) | high);
     }
 
     public static HashCode64 of<T>(T data)
         where T: unmanaged {
-        var low = Murmur.hash32(typeof(T).FullName);
+        var low = Murmur.hash32(typeof(T).FullName, (uint)Unsafe.SizeOf<T>());
         var high = Murmur.hash32(data);
         return new(((ulong)low << 32) | high);
     }
 
     public static HashCode64 of<T>(ReadOnlySpan<T> data)
         where T: unmanaged {
-        var low  = Murmur.hash32(typeof(T[]).FullName, (uint)data.Length);
+        var low  = Murmur.hash32(typeof(T[]).FullName, (uint)(data.Length * Unsafe.SizeOf<T>()));
         var high = Murmur.hash32(MemoryMarshal.AsBytes(data));
         return new(((ulong)low << 32) | high);
     }
@@ -71,20 +71,6 @@ public readonly struct HashCode64 {
 
 file static class Murmur {
     private const uint default_seed = 4203733937;
-
-    public static uint type_hash<T>(ref readonly T data) where T: notnull {
-        string type_name = "";
-
-        if (data is string str)
-            type_name = $"{typeof(T).FullName}[{str.Length}]";
-        else if (data is Array arr)
-            type_name = $"{typeof(T).FullName}[{arr.Length}]";
-        else if (typeof(T).IsArray)
-            type_name = $"{typeof(T).FullName}[{Unsafe.SizeOf<T>()}]";
-
-        return hash32(type_name);
-        //   return hash32(name, (uint)str.Length) ^ hash32(str);
-    }
 
     public static uint hash32<T>(T data, uint seed = default_seed)
         where T: unmanaged {

@@ -1,5 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using NetGL.Vectors;
 
 namespace NetGL;
 
@@ -26,7 +28,7 @@ public class AssetReader: IDisposable {
         }
     }
 
-    public void read_chunk<T>(string name, Span<T> data)
+    public void read_chunk<T>(string name, Span<T> buffer)
         where T: unmanaged {
 
         if(stream == null)
@@ -35,15 +37,15 @@ public class AssetReader: IDisposable {
         if(!chunk_headers.TryGetValue(name, out var header))
             throw new KeyNotFoundException($"Chunk '{name}' not found in asset file.");
 
-        if (data.Length * Unsafe.SizeOf<T>() != header.size)
-            throw new ArgumentException("Data buffer size does not match chunk size.", nameof(data));
+        if (buffer.Length * Unsafe.SizeOf<T>() != header.size)
+            throw new ArgumentException("Data buffer size does not match chunk size.", nameof(buffer));
 
         stream.Seek(header.offset, SeekOrigin.Begin);
 
-        read(data);
-        Console.WriteLine(name + " hash: " + header.hash + " new hash: " + HashCode64.of<T>(data));
+        read(buffer);
+        //Console.WriteLine(name + " hash: " + header.hash + " new hash: " + HashCode64.of<T>(buffer));
 
-        var verification_hash = HashCode64.of<T>(data);
+        var verification_hash = HashCode64.of<T>(buffer);
         if (header.hash != verification_hash)
             throw new InvalidDataException($"Chunk '{name}' failed hash verification.");
     }
@@ -52,7 +54,7 @@ public class AssetReader: IDisposable {
         if(!chunk_headers.TryGetValue(name, out var header))
             throw new KeyNotFoundException($"Chunk '{name}' not found in asset file.");
 
-        scoped var buffer =
+        var buffer =
             header.size <= 16
             ? stackalloc byte[(int)header.size]
             : new byte[header.size];
@@ -69,11 +71,11 @@ public class AssetReader: IDisposable {
         if(!chunk_headers.TryGetValue(name, out var header))
             throw new KeyNotFoundException($"Chunk '{name}' not found in asset file.");
 
-        Console.WriteLine(name + " hash: " + header.hash);
+        //Console.WriteLine(name + " hash: " + header.hash);
 
         stream.Seek(header.offset, SeekOrigin.Begin);
         var data = read<T>();
-        if(!header.hash.verify<T>(data))
+        if(header.hash != HashCode64.of(data))
             throw new InvalidDataException($"Chunk '{name}' failed hash verification.");
         return data;
     }
@@ -83,8 +85,10 @@ public class AssetReader: IDisposable {
             throw new InvalidOperationException("Asset reader is already closed.");
 
         var size = Marshal.SizeOf<T>();
-        var buffer = new byte[size];
-        var length = stream.Read(buffer, 0, size);
+        var buffer = size <= 32 ? stackalloc byte[size] : new byte[size];
+
+        if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+        var length = stream.Read(buffer);
         if(length != size)
             throw new EndOfStreamException("Failed to read data from file.");
         return MemoryMarshal.Cast<byte, T>(buffer)[0];

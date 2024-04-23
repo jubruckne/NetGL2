@@ -27,13 +27,22 @@ public sealed class LodLevels {
         return levels[^1];
     }
 
-    public static LodLevels create(int levels, int tile_size) {
+    public static LodLevels create(int levels, int l0_tile_size) {
         var lod_levels = new LodLevels(levels);
+        var tile_size = (short)(l0_tile_size << (levels - 1));
+        var max_distance = (short)(8 << (levels - 1));
 
-        var result = new LodLevel[levels];
-        for (var i = 0; i < levels; ++i)
-            lod_levels.levels[levels - i - 1] =
-                new LodLevel((short)(levels - i - 1), (short)(tile_size << i), (short)(tile_size << i));
+        for (short i = 0; i < levels; ++i) {
+            lod_levels.levels[i] = new(i, max_distance, tile_size);
+            tile_size >>= 1;
+            max_distance >>= 1;
+            //  new((short)(levels - i - 1), (short)((l0_tile_size + 1).power(i) * 10), (short)l0_tile_size.power(i));
+        }
+
+        for (var i = 0; i < levels; ++i) {
+            Console.WriteLine(lod_levels.levels[i]);
+        }
+
         return lod_levels;
     }
 
@@ -41,13 +50,11 @@ public sealed class LodLevels {
         var levels= tile_sizes.Length;
         var lod_levels = new LodLevels(levels);
 
-        var result = new LodLevel[levels];
         for (var i = 0; i < levels; ++i)
             lod_levels.levels[levels - i - 1] =
                 new LodLevel((short)(levels - i - 1), tile_sizes[i].max_distance, tile_sizes[i].tile_size);
         return lod_levels;
     }
-
 }
 
 public readonly struct LodLevel {
