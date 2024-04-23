@@ -19,10 +19,25 @@ global using half3 = NetGL.Vectors.vec3<System.Half>;
 global using half4 = NetGL.Vectors.vec4<System.Half>;
 
 global using static NetGL.Vectors.Global;
+using System.Numerics;
 
 namespace NetGL.Vectors;
 
 public static class Global {
+    // ------------------------ generic ------------------------------
+
+    public static vec2<T> vec2<T>(T x, T y)
+        where T: unmanaged, INumber<T>
+        => new vec2<T>(x, y);
+
+    public static vec3<T> vec3<T>(T x, T y, T z)
+        where T: unmanaged, INumber<T>
+        => new vec3<T>(x, y, z);
+
+    public static vec4<T> vec4<T>(T x, T y, T z, T w)
+        where T: unmanaged, INumber<T>
+        => new vec4<T>(x, y, z, w);
+
     // -------------------------- int --------------------------------
 
     public static int2 int2(int x, int y)

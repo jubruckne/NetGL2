@@ -180,6 +180,10 @@ public static class Numbers {
         where T: IRootFunctions<T>
         => T.Sqrt(number);
 
+    public static T squared<T>(this T value)
+        where T: IPowerFunctions<T>
+        => T.Pow(value, T.CreateSaturating(2));
+
     public static T power<T>(this T value, in T exp)
         where T: IPowerFunctions<T>
         => T.Pow(value, exp);

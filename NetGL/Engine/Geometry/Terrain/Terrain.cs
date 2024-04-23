@@ -1,18 +1,10 @@
-using OpenTK.Graphics.OpenGL;
+using NetGL.Vectors;
 
 namespace NetGL;
 
 using ECS;
-using OpenTK.Mathematics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
-/*
-
-    tile = 1 quad (2 triangles)
-    chunk = 10x10 tiles
-
- */
 
 [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 6)]
 public struct InstanceData {
@@ -36,15 +28,11 @@ public struct VertexData {
 public class Terrain: Entity {
     public readonly VertexArrayRenderer renderer;
 
-    //[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-    //readonly Quadtree<TerrainChunk> tree;
-
     private readonly FirstPersonCamera camera;
 
     internal readonly TerrainNoise noise;
     private readonly Shader shader;
 
-    private readonly Material[] material_per_level;
     private readonly LodLevels lod_levels;
 
     private readonly VertexBuffer<InstanceData> instance_buffer;
@@ -57,22 +45,21 @@ public class Terrain: Entity {
 
         noise = new();
 
-        lod_levels = LodLevels.create(9, 1);
+        lod_levels = LodLevels.create(4, 16,1);
 
         vertex_buffer = create_vertex_buffer();
-        instance_buffer = create_instance_buffer(query_chunks_within_radius(0, 0));
+        instance_buffer = create_instance_buffer(query_chunks_within_radius(get_camera_position(), 24));
         index_buffer = create_index_buffer();
 
         Garbage.start_measuring(this);
 
-        heightmap = create_heightmap(4096, 4096);
+        heightmap = new Heightmap(1024, Rectangle.centered_at((0, 0), 4096));
+        heightmap.generate(noise);
         //HeightmapAsset.serialize_to_file(heightmap, "heightmap.jl");
 
         //heightmap = HeightmapAsset.deserialize_from_file("heightmap.jl");
 
         Garbage.stop_measuring(this);
-
-
 
         shader = this.add_shader(Shader.from_file("terrain","terrain.vert.glsl", "terrain.frag.glsl")).shader;
         Materials.Material mat = new("Terrain", shader);
@@ -83,62 +70,6 @@ public class Terrain: Entity {
         renderer = this.add_vertex_array_renderer();
 
         renderer.vertex_arrays.Add(vertex_array, true);
-/*
-        heightmaps = new Texture2D<float>(
-                                              4096,
-                                              4096,
-                                              PixelFormat.Red,
-                                              PixelType.Float
-                                             );
-        heightmaps.wrap_t = TextureWrapMode.ClampToEdge;
-        heightmaps.wrap_s = TextureWrapMode.ClampToEdge;
-        heightmaps.min_filter = TextureMinFilter.Linear;
-        heightmaps.mag_filter = TextureMagFilter.Linear;
-        heightmaps.internal_pixel_format = PixelInternalFormat.R32f;
-        //heightmaps.create();
-
-        // add separate material for each level
-        material_per_level = new Material[lod_levels.count];
-        for (var i = lod_levels.lowest.level; i <= lod_levels.highest.level; i++)
-            material_per_level[i] = Material.Brass;
-
-        renderer = this.add_vertex_array_renderer();
-
-        chunks.Clear();
-
-        Garbage.start_measuring(this);
-        //query_chunks_within_radius(0, 0, 1024);
-
-        shader = this.add_shader(Shader.from_file("name","terrain.vert.glsl", "terrain.frag.glsl", "terrain.tessctrl.glsl", "terrain.tesseval.glsl")).shader;//, "terrain.frag.glsl", tess_control: "", tess_eval: "terrain.tesseval.glsl")).shader;
-
-        var rect  = new Rectangle((-256, -256), 512);
-        Materials.Material mat = new("Terrain", shader);
-       // mat.add_texture("heightmap", heightmaps);
-       // mat.add_color("tile_color", Color.White);
-
-        var chunk = new TerrainChunk(this, rect, mat); // material_per_level[level]);
-        chunks.Add(rect, chunk);
-        generate_heightmaps(0, rect);
-        chunk.create(priority: 0);
-
-        VertexArray.unbind();
-
-
-        Garbage.stop_measuring(this);
-        //heightmaps.query_info();
-        //var chunk = chunks.Values.First();
-        //this.add_shader(AutoShader.for_vertex_type($"{name}.auto", chunk.vertex_array!, tesselate: false));
-
-        /*
-        foreach (var i in Enumerable.Range(1, 10)) {
-            Console.WriteLine(
-                              $"level_max_tile_size {chunks.level_max_tile_size} at distance {i * 100} = {camera.calculate_size_at_distance(chunks.level_max_tile_size, i * 100)}, resolution = {camera.calculate_resolution_at_distance(i * 100)}"
-                             );
-        }
-*/
-        //Console.WriteLine("\nQuadtree:");
-        //TreePrinter.print(tree);
-        //GC.Collect(6, GCCollectionMode.Default, true);
 
         renderer.render_settings.wireframe    = true;
         renderer.render_settings.depth_test   = true;
@@ -146,29 +77,6 @@ public class Terrain: Entity {
         renderer.render_settings.front_facing = true;
 
         this.add_behavior(_ => update());
-    }
-
-    private Heightmap create_heightmap(int texture_size = 1024, int world_size = 1024) {
-        var map = new Heightmap(texture_size,
-                                Rectangle.centered_at((0, 0), world_size)
-                               );
-
-        var area = new Rectangle(0, 0, world_size, world_size);
-
-        for (var i = 0; i < texture_size * texture_size; ++i) {
-            var px = i % texture_size;
-            var py = i / texture_size;
-
-            map.texture[px, py] =
-                noise.sample(
-                             area.left + area.width * px / world_size,
-                             area.bottom + area.height * py / world_size
-                            );
-        }
-
-        map.texture.create();
-
-        return map;
     }
 
     private VertexBuffer<InstanceData> create_instance_buffer(Span<InstanceData> instances) {
@@ -219,11 +127,13 @@ public class Terrain: Entity {
                                              );
 
 
+        var half_width = width / 2f;
+        var half_height = height / 2f;
 
         var pos = 0;
         for (var i = 0; i <= tile_count; i++) {
             for (var j = 0; j <= tile_count; j++) {
-                vb[pos++] = ((half)(i * width / tile_count), (half)(j * height / tile_count));
+                vb[pos++] = ((half)(i * width / tile_count - half_width), (half)(j * height / tile_count - half_height));
             }
         }
 
@@ -232,118 +142,82 @@ public class Terrain: Entity {
         return vb;
     }
 
-    private Span<InstanceData> query_chunks_within_radius(float x, float y) {
+    private Span<InstanceData> query_chunks_within_radius(float3 position, float radius) {
         var lod = lod_levels.lowest;
-        var radius = lod_levels.lowest.max_distance.power(2);
+        var tile_count = (int)Math.Ceiling(radius / lod.tile_size);
 
         //Console.WriteLine($"checking for chunks to render with maxsize = {lod.size}, {lod}");
 
-        // Calculate bounds of the circle
-        int2 p   = ((int)x.nearest_multiple(lod.tile_size), (int)y.nearest_multiple(lod.tile_size));
+        var center = Rectangle<int>.centered_at(
+                                                int2(
+                                                     (int)position.x.nearest_multiple(lod.tile_size),
+                                                     (int)position.z.nearest_multiple(lod.tile_size)
+                                                    ),
+                                                tile_count * lod.tile_size * 2
+                                               );
 
         var chunks = new List<InstanceData>();
-        split_chunk(chunks, (x, y), radius, (p.x - lod.tile_size - radius, p.y - lod.tile_size - radius), (p.x + lod.tile_size + radius, p.y + lod.tile_size + radius), lod.level);
+        split_chunk(
+                    chunks,
+                    position,
+                    (int)radius,
+                    center,
+                    lod.level
+                   );
         return chunks.ToArray();
     }
 
-    [SkipLocalsInit]
-    private void split_chunk(List<InstanceData> chunks, float2 position, int radius, int2 bottom_left, int2 top_right, short level) {
+    private void split_chunk(List<InstanceData> chunks,
+                             float3 position,
+                             int radius,
+                             Rectangle<int> bounds,
+                             short level
+    ) {
         var size      = lod_levels[level].tile_size;
-        var half_size = lod_levels[level].half_tile_size;
 
-        for (var x = bottom_left.x; x < top_right.x; x += size) {
-            for (var y = bottom_left.y; y < top_right.y; y += size) {
-                var center_x = x + half_size;
-                var center_y = y + half_size;
+        foreach (var rect in bounds.split_by_size(size, size)) {
+            var distance = position.distance_to((rect.center.x, 0, rect.center.y));
+
+            if (distance <= lod_levels[level].max_distance && level < lod_levels.max_level) {
+                split_chunk(chunks, position, radius, rect, (short)(level + 1).at_most(lod_levels.max_level));
+            } else if (distance <= radius) {
+                Console.WriteLine($"{new string(' ', level * 2)}chunk: rect={rect}, center={rect.center}, rect_size={rect.width} size={size}, level={level}");
+                var instance = new InstanceData {
+                                                    offset = ((short)rect.center.x, (short)rect.center.y),
+                                                    size = (half)size
+                                                };
+                chunks.Add(instance);
+            }
+        }
+/*
+        for (var x = bottom_left.x + half_size; x < top_right.x + half_size; x += size) {
+            for (var y = bottom_left.y + half_size; y < top_right.y + half_size; y += size) {
+                Console.WriteLine($"split_chunk: x={x}, y={y}, size={size}, level={level}");
                 var distance = (int)MathF.Sqrt(
-                                               MathF.Pow(center_x - position.x, 2)
-                                               + MathF.Pow(center_y - position.y, 2)
+                                               MathF.Pow(x - position.x, 2)
+                                               + MathF.Pow(y - position.y, 2)
                                               );
+
                 /*var angle_to_chunk = MathF.Atan2(center_y - position.y, center_x - position.x);
 
                 var isWithinFoV = MathF.Abs(0 - angle_to_chunk)
                                   <= camera.field_of_view_degrees.degree_to_radians() * 0.55f; // allow 10% margin
 */
-                if (distance < lod_levels[level].max_distance && level < lod_levels.max_level) {
-                    // Debug.println(
-                    //               $"Drill down to level {lod.level + 1} into Quad at ({center_x},{center_y}), distance={distance:N0}, lod={lod}.",
-                    //               ConsoleColor.Magenta
-                    //              );
-
-                    split_chunk(chunks, position, radius, (x, y), (x + size, y + size), (short)(level + 1));
-                } else if(distance <= radius) {
-                    //Debug.println(
-                    //              $"Quad at ({center_x},{center_y}), distance={distance:N0}, lod={level}.",
-                    //              ConsoleColor.Green
-                    //             );
-                    /*
-                    var rect  = new Rectangle((x, y), size);
-                    Materials.Material mat = new("Terrain", this.shader);
-                    mat.add_texture("heightmap", heightmaps);
-                    mat.add_color("tile_color", Color.random_for(rect));
-
-                    var chunk = new TerrainChunk(this, rect, mat); // material_per_level[level]);
-                    chunks.Add(rect, chunk);
-                    generate_heightmaps(chunks.Count - 1, rect);
-                    chunk.create(priority: 0);
-                    */
-                    var instance = new InstanceData {
-                                                        offset = ((short)(x - (int)position.x), (short)(y - (int)position.y)),
-                                                        size = (half)size
-                                                    };
-                    chunks.Add(instance);
-                }
-            }
-        }
     }
 
-    /*
-    private TerrainChunk allocate_chunk(in Bounds bounds, int level) {
-        var distance = world_to_terrain_distance(bounds.center.x, bounds.center.y);
-
-        var chunk = new TerrainChunk(this, bounds, level, material_per_level[level]);
-        chunk.create(priority: 0);
-        return chunk;
-    }*/
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public float3 terrain_to_world_position(float x, float y, float height)
-        => new float3(x, height, -y);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private (float terrain_x, float terrain_y, float height) world_to_terrain_position(Vector3 world_position)
-        => (world_position.X, -world_position.Z, noise.sample(world_position.X, -world_position.Z));
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private (float terrain_x, float terrain_y, float height) world_to_terrain_position()
-        => world_to_terrain_position(camera.transform.position);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public float world_to_terrain_distance(float terrain_x, float terrain_y) {
-        var pos = world_to_terrain_position(camera.transform.position);
-        return MathF.Sqrt(
-                          (pos.terrain_x - terrain_x) * (pos.terrain_x - terrain_x)
-                          + (pos.terrain_y - terrain_y) * (pos.terrain_y - terrain_y)
-                         );
-    }
-
-    public float world_to_terrain_distance(Vector3 world_position, float terrain_x, float terrain_y) {
-        var pos = world_to_terrain_position(world_position);
-        return MathF.Sqrt(
-                          (pos.terrain_x - terrain_x) * (pos.terrain_x - terrain_x)
-                          + (pos.terrain_y - terrain_y) * (pos.terrain_y - terrain_y)
-                         );
-    }
+    private float3 get_camera_position()
+        => camera.transform.position;
 
     private void update() {
-        var (terrain_x, terrain_y, terrain_height) = world_to_terrain_position();
-        var chunks = query_chunks_within_radius(terrain_x, terrain_y);
+        /*var (terrain_x, terrain_y, terrain_height) = world_to_terrain_position();
+        var chunks = query_chunks_within_radius((terrain_x, terrain_y), 200);
         Console.WriteLine($"terrain_pos={terrain_x:N2}:{terrain_y:N2}, height={terrain_height}, chunks={chunks.Length}");
         for (var i = 0; i < chunks.Length; i++)
             instance_buffer[i] = chunks[i];
         instance_buffer.update();
-
-        return;
+*/
+        /*
         if (camera.transform.position.Y < terrain_height) {
             camera.transform.position.Y = float.Lerp(camera.transform.position.Y, terrain_height, 0.09f);
         } else if (camera.transform.position.Y > terrain_height) {

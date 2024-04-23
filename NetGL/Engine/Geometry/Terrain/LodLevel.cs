@@ -21,16 +21,16 @@ public sealed class LodLevels {
 
     public LodLevel select_for_distance(float distance) {
         for (var i = 0; i < levels.Length; ++i)
-            if (distance <= levels[i].max_distance)
+            if (distance >= levels[i].max_distance)
                 return levels[i];
 
         return levels[^1];
     }
 
-    public static LodLevels create(int levels, int l0_tile_size) {
+    public static LodLevels create(int levels, int l0_distance, int l0_tile_size) {
         var lod_levels = new LodLevels(levels);
         var tile_size = (short)(l0_tile_size << (levels - 1));
-        var max_distance = (short)(8 << (levels - 1));
+        var max_distance = (short)(l0_distance << (levels - 1));
 
         for (short i = 0; i < levels; ++i) {
             lod_levels.levels[i] = new(i, max_distance, tile_size);

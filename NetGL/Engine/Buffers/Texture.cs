@@ -243,9 +243,6 @@ public abstract class Texture {
     public abstract string sampler_name { get; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-    public int version { get; protected set; }
-    public Buffer.Status status { get; protected set; }
-
     public void bind() => bind(texture_unit);
 
     public abstract void bind(int texture_unit);

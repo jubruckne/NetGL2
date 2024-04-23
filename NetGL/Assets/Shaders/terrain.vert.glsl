@@ -15,9 +15,11 @@ out vec3 vs_color;
 void main()
 {
   vec4 pos = vec4(offset.x + (position.x * size), 0, offset.y + (position.y * size), 1.0);
-  pos.y = texture(heightmap, (vec2(pos.x, pos.z) + vec2(2048, 2048)) / 4096.0).r * 3.5;
+  //pos.y = texture(heightmap, (vec2(pos.x, pos.z) + vec2(2048, 2048)) / 4096.0).r * 3.5;
+  pos.y = gl_InstanceID * -0.0075;
 
   gl_Position = pos * model * camera * projection;
 
-  vs_color = 1/ (pos.xzy / 2048.0);
+  vs_color =  vec3(1, 1, 1); //1/ (pos.xzy / 2048.0);
+  //vs_color.r = (gl_InstanceID % 255) / 255.0;
 }
