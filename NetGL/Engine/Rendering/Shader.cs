@@ -301,7 +301,7 @@ public class Shader: IBindable, IEquatable<Shader> {
         foreach (var input in material.inputs) {
             var name = $"{material.name.ToLower()}.{input.name.ToLower()}";
             if (input.match<Texture>(out var tex)) {
-                //Console.WriteLine($"Binding texture: {name}");
+                // Console.WriteLine($"Binding texture: {name}");
                 tex.bind(0);
                 set_uniform(name, 0);
             } else {

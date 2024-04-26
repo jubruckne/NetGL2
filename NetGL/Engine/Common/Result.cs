@@ -1,40 +1,66 @@
 namespace NetGL;
 
-public static class Result {
-    public static Result<T> success<T>(in T value) => new(true, value);
-    public static Result<T> failure<T>() => new();
+public readonly struct Result<TValue, TError> {
+    private readonly TValue value = default!;
+    private readonly TError error = default!;
+    private readonly bool success;
 
-    public static void if_true<T>(in Result<T> result, in Action<T> action) {
-        if (result) action(result.value);
+    private Result(TValue value) {
+        this.success = true;
+        this.value   = value;
     }
+
+    private Result(TError error) {
+        this.success = false;
+        this.error   = error;
+    }
+
+    public static implicit operator Result<TValue, TError>(TValue value)
+        => new Result<TValue, TError>(value);
+
+    public static implicit operator Result<TValue, TError>(TError error)
+        => new Result<TValue, TError>(error);
+
+    public static implicit operator bool(Result<TValue, TError> result)
+        => result.success;
+
+    public static explicit operator TValue(Result<TValue, TError> result)
+        => result.success
+            ? result.value
+            : throw new InvalidOperationException(
+                                                  result.error != null
+                                                      ? result.error.ToString()
+                                                      : $"Result<{nameof(TValue)}, {nameof(TError)}> is in a failure state."
+                                                 );
+
+    public static explicit operator TError(Result<TValue, TError> result)
+        => result.success
+            ? throw new InvalidOperationException("Result<TValue, TError> is in a success state.")
+            : result.error;
 }
 
 public readonly struct Result<T> {
-    public readonly T value;
-    private readonly bool succeeded;
+    private readonly T value = default!;
+    private readonly bool success = false;
 
-    public Result(bool result, in T value) {
-        this.succeeded = result;
-        this.value = value;
+    private Result(T value) {
+        this.success = true;
+        this.value   = value;
     }
 
-    public Result() {
-        succeeded = false;
-        value = default!;
+    private Result(bool success) {
+        if (success) throw new ArgumentException("Cannot convert a boolean to a Result<T> without a value.");
+        this.success = success;
     }
 
-    public static implicit operator Result<T>(in T value) => new Result<T>(true, value);
+    public static implicit operator Result<T>(T value) => new(value);
 
-    public static implicit operator Result<T>(in bool value) {
-        if (value) throw new ArgumentException("Cannot convert a boolean to a Result<T> without a value.");
-        return new Result<T>();
-    }
+    public static implicit operator Result<T>(bool success)
+        => new Result<T>(success);
 
-    public static implicit operator T(in Result<T> r) => r.succeeded ? r.value : throw new NullReferenceException();
-    public static bool operator true(in Result<T> r) => r.succeeded;
-    public static bool operator false(in Result<T> r) => !r.succeeded;
-    public static T operator~(in Result<T> r) => r.value;
-    public static implicit operator bool(in Result<T> r) => r.succeeded;
+    public static implicit operator bool(Result<T> result)
+        => result.success;
 
-    public (bool result, T value) result => (succeeded, value);
+    public static explicit operator T(Result<T> result)
+        => result.success ? result.value : throw new InvalidOperationException("Result<T> is in a failure state.");
 }

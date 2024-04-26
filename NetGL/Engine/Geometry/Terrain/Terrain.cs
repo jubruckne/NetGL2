@@ -9,9 +9,9 @@ using System.Runtime.InteropServices;
 [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 6)]
 public struct InstanceData {
     public short2 offset;
-    public half size;
-    public static implicit operator InstanceData((short x, short y, half size) v) => new() { offset = (v.x, v.y), size = v.size };
-    public static implicit operator InstanceData((short x, short y, float size) v) => new() { offset = (v.x, v.y), size = (half)v.size };
+    public short size;
+    public Color color;
+    public static implicit operator InstanceData((short x, short y, short size) v) => new() { offset = (v.x, v.y), size = v.size, color = Color.random_for(v)};
 
     public override string ToString()
         => $"offset={offset}, size={size}";
@@ -45,15 +45,15 @@ public class Terrain: Entity {
 
         noise = new();
 
-        lod_levels = LodLevels.create(4, 16,1);
+        lod_levels = LodLevels.create(8, 8,1);
 
         vertex_buffer = create_vertex_buffer();
-        instance_buffer = create_instance_buffer(query_chunks_within_radius(get_camera_position(), 24));
+        instance_buffer = create_instance_buffer(query_chunks_within_radius(get_camera_position(), 4096));
         index_buffer = create_index_buffer();
 
         Garbage.start_measuring(this);
 
-        heightmap = new Heightmap(1024, Rectangle.centered_at((0, 0), 4096));
+        heightmap = new Heightmap(2048, Rectangle.centered_at((0, 0), 16384));
         heightmap.generate(noise);
         //HeightmapAsset.serialize_to_file(heightmap, "heightmap.jl");
 
@@ -83,7 +83,8 @@ public class Terrain: Entity {
         var ib = new VertexBuffer<InstanceData>(
                                                 instances.Length,
                                                 VertexAttribute.create_instanced<short2>("offset", divisor: 1),
-                                                VertexAttribute.create_instanced<half>("size", divisor: 1)
+                                                VertexAttribute.create_instanced<short>("size", divisor: 1),
+                                                VertexAttribute.create_instanced<Color>("color", divisor: 1)
                                                );
 
         for (var index = 0; index < instances.Length; index++)
@@ -184,7 +185,8 @@ public class Terrain: Entity {
                 Console.WriteLine($"{new string(' ', level * 2)}chunk: rect={rect}, center={rect.center}, rect_size={rect.width} size={size}, level={level}");
                 var instance = new InstanceData {
                                                     offset = ((short)rect.center.x, (short)rect.center.y),
-                                                    size = (half)size
+                                                    size = size,
+                                                    color = Color.random_for((rect, level))
                                                 };
                 chunks.Add(instance);
             }

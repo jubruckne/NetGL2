@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using NetGL.Vectors;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using Half = System.Half;
@@ -12,31 +13,32 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 namespace NetGL;
 
 public static class OpenTKExtensions {
-    public static (Type type_of, int size_of, VertexAttribPointerType type, int count)
+    public static (Type type_of, int size_of, VertexAttribPointerType type, int count, bool normalized)
         to_vertex_attribute_pointer_type<T>(this T d, int count = 1)
         where T: unmanaged {
         return d switch {
-            float                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 1 * count),
-            byte                        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.UnsignedByte, 1 * count),
-            short                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Short, 1 * count),
-            double                      => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Double, 1 * count),
-            int                         => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Int, 1 * count),
-            ushort                      => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.UnsignedShort, 1 * count),
-            uint                        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.UnsignedInt, 1 * count),
-            Half                        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.HalfFloat, 1 * count),
-            sbyte                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Byte, 1 * count),
-            System.Numerics.Vector3     => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 3 * count),
-            OpenTK.Mathematics.Vector3  => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 3 * count),
-            OpenTK.Mathematics.Vector3h => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.HalfFloat, 3 * count),
-            OpenTK.Mathematics.Vector3i => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Int, 3 * count),
-            OpenTK.Mathematics.Vector3d => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Double, 3 * count),
-            Vectors.vec3<float>         => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 3 * count),
-            Vectors.vec3<double>        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Double, 3 * count),
-            Vectors.vec3<Half>          => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.HalfFloat, 3 * count),
+            float                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 1 * count, false),
+            byte                        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.UnsignedByte, 1 * count, false),
+            short                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Short, 1 * count, false),
+            double                      => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Double, 1 * count, false),
+            int                         => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Int, 1 * count, false),
+            ushort                      => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.UnsignedShort, 1 * count, false),
+            uint                        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.UnsignedInt, 1 * count, false),
+            Half                        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.HalfFloat, 1 * count, false),
+            sbyte                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Byte, 1 * count, false),
+            System.Numerics.Vector3     => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 3 * count, false),
+            OpenTK.Mathematics.Vector3  => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 3 * count, false),
+            OpenTK.Mathematics.Vector3h => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.HalfFloat, 3 * count, false),
+            OpenTK.Mathematics.Vector3i => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Int, 3 * count, false),
+            OpenTK.Mathematics.Vector3d => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Double, 3 * count, false),
+            Vectors.vec3<float>         => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 3 * count, false),
+            Vectors.vec3<double>        => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Double, 3 * count, false),
+            Vectors.vec3<Half>          => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.HalfFloat, 3 * count, false),
+            Color                       => (typeof(T), Unsafe.SizeOf<T>(), VertexAttribPointerType.Float, 4 * count, true),
             _                           => get_struct_type()
         };
 
-        (Type type_of, int size_of, VertexAttribPointerType type, int count) get_struct_type() {
+        (Type type_of, int size_of, VertexAttribPointerType type, int count, bool normalized) get_struct_type() {
             var type_of = typeof(T);
             var size_of = Unsafe.SizeOf<T>();
 
@@ -54,21 +56,21 @@ public static class OpenTKExtensions {
             }
 
             if (fields[0].FieldType == typeof(float))
-                return (type_of, size_of, VertexAttribPointerType.Float, 1 * count);
+                return (type_of, size_of, VertexAttribPointerType.Float, 1 * count, false);
             if (fields[0].FieldType == typeof(int))
-                return (type_of, size_of, VertexAttribPointerType.Int, 1 * count);
+                return (type_of, size_of, VertexAttribPointerType.Int, 1 * count, false);
             if (fields[0].FieldType == typeof(uint))
-                return (type_of, size_of, VertexAttribPointerType.UnsignedInt, 1 * count);
+                return (type_of, size_of, VertexAttribPointerType.UnsignedInt, 1 * count, false);
             if (fields[0].FieldType == typeof(short))
-                return (type_of, size_of, VertexAttribPointerType.Short, 1 * count);
+                return (type_of, size_of, VertexAttribPointerType.Short, 1 * count, false);
             if (fields[0].FieldType == typeof(ushort))
-                return (type_of, size_of, VertexAttribPointerType.UnsignedShort, 1 * count);
+                return (type_of, size_of, VertexAttribPointerType.UnsignedShort, 1 * count, false);
             if (fields[0].FieldType == typeof(byte))
-                return (type_of, size_of, VertexAttribPointerType.UnsignedByte, 1 * count);
+                return (type_of, size_of, VertexAttribPointerType.UnsignedByte, 1 * count, false);
             if (fields[0].FieldType == typeof(Half))
-                return (type_of, size_of, VertexAttribPointerType.HalfFloat, 1 * count);
+                return (type_of, size_of, VertexAttribPointerType.HalfFloat, 1 * count, false);
             if (fields[0].FieldType == typeof(double))
-                return (type_of, size_of, VertexAttribPointerType.Double, 1 * count);
+                return (type_of, size_of, VertexAttribPointerType.Double, 1 * count, false);
 
             Error.type_conversion_error<T, VertexAttribPointerType>(default);
             return default;

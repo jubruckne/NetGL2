@@ -1,4 +1,4 @@
-using System.Diagnostics;
+/*using System.Diagnostics;
 
 namespace NetGL;
 
@@ -121,3 +121,4 @@ public sealed partial class Quadtree<T> {
         public override string ToString() => $"Node: level:{level} bounds:({bounds.center}, size={bounds.size}), has_data:{has_data}";
     }
 }
+*/

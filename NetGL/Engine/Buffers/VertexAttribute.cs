@@ -1,8 +1,5 @@
-using System.Numerics;
-using System.Runtime.CompilerServices;
 using NetGL.ECS;
 using OpenTK.Graphics.OpenGL4;
-using Spectre.Console;
 
 namespace NetGL;
 
@@ -39,10 +36,9 @@ public class VertexAttribute: INamed {
     }
 
     private VertexAttribute(string name,
-                            (Type type, int size_of, VertexAttribPointerType pointer_type, int count) type,
-                            bool normalized = false,
+                            (Type type, int size_of, VertexAttribPointerType pointer_type, int count, bool normalized) type,
                             int divisor = 0
-    ): this(name, type.type, type.size_of, type.count, type.pointer_type, normalized, divisor) {}
+    ): this(name, type.type, type.size_of, type.count, type.pointer_type, type.normalized, divisor) {}
 
     public string glsl_type {
         get {
@@ -64,11 +60,11 @@ public class VertexAttribute: INamed {
 
     public static VertexAttribute create<T>(string name)
         where T: unmanaged
-        => new VertexAttribute(name, new T().to_vertex_attribute_pointer_type(), false, 0);
+        => new VertexAttribute(name, new T().to_vertex_attribute_pointer_type(), 0);
 
     public static VertexAttribute create_instanced<T>(string name,
                                                       int divisor
     )
         where T: unmanaged
-        => new VertexAttribute(name, new T().to_vertex_attribute_pointer_type(), false, divisor);
+        => new VertexAttribute(name, new T().to_vertex_attribute_pointer_type(), divisor);
 }

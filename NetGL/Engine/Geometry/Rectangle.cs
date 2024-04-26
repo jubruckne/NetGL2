@@ -62,7 +62,7 @@ public readonly struct Rectangle<T>: IComparable<Rectangle<T>> where T: unmanage
             for (var j = 0; j < rows; ++j) {
                 var x = bottom_left.x + width * T.CreateChecked(i);
                 var y = bottom_left.y + height * T.CreateChecked(j);
-                result[i * rows + j] = new(x, y, width, height);
+                result[i * columns + j] = new(x, y, width, height);
             }
         }
 

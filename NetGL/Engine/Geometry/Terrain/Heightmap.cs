@@ -12,28 +12,26 @@ public class Heightmap: IDisposable {
         this.texture_size = texture_size;
         this.texture      = new Texture2D<float>(texture_size, texture_size, PixelFormat.Red, PixelType.Float);
         this.texture.internal_pixel_format = PixelInternalFormat.R32f;
-        this.texture.min_filter = TextureMinFilter.Nearest;
-        this.texture.mag_filter = TextureMagFilter.Nearest;
+        this.texture.min_filter = TextureMinFilter.Linear;
+        this.texture.mag_filter = TextureMagFilter.Linear;
         this.texture.wrap_s = TextureWrapMode.ClampToEdge;
         this.texture.wrap_t = TextureWrapMode.ClampToEdge;
         this.texture.create();
     }
 
     public void generate(Noise noise) {
-        var map = new Heightmap(texture_size, bounds);
-
         for (var i = 0; i < texture_size * texture_size; ++i) {
             var px = i % texture_size;
             var py = i / texture_size;
 
-            map.texture[px, py] =
+            texture[px, py] =
                 noise.sample(
                              bounds.left + bounds.width * px / texture_size,
                              bounds.bottom + bounds.height * py / texture_size
                             );
         }
 
-        map.texture.create();
+        texture.update();
     }
 
     public void Dispose() {

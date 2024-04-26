@@ -2,7 +2,8 @@
 
 layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 offset;
-layout (location = 2) in float size;
+layout (location = 2) in int size;
+layout (location = 3) in vec4 color;
 
 uniform mat4 projection;
 uniform mat4 camera;
@@ -10,16 +11,26 @@ uniform mat4 model;
 
 uniform sampler2D heightmap;
 
+out vec3 vs_normal;
 out vec3 vs_color;
 
-void main()
-{
-  vec4 pos = vec4(offset.x + (position.x * size), 0, offset.y + (position.y * size), 1.0);
-  //pos.y = texture(heightmap, (vec2(pos.x, pos.z) + vec2(2048, 2048)) / 4096.0).r * 3.5;
-  pos.y = gl_InstanceID * -0.0075;
+void main() {
+  vec3 pos = vec3(offset.x + (position.x * size), 0, offset.y + (position.y * size));
 
-  gl_Position = pos * model * camera * projection;
+  vec2 tex_coord = vec2(pos.x, pos.z) / textureSize(heightmap, 0).xy + 0.5;
 
-  vs_color =  vec3(1, 1, 1); //1/ (pos.xzy / 2048.0);
-  //vs_color.r = (gl_InstanceID % 255) / 255.0;
+  pos.y = texture(heightmap, tex_coord).r;
+
+  // calculate normal from surrounding pixels
+  float north = textureOffset(heightmap, tex_coord, ivec2(0, 1)).r;
+  float south = textureOffset(heightmap, tex_coord, ivec2(0, -1)).r;
+  float east = textureOffset(heightmap, tex_coord, ivec2(1, 0)).r;
+  float west = textureOffset(heightmap, tex_coord, ivec2(-1, 0)).r;
+
+  // Calculate normal
+  vs_normal = normalize(vec3(east - west, 2.0, north - south));
+
+  gl_Position = vec4(pos, 1.0) * model * camera * projection;
+
+  vs_color = color.rgb;
 }

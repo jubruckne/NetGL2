@@ -1,4 +1,4 @@
-using System.Diagnostics;
+/*using System.Diagnostics;
 
 namespace NetGL;
 
@@ -70,3 +70,4 @@ public sealed partial class Quadtree<T> where T: class {
 
     public override string ToString() => $"Quadtree: tile size level_0={tile_size_by_level[0]}, level_{max_level}={tile_size_by_level[max_level]}";
 }
+*/
