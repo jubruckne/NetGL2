@@ -87,7 +87,7 @@ public class VertexArray: IBindable {
             GL.PatchParameter(PatchParameterInt.PatchVertices, 4);
 
         foreach (var attribute in vertex_attributes) {
-            Console.WriteLine($"VertexArray.create_attribute_pointers: name:{attribute.name}, location:{attribute.location}, count:{attribute.count}, offset:{attribute.offset}");
+            //Console.WriteLine($"VertexArray.create_attribute_pointers: name:{attribute.name}, location:{attribute.location}, count:{attribute.count}, offset:{attribute.offset}");
             attribute.source_buffer!.bind();
             GL.EnableVertexAttribArray(attribute.location);
 

@@ -89,6 +89,9 @@ public struct Color {
     public static implicit operator Color((float r, float g, float b) color) => new(color.r, color.g, color.b);
     public static implicit operator Color((float r, float g, float b, float a) color) => new(color.r, color.g, color.b, color.a);
 
+    public static Color operator*(Color left, float right)
+        => new Color(left.r * right, left.g * right, left.b * right, left.a);
+
     public override string ToString() => $"({r},{g},{b},{a})";
 
     // public static explicit operator System.Numerics.Vector3(Color color) => new(color.r, color.g, color.b);

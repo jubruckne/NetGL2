@@ -32,10 +32,10 @@ public class VertexBuffer<T>: Buffer<T>, IVertexBuffer where T: unmanaged {
     }
 
     private void attribute_def_init(in VertexAttribute[] attribute_definitions) {
-        Console.WriteLine($"\n\nattribute_def_init: {typeof(T).Name}");
+        //Console.WriteLine($"\n\nattribute_def_init: {typeof(T).Name}");
         var offset = 0;
         foreach (var attrib in attribute_definitions) {
-            Console.WriteLine($"attrib: {attrib.name}, offset: {offset} size_of: {attrib.size_of}");
+            //Console.WriteLine($"attrib: {attrib.name}, offset: {offset} size_of: {attrib.size_of}");
             attrib.offset = offset;
             offset += attrib.size_of;
             this.attribute_definitions.writeable().add(attrib.name, attrib);

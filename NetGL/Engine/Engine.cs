@@ -492,11 +492,17 @@ public class Engine: GameWindow {
                                 var.vertex_arrays[va] = ref_enable;
                             }
 
+                            if (va.has_instance_buffer) {
+                                ImGui.Text($"IB: length={va.instance_buffer!.length:N0}, size={va.instance_buffer!.total_size:N0}");
+                            }
+
                             foreach (var vb in va.vertex_buffers)
-                                ImGui.Text($"A: Length: {vb.length:N0}, Size: {vb.total_size:N0}");
+                                if (vb != va.instance_buffer)
+                                    ImGui.Text($"AB: length={vb.length:N0}, size={vb.total_size:N0}");
+
 
                             if(va is VertexArrayIndexed vai)
-                                ImGui.Text($"I: Length: {vai.index_buffer.length:N0}, Size: {vai.index_buffer.total_size:N0}");
+                                ImGui.Text($"EB: length={vai.index_buffer.length:N0}, size={vai.index_buffer.total_size:N0}");
 
 
                             ImGui.Spacing();

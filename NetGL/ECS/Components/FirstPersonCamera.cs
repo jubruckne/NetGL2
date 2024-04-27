@@ -12,6 +12,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
     public readonly float field_of_view_degrees;
     public readonly float near;
     public readonly float far;
+    public Frustum frustum { get; private set; }
 
     internal FirstPersonCamera (
         in Entity entity,
@@ -32,26 +33,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
 
         camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(field_of_view.degree_to_radians(), aspect_ratio, near, far);
         camera_data.camera_matrix = Matrix4.Identity;
-    }
-
-    public bool is_in_frustum(in Vector3 position) {
-        var view_projection = Matrix4.Mult(camera_data.camera_matrix, camera_data.projection_matrix);
-        var clipCoords = Vector4.Transform(new Vector4(position, 1f), view_projection.ExtractRotation());
-
-        // Normalize clip space coordinates (homogeneous division)
-        if (clipCoords.W != 0f) {
-            clipCoords.X /= clipCoords.W;
-            clipCoords.Y /= clipCoords.W;
-            clipCoords.Z /= clipCoords.W;
-        }
-
-        return Math.Abs(clipCoords.X) <= 1f && Math.Abs(clipCoords.Y) <= 1f && clipCoords.Z <= 1f;
-    }
-
-    public bool is_in_frustum(in Vector2 xz) {
-        // Create a 3D position using the XZ plane and a neutral Y value (e.g., the camera's Y position)
-        var position = new Vector3(xz.X, this.transform.position.Y, xz.Y);
-        return is_in_frustum(position);
+        frustum = new Frustum(camera_data.get_view_projection_matrix());
     }
 
     public override void update(in float delta_time) {
@@ -99,6 +81,7 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
 
         camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(60f.degree_to_radians(), viewport.aspect_ratio, near, far);
         camera_data.camera_matrix = transform.calculate_look_at_matrix();
+        frustum = new Frustum(camera_data.get_view_projection_matrix());
         //camera_data.game_time = Engine.game_time;
         camera_data.camera_position = transform.position;
 

@@ -1,7 +1,5 @@
 namespace NetGL;
 
-using OpenTK.Graphics.OpenGL4;
-
 public sealed class TerrainChunk {
     private const int quad_count = 1;
     private const int vertex_count = (quad_count + 1) * (quad_count + 1);

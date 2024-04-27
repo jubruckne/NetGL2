@@ -19,13 +19,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
       <PackageReference Include="AssimpNetLatest" Version="5.0.0-beta1" />
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.9.2" />
       <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="4.9.2" />
       <PackageReference Include="OpenTK" Version="4.8.2" />
       <PackageReference Include="Spectre.Console" Version="0.48.0" />
       <PackageReference Include="Spectre.Console.Cli" Version="0.48.0" />
-      <PackageReference Include="StbImageSharp" Version="2.27.13" />
+      <PackageReference Include="StbImageSharp" Version="2.27.14" />
       <Reference Include="BulletSharp">
           <HintPath>..\..\BulletSharpPInvoke\BulletSharp\bin\Debug\net8.0\BulletSharp.dll</HintPath>
       </Reference>
@@ -75,6 +76,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Assets\gen\" />
       <Folder Include="Assets\Heightmaps\" />
     </ItemGroup>
     

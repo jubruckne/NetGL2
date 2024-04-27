@@ -7,11 +7,17 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 6)]
-public struct InstanceData {
-    public short2 offset;
-    public short size;
-    public Color color;
-    public static implicit operator InstanceData((short x, short y, short size) v) => new() { offset = (v.x, v.y), size = v.size, color = Color.random_for(v)};
+public readonly struct InstanceData {
+    public readonly short2 offset;
+    public readonly short size;
+    public readonly Color color;
+    public static implicit operator InstanceData((short x, short y, short size) v) => new(v.x, v.y, v.size);
+
+    public InstanceData(short x, short y, short size) {
+        this.offset = (x, y);
+        this.size = size;
+        this.color = Color.random_for(offset) * 1.1f;
+    }
 
     public override string ToString()
         => $"offset={offset}, size={size}";
@@ -45,7 +51,7 @@ public class Terrain: Entity {
 
         noise = new();
 
-        lod_levels = LodLevels.create(8, 8,1);
+        lod_levels = LodLevels.create(6, 16,1);
 
         vertex_buffer = create_vertex_buffer();
         instance_buffer = create_instance_buffer(query_chunks_within_radius(get_camera_position(), 4096));
@@ -71,7 +77,7 @@ public class Terrain: Entity {
 
         renderer.vertex_arrays.Add(vertex_array, true);
 
-        renderer.render_settings.wireframe    = true;
+        renderer.render_settings.wireframe    = false;
         renderer.render_settings.depth_test   = true;
         renderer.render_settings.cull_face    = true;
         renderer.render_settings.front_facing = true;
@@ -165,6 +171,7 @@ public class Terrain: Entity {
                     center,
                     lod.level
                    );
+
         return chunks.ToArray();
     }
 
@@ -182,13 +189,17 @@ public class Terrain: Entity {
             if (distance <= lod_levels[level].max_distance && level < lod_levels.max_level) {
                 split_chunk(chunks, position, radius, rect, (short)(level + 1).at_most(lod_levels.max_level));
             } else if (distance <= radius) {
-                Console.WriteLine($"{new string(' ', level * 2)}chunk: rect={rect}, center={rect.center}, rect_size={rect.width} size={size}, level={level}");
-                var instance = new InstanceData {
-                                                    offset = ((short)rect.center.x, (short)rect.center.y),
-                                                    size = size,
-                                                    color = Color.random_for((rect, level))
-                                                };
-                chunks.Add(instance);
+                if (camera.frustum.contains((rect.center.x, 0, rect.center.y))) {
+                    Console.WriteLine(
+                                      $"{new string(' ', level * 2)}chunk: rect={rect}, center={rect.center}, rect_size={rect.width} size={size}, level={level}"
+                                     );
+                    var instance = new InstanceData(
+                                                    x: (short)rect.center.x,
+                                                    y: (short)rect.center.y,
+                                                    size: size
+                                                   );
+                    chunks.Add(instance);
+                }
             }
         }
 /*
