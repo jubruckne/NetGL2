@@ -6,17 +6,17 @@ using ECS;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[StructLayout(LayoutKind.Sequential, Pack = 1, Size = 6)]
+[StructLayout(LayoutKind.Sequential, Pack = 1, Size = 16)]
 public readonly struct InstanceData {
-    public readonly short2 offset;
-    public readonly short size;
+    public readonly float2 offset;
+    public readonly float size;
     public readonly Color color;
-    public static implicit operator InstanceData((short x, short y, short size) v) => new(v.x, v.y, v.size);
+    public static implicit operator InstanceData((float x, float y, float size) v) => new(v.x, v.y, v.size);
 
-    public InstanceData(short x, short y, short size) {
+    public InstanceData(float x, float y, float size) {
         this.offset = (x, y);
         this.size = size;
-        this.color = Color.random_for(offset) * 1.1f;
+        this.color = Color.random_for(x + y + size * Random.Shared.NextInt64());
     }
 
     public override string ToString()
@@ -51,10 +51,20 @@ public class Terrain: Entity {
 
         noise = new();
 
-        lod_levels = LodLevels.create(6, 16,1);
+        //lod_levels = LodLevels.create(6, 16,1);
+        lod_levels = LodLevels.create(
+                                      [
+                                          (1, 1),
+                                          (2, 8),
+                                          (4, 32),
+                                          (8, 128),
+                                          (16, 192),
+                                          (32, 256),
+                                          (64, 512)
+                                      ]);
 
         vertex_buffer = create_vertex_buffer();
-        instance_buffer = create_instance_buffer(query_chunks_within_radius(get_camera_position(), 4096));
+        instance_buffer = create_instance_buffer(query_chunks_within_radius(get_camera_position(), 1024));
         index_buffer = create_index_buffer();
 
         Garbage.start_measuring(this);
@@ -88,8 +98,8 @@ public class Terrain: Entity {
     private VertexBuffer<InstanceData> create_instance_buffer(Span<InstanceData> instances) {
         var ib = new VertexBuffer<InstanceData>(
                                                 instances.Length,
-                                                VertexAttribute.create_instanced<short2>("offset", divisor: 1),
-                                                VertexAttribute.create_instanced<short>("size", divisor: 1),
+                                                VertexAttribute.create_instanced<float2>("offset", divisor: 1),
+                                                VertexAttribute.create_instanced<float>("size", divisor: 1),
                                                 VertexAttribute.create_instanced<Color>("color", divisor: 1)
                                                );
 
@@ -155,13 +165,13 @@ public class Terrain: Entity {
 
         //Console.WriteLine($"checking for chunks to render with maxsize = {lod.size}, {lod}");
 
-        var center = Rectangle<int>.centered_at(
-                                                int2(
-                                                     (int)position.x.nearest_multiple(lod.tile_size),
-                                                     (int)position.z.nearest_multiple(lod.tile_size)
-                                                    ),
-                                                tile_count * lod.tile_size * 2
-                                               );
+        var center = Rectangle<float>.centered_at(
+                                                  float2(
+                                                         position.x.nearest_multiple(lod.tile_size),
+                                                         position.z.nearest_multiple(lod.tile_size)
+                                                        ),
+                                                  tile_count * lod.tile_size * 2
+                                                 );
 
         var chunks = new List<InstanceData>();
         split_chunk(
@@ -178,24 +188,33 @@ public class Terrain: Entity {
     private void split_chunk(List<InstanceData> chunks,
                              float3 position,
                              int radius,
-                             Rectangle<int> bounds,
+                             Rectangle<float> bounds,
                              short level
     ) {
         var size      = lod_levels[level].tile_size;
 
-        foreach (var rect in bounds.split_by_size(size, size)) {
-            var distance = position.distance_to((rect.center.x, 0, rect.center.y));
+        var split = bounds.split_by_size(size, size);
+        Debug.assert_equal(split.get_area(), bounds.get_area());
+        Debug.assert_equal(bounds.left, split[0].left);
+        Debug.assert_equal(bounds.bottom, split[0].bottom);
+        Debug.assert_equal(bounds.right, split[^1].right);
+        Debug.assert_equal(bounds.top, split[^1].top);
+
+        foreach (var rect in split) {
+            var distance = position.distance_to((rect.center.x, 0, rect.center.y)) - size / 2f;
 
             if (distance <= lod_levels[level].max_distance && level < lod_levels.max_level) {
                 split_chunk(chunks, position, radius, rect, (short)(level + 1).at_most(lod_levels.max_level));
+                Console.WriteLine();
             } else if (distance <= radius) {
                 if (camera.frustum.contains((rect.center.x, 0, rect.center.y))) {
+                    if(level == 1)
                     Console.WriteLine(
                                       $"{new string(' ', level * 2)}chunk: rect={rect}, center={rect.center}, rect_size={rect.width} size={size}, level={level}"
                                      );
                     var instance = new InstanceData(
-                                                    x: (short)rect.center.x,
-                                                    y: (short)rect.center.y,
+                                                    x: rect.center.x,
+                                                    y: rect.center.y,
                                                     size: size
                                                    );
                     chunks.Add(instance);

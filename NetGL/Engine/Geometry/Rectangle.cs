@@ -5,7 +5,22 @@ using NetGL.Vectors;
 
 namespace NetGL;
 
-public readonly struct Rectangle<T>: IComparable<Rectangle<T>> where T: unmanaged, INumber<T> {
+public static class RectangleExt {
+    public static T get_area<T>(this Rectangle<T> rectangle) where T: unmanaged, INumber<T>
+        => rectangle.width * rectangle.height;
+
+    public static T get_area<T>(this IEnumerable<Rectangle<T>> rectangles) where T: unmanaged, INumber<T> {
+        var result = T.CreateChecked(0);
+
+        foreach (var rectangle in rectangles)
+            result += rectangle.get_area();
+
+        return result;
+    }
+}
+
+public readonly struct Rectangle<T>: IComparable<Rectangle<T>>
+    where T: unmanaged, INumber<T> {
     public readonly vec2<T> bottom_left;
     public readonly vec2<T> top_right;
 
@@ -18,9 +33,17 @@ public readonly struct Rectangle<T>: IComparable<Rectangle<T>> where T: unmanage
     public T top => top_right.y;
     public T bottom => bottom_left.y;
 
-    public vec2<T> center => (bottom_left + top_right) / T.CreateChecked(2);
+    public vec2<T> center {
+        get {
+            // verify that center can be calculated without overflow
+            var center = (bottom_left + top_right) / T.CreateSaturating(2);
+            if((float2)center != (float2)(bottom_left + top_right) / 2f)
+                throw new OverflowException("Center calculation overflowed");
+            return center;
+        }
+    }
 
-    public Rectangle(T x, T y, T width, T height) {
+public Rectangle(T x, T y, T width, T height) {
         bottom_left = vec2(x, y);
         top_right = vec2(x + width, y + height);
     }

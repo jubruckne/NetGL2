@@ -16,7 +16,7 @@ public struct vec2<T>:
         this.y = y;
     }
 
-    public vec2(in vec2<T> other) {
+    public vec2(vec2<T> other) {
         this.x = other.x;
         this.y = other.y;
     }
@@ -34,13 +34,13 @@ public struct vec2<T>:
         return this;
     }
 
-    public vec2<T> set(in vec2<T> other) {
+    public vec2<T> set(vec2<T> other) {
         x = other.x;
         y = other.y;
         return this;
     }
 
-    public vec2<T> set<P>(in vec2<P> other)
+    public vec2<T> set<P>(vec2<P> other)
         where P: unmanaged, INumber<P> {
         x = T.CreateSaturating(other.x);
         y = T.CreateSaturating(other.y);
@@ -48,51 +48,51 @@ public struct vec2<T>:
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec2<T> operator+(vec2<T> left, in vec2<T> right) {
+    public static vec2<T> operator+(vec2<T> left, vec2<T> right) {
         left.x += right.x;
         left.y += right.y;
         return left;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec2<T> operator-(in vec2<T> left, in vec2<T> right)
+    public static vec2<T> operator-(vec2<T> left, vec2<T> right)
         => new (left.x - right.x, left.y - right.y);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec2<T> operator*(in vec2<T> left, T right)
+    public static vec2<T> operator*(vec2<T> left, T right)
         => new (left.x * right, left.y * right);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static vec2<T> operator/(in vec2<T> left, T right)
+    public static vec2<T> operator/(vec2<T> left, T right)
         => new (left.x / right, left.y / right);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator==(in vec2<T> left, in vec2<T> right)
+    public static bool operator==(vec2<T> left, vec2<T> right)
         => left.x == right.x && left.y == right.y;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator!=(in vec2<T> left, in vec2<T> right)
+    public static bool operator!=(vec2<T> left, vec2<T> right)
         => left.x != right.x || left.y != right.y;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator half2(in vec2<T> other) =>
+    public static explicit operator half2(vec2<T> other) =>
         new half2().set(other);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator float2(in vec2<T> other) =>
+    public static explicit operator float2(vec2<T> other) =>
         new float2().set(other);
 
-    public static explicit operator double2(in vec2<T> other) =>
+    public static explicit operator double2(vec2<T> other) =>
         new double2().set(other);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator vec2<T>((T x, T y) vector)
         => new vec2<T>(vector.x, vector.y);
 
-    public static explicit operator OpenTK.Mathematics.Vector2i(in vec2<T> vector)
+    public static explicit operator OpenTK.Mathematics.Vector2i(vec2<T> vector)
         => new(int.CreateChecked(vector.x), int.CreateChecked(vector.y));
 
-    public static explicit operator int2(in vec2<T> vector)
+    public static explicit operator int2(vec2<T> vector)
         => new(int.CreateChecked(vector.x), int.CreateChecked(vector.y));
 
     public readonly T length() {
