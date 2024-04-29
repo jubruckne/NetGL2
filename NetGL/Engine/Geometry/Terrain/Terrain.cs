@@ -55,10 +55,10 @@ public class Terrain: Entity {
         lod_levels = LodLevels.create(
                                       [
                                           (1, 1),
-                                          (2, 8),
-                                          (4, 32),
-                                          (8, 128),
-                                          (16, 192),
+                                          (2, 4),
+                                          (4, 16),
+                                          (8, 64),
+                                          (16, 128),
                                           (32, 256),
                                           (64, 512)
                                       ]);
@@ -84,6 +84,9 @@ public class Terrain: Entity {
         var vertex_array = new VertexArrayIndexed([vertex_buffer, instance_buffer], index_buffer, mat);
         vertex_array.create();
         renderer = this.add_vertex_array_renderer();
+
+        DrawCommand.List draw_list = new();
+        draw_list.add(new DrawCommand.DrawElementsInstanced(index_buffer, instance_buffer, index_buffer.length, instance_buffer.length));
 
         renderer.vertex_arrays.Add(vertex_array, true);
 
@@ -242,13 +245,13 @@ public class Terrain: Entity {
         => camera.transform.position;
 
     private void update() {
-        /*var (terrain_x, terrain_y, terrain_height) = world_to_terrain_position();
-        var chunks = query_chunks_within_radius((terrain_x, terrain_y), 200);
-        Console.WriteLine($"terrain_pos={terrain_x:N2}:{terrain_y:N2}, height={terrain_height}, chunks={chunks.Length}");
+        var pos = get_camera_position();
+        var chunks = query_chunks_within_radius(pos, 200);
+        //Console.WriteLine($"terrain_pos={terrain_x:N2}:{terrain_y:N2}, height={terrain_height}, chunks={chunks.Length}");
         for (var i = 0; i < chunks.Length; i++)
             instance_buffer[i] = chunks[i];
         instance_buffer.update();
-*/
+
         /*
         if (camera.transform.position.Y < terrain_height) {
             camera.transform.position.Y = float.Lerp(camera.transform.position.Y, terrain_height, 0.09f);

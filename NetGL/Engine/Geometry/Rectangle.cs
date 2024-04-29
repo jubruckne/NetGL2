@@ -97,6 +97,24 @@ public Rectangle(T x, T y, T width, T height) {
         return new(center.x - half_size, center.y - half_size, size, size);
     }
 
+    public bool contains(vec2<T> point)
+        => point.x >= bottom_left.x
+            && point.x <= top_right.x
+            && point.y >= bottom_left.y
+            && point.y <= top_right.y;
+
+    public bool contains(Rectangle<T> other)
+        => other.bottom_left.x >= bottom_left.x
+            && other.bottom_left.y >= bottom_left.y
+            && other.top_right.x <= top_right.x
+            && other.top_right.y <= top_right.y;
+
+    public bool intersects(Rectangle<T> other)
+        => bottom_left.x < other.top_right.x
+            && top_right.x > other.bottom_left.x
+            && bottom_left.y < other.top_right.y
+            && top_right.y > other.bottom_left.y;
+
     public static implicit operator Rectangle<T>((T x, T y, T width, T height) rect)
         => new(rect.x, rect.y, rect.width, rect.height);
 

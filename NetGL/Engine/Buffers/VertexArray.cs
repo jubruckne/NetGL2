@@ -1,5 +1,3 @@
-using System.Threading.Channels;
-
 namespace NetGL;
 
 using OpenTK.Graphics.OpenGL4;

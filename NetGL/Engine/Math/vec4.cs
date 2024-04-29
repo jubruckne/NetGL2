@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace NetGL.Vectors;
 
@@ -13,7 +14,7 @@ public partial struct vec4<T>:
     public T z;
     public T w;
 
-    public vec4(in vec3<T> xyz, T w) {
+    public vec4(vec3<T> xyz, T w) {
         this.x = xyz.x;
         this.y = xyz.y;
         this.z = xyz.z;
@@ -58,8 +59,6 @@ public partial struct vec4<T>:
     public static implicit operator vec4<T>((T x, T y, T z, T w) vector) =>
         new vec4<T>(vector.x, vector.y, vector.z, vector.w);
 
-    I[] ivec.get_array<I>() => new T[]{x, y, z, w}.Cast<I>().ToArray();
-    T[] ivec<T>.array => [x, y, z, w];
     T ivec2<T>.x => x;
     T ivec2<T>.y => y;
     T ivec3<T>.z => z;
@@ -67,13 +66,27 @@ public partial struct vec4<T>:
 }
 
 public partial struct vec4<T> {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals(vec4<T> other)
         => x.Equals(other.x) && y.Equals(other.y) && z.Equals(other.z);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Span<T> as_span()
+        => MemoryMarshal.CreateSpan(ref x, 4);
 
     public override bool Equals(object? obj)
         => obj is vec3<T> other && Equals(other);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override int GetHashCode() => HashCode.Combine(x, y, z, w);
 
     public override string ToString() => $"({x}, {y}, {z}, {w})";
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Deconstruct(out T x, out T y, out T z, out T w) {
+        x = this.x;
+        y = this.y;
+        z = this.z;
+        w = this.w;
+    }
 }

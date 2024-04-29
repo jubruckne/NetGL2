@@ -2,6 +2,45 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
 
+public static class packed_height {
+    private const float min_height = -512.0f;
+    private const float max_height = 512.0f;
+
+    public static uint pack(float height, float3 normal) {
+        // Normalize and scale the height to fit within an unsigned 16-bit integer range
+        var normalized_height = (height - min_height) / (max_height - min_height);
+        var packed_height     = (ushort)(normalized_height * ushort.MaxValue);
+
+        // Normalize and scale the normal components from [-1, 1] to [0, 255]
+        var nx = (byte)((normal.x * 0.5f + 0.5f) * 255.0f);
+        var nz = (byte)((normal.z * 0.5f + 0.5f) * 255.0f);
+
+        // Pack height and normals into a single 32-bit unsigned integer
+        return (uint)((packed_height << 16) | (nx << 8) | nz);
+    }
+
+    public static (float height, float3 normal) unpack(uint packed) {
+        // Extract the height
+        var packed_height = (ushort)(packed >> 16);
+        var height = (float)packed_height / ushort.MaxValue * (max_height - min_height) + min_height;
+
+        // Extract normals
+        var nx = (byte)((packed >> 8) & 0xFF);
+        var nz = (byte)(packed & 0xFF);
+
+        // Normalize normals back to [-1, 1]
+        var normal_x = nx / 255.0f * 2.0f - 1.0f;
+        var normal_z = nz / 255.0f * 2.0f - 1.0f;
+
+        var sum_squares = normal_x * normal_x + normal_z * normal_z;
+        var normal_y = sum_squares > 1.0f ? 0.0f : sqrt(1.0f - sum_squares) * float.Sign(height);
+
+        var normal = normalize(float3(normal_x, normal_y, normal_z));
+
+        return (height, normal);
+    }
+}
+
 public class Heightmap: IDisposable {
     public Rectangle bounds { get; } // in world space
     public int texture_size { get; } // in pixels
@@ -10,12 +49,12 @@ public class Heightmap: IDisposable {
     public Heightmap(int texture_size, Rectangle bounds) {
         this.bounds       = bounds;
         this.texture_size = texture_size;
-        this.texture      = new Texture2D<float>(texture_size, texture_size, PixelFormat.Red, PixelType.Float);
-        this.texture.internal_pixel_format = PixelInternalFormat.R32f;
+        this.texture      = new Texture2D<float>(texture_size, texture_size, PixelFormat.Rgba, PixelType.Byte);
+        this.texture.internal_pixel_format = PixelInternalFormat.Rgba;
         this.texture.min_filter = TextureMinFilter.Linear;
         this.texture.mag_filter = TextureMagFilter.Linear;
-        this.texture.wrap_s = TextureWrapMode.ClampToEdge;
-        this.texture.wrap_t = TextureWrapMode.ClampToEdge;
+        this.texture.wrap_s = TextureWrapMode.ClampToBorder;
+        this.texture.wrap_t = TextureWrapMode.ClampToBorder;
         this.texture.create();
     }
 
@@ -24,11 +63,28 @@ public class Heightmap: IDisposable {
             var px = i % texture_size;
             var py = i / texture_size;
 
-            texture[px, py] =
+            // sample noise at pixel position
+
+            var height =
                 noise.sample(
                              bounds.left + bounds.width * px / texture_size,
                              bounds.bottom + bounds.height * py / texture_size
                             );
+
+            var normal = normalize(
+                                   float3(
+                                          bounds.left + bounds.width * px / texture_size,
+                                          height,
+                                          bounds.bottom + bounds.height * py / texture_size
+                                         )
+                                  );
+
+            var hn = packed_height.pack(height, normal);
+            var hn2 = packed_height.unpack(hn);
+            Console.WriteLine($"original={(height, normal)}, unpacked={hn2}");
+
+            // pack height into 2x 8-bit channels
+            texture[px, py] = height;
         }
 
         texture.update();

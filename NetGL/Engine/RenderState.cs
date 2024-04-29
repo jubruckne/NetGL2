@@ -118,6 +118,35 @@ public static partial class RenderState {
         RenderState.shader.value = shader;
     }
 
+    public static void bind(IState state) {
+switch (state) {
+            case RenderState.CullFace cf:
+                RenderState.cull_face.value = cf.value;
+                break;
+            case RenderState.DepthTest dt:
+                RenderState.depth_test.value = dt.value;
+                break;
+            case RenderState.FrontFacing ff:
+                RenderState.front_facing.value = ff.value;
+                break;
+            case Shader sh:
+                RenderState.shader.value = sh.value;
+                break;
+            case RenderState.Wireframe wf:
+                RenderState.wireframe.value = wf.value;
+                break;
+            case RenderState.Blending bl:
+                RenderState.blending.value = bl.value;
+                break;
+            case RenderState.ScissorTest st:
+                RenderState.scissor_test.value = st.value;
+                break;
+            default:
+                Error.index_out_of_range(state);
+                break;
+        }
+    }
+
     public static void bind(in RenderSettings settings) {
         depth_test.value   = settings.depth_test;
         cull_face.value    = settings.cull_face;
@@ -128,34 +157,8 @@ public static partial class RenderState {
     }
 
     public static Bag<IState> bind(this Bag<IState> states) {
-        foreach (var state in states) {
-            switch (state) {
-                case RenderState.CullFace cf:
-                    RenderState.cull_face.value = cf.value;
-                    break;
-                case RenderState.DepthTest dt:
-                    RenderState.depth_test.value = dt.value;
-                    break;
-                case RenderState.FrontFacing ff:
-                    RenderState.front_facing.value = ff.value;
-                    break;
-                case Shader sh:
-                    RenderState.shader.value = sh.value;
-                    break;
-                case RenderState.Wireframe wf:
-                    RenderState.wireframe.value = wf.value;
-                    break;
-                case RenderState.Blending bl:
-                    RenderState.blending.value = bl.value;
-                    break;
-                case RenderState.ScissorTest st:
-                    RenderState.scissor_test.value = st.value;
-                    break;
-                default:
-                    Error.index_out_of_range(state);
-                    break;
-            }
-        }
+        foreach (var state in states)
+            bind(state);
 
         return states;
     }

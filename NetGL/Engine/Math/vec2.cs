@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace NetGL.Vectors;
 
@@ -117,15 +118,22 @@ public struct vec2<T>:
     public override string ToString() => $"({x}, {y})";
 
     public static vec2<T> zero => new(T.Zero, T.Zero);
-
     public static vec2<T> unit_x => new(T.One, T.Zero);
     public static vec2<T> unit_y => new(T.Zero, T.One);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Span<T> as_span()
+        => MemoryMarshal.CreateSpan(ref x, 2);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override int GetHashCode() => HashCode.Combine(x, y);
 
-    I[] ivec.get_array<I>() => new T[]{x, y}.Cast<I>().ToArray();
-    T[] ivec<T>.array => [x, y];
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Deconstruct(out T x, out T y) {
+        x = this.x;
+        y = this.y;
+    }
+
     T ivec2<T>.x => x;
     T ivec2<T>.y => y;
 }

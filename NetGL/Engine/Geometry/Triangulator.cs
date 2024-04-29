@@ -8,7 +8,7 @@ public static class Triangulator {
     public static float3 calculate_normal(in float3 p0, in float3 p1, in float3 p2) {
         var edge1 = p1 - p0;
         var edge2 = p2 - p0;
-        var norm  = vec.cross(edge1, edge2);
+        var norm  = cross(edge1, edge2);
         norm.normalize();
         return norm;
     }
@@ -20,7 +20,7 @@ public static class Triangulator {
         foreach (var tri in indices) {
             var edge1  = positions[tri.p1] - positions[tri.p0];
             var edge2  = positions[tri.p2] - positions[tri.p0];
-            var normal = vec.cross(edge1,edge2);
+            var normal = cross(edge1,edge2);
 
             normals[tri.p0] += (half3)normal;
             normals[tri.p1] += (half3)normal;
@@ -39,7 +39,7 @@ public static class Triangulator {
         foreach (var tri in indices) {
             var edge1  = positions[tri.p1] - positions[tri.p0];
             var edge2  = positions[tri.p2] - positions[tri.p0];
-            var normal = vec.cross(edge1,edge2);
+            var normal = cross(edge1,edge2);
 
             normals[tri.p0] += normal;
             normals[tri.p1] += normal;
@@ -58,7 +58,7 @@ public static class Triangulator {
         foreach (var tri in indices) {
             var edge1  = positions[tri.p1] - positions[tri.p0];
             var edge2  = positions[tri.p2] - positions[tri.p0];
-            var normal = vec.cross(edge1,edge2);
+            var normal = cross(edge1,edge2);
 
             normals[tri.p0] += normal;
             normals[tri.p1] += normal;

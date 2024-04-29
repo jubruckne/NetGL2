@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerators", "SourceG
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Benchmark\Benchmark.csproj", "{560FE862-15AF-4D3C-874A-F690E923EFA2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lab", "Lab\Lab.csproj", "{9DDC8FEA-607E-4184-BF35-5E4F06B0FDA6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -24,5 +26,9 @@ Global
 		{560FE862-15AF-4D3C-874A-F690E923EFA2}.Debug|ARM64.Build.0 = Debug|Any CPU
 		{560FE862-15AF-4D3C-874A-F690E923EFA2}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{560FE862-15AF-4D3C-874A-F690E923EFA2}.Release|ARM64.Build.0 = Release|Any CPU
+		{9DDC8FEA-607E-4184-BF35-5E4F06B0FDA6}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{9DDC8FEA-607E-4184-BF35-5E4F06B0FDA6}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{9DDC8FEA-607E-4184-BF35-5E4F06B0FDA6}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{9DDC8FEA-607E-4184-BF35-5E4F06B0FDA6}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

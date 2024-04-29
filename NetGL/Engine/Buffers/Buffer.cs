@@ -92,6 +92,9 @@ public abstract class Buffer<T>: Buffer, IDisposable where T: unmanaged {
         }
     }
 
+    public void clear()
+        => buffer.zero();
+
     public ArrayView<T> this[System.Range range]
         => buffer.get_view(range);
 

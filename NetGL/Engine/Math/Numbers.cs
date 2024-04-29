@@ -176,10 +176,6 @@ public static class Numbers {
     public static bool is_between_including<T>(this T t, in T lower, in T upper)
         where T: INumber<T> => t >= lower && t <= upper;
 
-    public static T sqrt<T>(this T number)
-        where T: IRootFunctions<T>
-        => T.Sqrt(number);
-
     public static T squared<T>(this T value)
         where T: IPowerFunctions<T>
         => T.Pow(value, T.CreateSaturating(2));

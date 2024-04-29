@@ -262,6 +262,7 @@ public abstract class Texture {
                 break;
             case PixelFormat.Red:
                 internal_pixel_format = pixel_type switch {
+                    PixelType.Byte         => PixelInternalFormat.R8,
                     PixelType.Float        => PixelInternalFormat.R32f,
                     PixelType.HalfFloat    => PixelInternalFormat.R16f,
                     PixelType.UnsignedByte => PixelInternalFormat.R8,
