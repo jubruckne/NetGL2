@@ -12,10 +12,7 @@
         <Platforms>ARM64</Platforms>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>./generated</CompilerGeneratedFilesOutputPath>
-        <Optimize>false</Optimize>
-        <WholeProgramOptimization>false</WholeProgramOptimization>
-        <DebugType>portable</DebugType>
-        <DebugSymbols>true</DebugSymbols>
+        <Optimize>true</Optimize>
     </PropertyGroup>
 
     <ItemGroup>

@@ -50,13 +50,12 @@ internal class Garbage: IDisposable {
     private Garbage([CallerMemberName] string? caller = default) {
         name = caller!;
         allocations_before = GC.GetAllocatedBytesForCurrentThread();
-        stopwatch          = new();
-        stopwatch.Start();
+        stopwatch = Stopwatch.StartNew();
     }
 
     public void Dispose() {
         stopwatch.Stop();
         var allocations = GC.GetAllocatedBytesForCurrentThread() - allocations_before;
-        Debug.println($"{name}: duration = {stopwatch.Elapsed.Milliseconds:N0} ms, allocated = {allocations:N0} bytes");
+        Debug.println($"{name}: duration = {stopwatch.ElapsedMilliseconds:N0} ms, allocated = {allocations:N0} bytes");
     }
 }

@@ -1,4 +1,4 @@
-﻿using Antlr4.Runtime;
+﻿/*using Antlr4.Runtime;
 using OpenTK.Windowing.Common;
 
 var input   = new AntlrFileStream("/Users/julia/RiderProjects/NetGL/NetGL/Assets/test.shader");
@@ -11,7 +11,9 @@ Console.WriteLine(context.ToStringTree(parser));
 
 foreach (var token in tokens.GetTokens())
     Console.WriteLine($"{token.ToString()}: {token.Type}");
+*/
 
+using OpenTK.Windowing.Common;
 
 Engine engine = new("NetGL", (1280, 820), debugging: true, window_state: WindowState.Normal);
 

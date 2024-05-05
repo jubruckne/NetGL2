@@ -5,21 +5,22 @@ using OpenTK.Graphics.OpenGL4;
 public class Texture2DArrayBuffer: TextureBuffer {
     protected readonly Image[] textures;
 
-    public override int length { get; }
-    public override int item_size { get; }
-    public override Type item_type { get; }
-    public override int total_size { get; }
+    public override int capacity => textures.Length;
 
-    protected Texture2DArrayBuffer(TextureTarget target, in Image[] textures): base(target) {
+    public sealed override int item_size { get; }
+    public sealed override Type item_type { get; }
+    // public override int total_size { get; }
+
+    protected Texture2DArrayBuffer(TextureTarget target, Image[] textures): base(target) {
         handle = 0;
+        this.textures = textures;
 
         length = textures.Length;
         width = textures[0].width;
         height = textures[0].height;
         item_size = textures[0].image_data.Length;
         item_type = textures[0].image_data.GetType();
-        total_size = textures.Length * textures[0].image_data.Length;
-        this.textures = textures;
+        //total_size = textures.Length * textures[0].image_data.Length;
     }
 
     public Texture2DArrayBuffer(in Image[] textures): this(TextureTarget.Texture2DArray, textures) {}

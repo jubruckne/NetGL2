@@ -59,6 +59,13 @@ public readonly struct Box: IEquatable<Box> {
         );
     }
 
+    public static Box from_rectangle_xz(Rectangle<float> rectangle) {
+        return new Box(
+                       float3(rectangle.left, float.NegativeInfinity, rectangle.bottom),
+                       float3(rectangle.right, float.PositiveInfinity, rectangle.top)
+                      );
+    }
+
     public static Box merge(Box left, Box right) {
         return new Box(
             float3(

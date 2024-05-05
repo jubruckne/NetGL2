@@ -6,10 +6,10 @@ using NetGL.Vectors;
 namespace NetGL;
 
 public static class RectangleExt {
-    public static T get_area<T>(this Rectangle<T> rectangle) where T: unmanaged, INumber<T>
+    public static T get_area<T>(this Rectangle<T> rectangle) where T: unmanaged, INumber<T>, IMinMaxValue<T>
         => rectangle.width * rectangle.height;
 
-    public static T get_area<T>(this IEnumerable<Rectangle<T>> rectangles) where T: unmanaged, INumber<T> {
+    public static T get_area<T>(this ReadOnlySpan<Rectangle<T>> rectangles) where T: unmanaged, INumber<T>, IMinMaxValue<T> {
         var result = T.CreateChecked(0);
 
         foreach (var rectangle in rectangles)
@@ -20,9 +20,12 @@ public static class RectangleExt {
 }
 
 public readonly struct Rectangle<T>: IComparable<Rectangle<T>>
-    where T: unmanaged, INumber<T> {
+    where T: unmanaged, INumber<T>, IMinMaxValue<T> {
     public readonly vec2<T> bottom_left;
     public readonly vec2<T> top_right;
+
+    public vec2<T> top_left => new(top, left);
+    public vec2<T> bottom_right => new(bottom, right);
 
     public T x => bottom_left.x;
     public T y => bottom_left.y;
@@ -85,7 +88,7 @@ public Rectangle(T x, T y, T width, T height) {
             for (var j = 0; j < rows; ++j) {
                 var x = bottom_left.x + width * T.CreateChecked(i);
                 var y = bottom_left.y + height * T.CreateChecked(j);
-                result[i * columns + j] = new(x, y, width, height);
+                result[i + j * columns] = new(x, y, width, height);
             }
         }
 
@@ -95,6 +98,33 @@ public Rectangle(T x, T y, T width, T height) {
     public static Rectangle<T> centered_at(vec2<T> center, T size) {
         var half_size = size / T.CreateChecked(2);
         return new(center.x - half_size, center.y - half_size, size, size);
+    }
+
+    public static Rectangle<T> square(T x, T y, T size)
+        => new(x, y, size, size);
+
+    public static Rectangle<T> from_points(IEnumerable<vec2<T>> points) {
+        var min = vec2(T.MaxValue);
+        var max = vec2(T.MinValue);
+
+        foreach (var point in points) {
+            if (point.x < min.x)
+                min.x = point.x;
+
+            if (point.y < min.y)
+                min.y = point.y;
+
+            if (point.x > max.x)
+                max.x = point.x;
+
+            if (point.y > max.y)
+                max.y = point.y;
+        }
+
+        if(min.x == T.MaxValue)
+            throw new ArgumentException(nameof(points));
+
+        return new Rectangle<T>(min, max);
     }
 
     public bool contains(vec2<T> point)

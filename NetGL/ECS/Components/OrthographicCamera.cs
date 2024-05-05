@@ -35,7 +35,7 @@ public class OrthographicCamera: Camera, IComponent<FirstPersonCamera>, IUpdatab
         return $"position: {entity.transform.position} rotation: {entity.transform.rotation}";
     }
 
-    public override void update(in float delta_time) {
+    public override void update(float delta_time) {
         if (enable_input) {
             var speed = this.speed * delta_time;
             var sensitivity = this.sensitivity * this.speed * delta_time * 180f;

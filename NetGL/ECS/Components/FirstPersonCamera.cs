@@ -33,10 +33,10 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
 
         camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(field_of_view.degree_to_radians(), aspect_ratio, near, far);
         camera_data.camera_matrix = Matrix4.Identity;
-        frustum = new Frustum(camera_data.get_view_projection_matrix());
+        frustum = Frustum.from_matrix(camera_data.get_view_projection_matrix());
     }
 
-    public override void update(in float delta_time) {
+    public override void update(float delta_time) {
         if (enable_input) {
             var speed = this.speed * delta_time;
 
@@ -79,9 +79,9 @@ public class FirstPersonCamera: Camera, IComponent<FirstPersonCamera>, IUpdatabl
             transform.attitude.pitch = pitch_clamp[1];
 */
 
-        camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(60f.degree_to_radians(), viewport.aspect_ratio, near, far);
+        camera_data.projection_matrix = Matrix4.CreatePerspectiveFieldOfView(field_of_view_degrees.degree_to_radians(), viewport.aspect_ratio, near, far);
         camera_data.camera_matrix = transform.calculate_look_at_matrix();
-        frustum = new Frustum(camera_data.get_view_projection_matrix());
+        frustum = Frustum.from_matrix(camera_data.get_view_projection_matrix());
         //camera_data.game_time = Engine.game_time;
         camera_data.camera_position = transform.position;
 

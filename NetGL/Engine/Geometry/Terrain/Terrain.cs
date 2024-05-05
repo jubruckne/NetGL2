@@ -16,7 +16,10 @@ public readonly struct InstanceData {
     public InstanceData(float x, float y, float size) {
         this.offset = (x, y);
         this.size = size;
-        this.color = Color.random_for(x + y + size * Random.Shared.NextInt64());
+        color.r = (abs(x) % 100) / 128f;
+        color.g = (abs(y) % 100) / 128f;
+        color.b = sqrt(size) / 8f;
+        color.a = 1f;
     }
 
     public override string ToString()
@@ -54,28 +57,30 @@ public class Terrain: Entity {
         //lod_levels = LodLevels.create(6, 16,1);
         lod_levels = LodLevels.create(
                                       [
-                                          (1, 1),
-                                          (2, 4),
-                                          (4, 16),
-                                          (8, 64),
-                                          (16, 128),
-                                          (32, 256),
-                                          (64, 512)
+                                          (1, 16),
+                                          (2, 32),
+                                          (4, 64),
+                                          (8, 128),
+                                          (16, 256),
+                                          (32, 512),
+                                          (64, 768)
                                       ]);
 
         vertex_buffer = create_vertex_buffer();
-        instance_buffer = create_instance_buffer(query_chunks_within_radius(get_camera_position(), 1024));
+        instance_buffer = create_instance_buffer(32000);
+        query_chunks_within_radius(get_camera_position(), 4096);
         index_buffer = create_index_buffer();
 
-        Garbage.start_measuring(this);
+        Garbage.start_measuring();
 
-        heightmap = new Heightmap(2048, Rectangle.centered_at((0, 0), 16384));
-        heightmap.generate(noise);
+        heightmap = new Heightmap(4096 * 4, Rectangle.centered_at((0, 0), 16384));
+        heightmap.generate_threaded(noise);
+
         //HeightmapAsset.serialize_to_file(heightmap, "heightmap.jl");
+        Garbage.stop_measuring();
 
         //heightmap = HeightmapAsset.deserialize_from_file("heightmap.jl");
 
-        Garbage.stop_measuring(this);
 
         shader = this.add_shader(Shader.from_file("terrain","terrain.vert.glsl", "terrain.frag.glsl")).shader;
         Materials.Material mat = new("Terrain", shader);
@@ -85,8 +90,8 @@ public class Terrain: Entity {
         vertex_array.create();
         renderer = this.add_vertex_array_renderer();
 
-        DrawCommand.List draw_list = new();
-        draw_list.add(new DrawCommand.DrawElementsInstanced(index_buffer, instance_buffer, index_buffer.length, instance_buffer.length));
+       // DrawCommand.List draw_list = new();
+        //draw_list.add(new DrawCommand.DrawElementsInstanced(index_buffer, instance_buffer, index_buffer.length, instance_buffer.length));
 
         renderer.vertex_arrays.Add(vertex_array, true);
 
@@ -95,20 +100,16 @@ public class Terrain: Entity {
         renderer.render_settings.cull_face    = true;
         renderer.render_settings.front_facing = true;
 
-        this.add_behavior(_ => update());
+       this.add_behavior(_ => update());
     }
 
-    private VertexBuffer<InstanceData> create_instance_buffer(Span<InstanceData> instances) {
+    private VertexBuffer<InstanceData> create_instance_buffer(int max_instances = 16384) {
         var ib = new VertexBuffer<InstanceData>(
-                                                instances.Length,
+                                                max_instances,
                                                 VertexAttribute.create_instanced<float2>("offset", divisor: 1),
                                                 VertexAttribute.create_instanced<float>("size", divisor: 1),
                                                 VertexAttribute.create_instanced<Color>("color", divisor: 1)
                                                );
-
-        for (var index = 0; index < instances.Length; index++)
-            ib[index] = instances[index];
-
         ib.create();
         return ib;
     }
@@ -162,11 +163,13 @@ public class Terrain: Entity {
         return vb;
     }
 
-    private Span<InstanceData> query_chunks_within_radius(float3 position, float radius) {
+    private void query_chunks_within_radius(float3 position, float radius) {
         var lod = lod_levels.lowest;
         var tile_count = (int)Math.Ceiling(radius / lod.tile_size);
 
-        //Console.WriteLine($"checking for chunks to render with maxsize = {lod.size}, {lod}");
+        //Console.WriteLine($"split_chunk: {position}");
+        //Console.WriteLine(camera.camera_data.get_view_projection_matrix());
+
 
         var center = Rectangle<float>.centered_at(
                                                   float2(
@@ -176,27 +179,23 @@ public class Terrain: Entity {
                                                   tile_count * lod.tile_size * 2
                                                  );
 
-        var chunks = new List<InstanceData>();
+        instance_buffer.clear();
         split_chunk(
-                    chunks,
                     position,
                     (int)radius,
                     center,
                     lod.level
                    );
-
-        return chunks.ToArray();
     }
 
-    private void split_chunk(List<InstanceData> chunks,
-                             float3 position,
+    private void split_chunk(float3 position,
                              int radius,
                              Rectangle<float> bounds,
                              short level
     ) {
         var size      = lod_levels[level].tile_size;
 
-        var split = bounds.split_by_size(size, size);
+        ReadOnlySpan<Rectangle<float>> split = bounds.split_by_size(size, size);
         Debug.assert_equal(split.get_area(), bounds.get_area());
         Debug.assert_equal(bounds.left, split[0].left);
         Debug.assert_equal(bounds.bottom, split[0].bottom);
@@ -207,20 +206,19 @@ public class Terrain: Entity {
             var distance = position.distance_to((rect.center.x, 0, rect.center.y)) - size / 2f;
 
             if (distance <= lod_levels[level].max_distance && level < lod_levels.max_level) {
-                split_chunk(chunks, position, radius, rect, (short)(level + 1).at_most(lod_levels.max_level));
-                Console.WriteLine();
+                split_chunk(position, radius, rect, (short)(level + 1).at_most(lod_levels.max_level));
+                //Console.WriteLine();
             } else if (distance <= radius) {
-                if (camera.frustum.contains((rect.center.x, 0, rect.center.y))) {
-                    if(level == 1)
-                    Console.WriteLine(
-                                      $"{new string(' ', level * 2)}chunk: rect={rect}, center={rect.center}, rect_size={rect.width} size={size}, level={level}"
-                                     );
+                if(camera.frustum.intersects(Box.from_rectangle_xz(rect))) {
+                    //Console.WriteLine(
+                    //                  $"{new string(' ', level * 2)}chunk: rect={rect}, center={rect.center}, rect_size={rect.width} size={size}, level={level}"
+                    //                 );
                     var instance = new InstanceData(
                                                     x: rect.center.x,
                                                     y: rect.center.y,
                                                     size: size
                                                    );
-                    chunks.Add(instance);
+                    instance_buffer.append(instance);
                 }
             }
         }
@@ -245,12 +243,12 @@ public class Terrain: Entity {
         => camera.transform.position;
 
     private void update() {
-        var pos = get_camera_position();
-        var chunks = query_chunks_within_radius(pos, 200);
-        //Console.WriteLine($"terrain_pos={terrain_x:N2}:{terrain_y:N2}, height={terrain_height}, chunks={chunks.Length}");
-        for (var i = 0; i < chunks.Length; i++)
-            instance_buffer[i] = chunks[i];
+        var pos    = get_camera_position();
+        query_chunks_within_radius(pos, 4096);
         instance_buffer.update();
+
+        //Console.WriteLine($"# of chunks: {chunks.Length}, world_pos={pos}");
+
 
         /*
         if (camera.transform.position.Y < terrain_height) {

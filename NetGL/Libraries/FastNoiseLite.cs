@@ -729,10 +729,8 @@ public sealed class FastNoiseLite {
         y *= mFrequency;
         z *= mFrequency;
 
-        switch (mTransformType3D)
-        {
-            case TransformType3D.ImproveXYPlanes:
-                {
+        switch (mTransformType3D) {
+            case TransformType3D.ImproveXYPlanes: {
                     var xy = x + y;
                     var s2 = xy * -(float)0.211324865405187;
                     z *= (float)0.577350269189626;
@@ -741,8 +739,7 @@ public sealed class FastNoiseLite {
                     z += xy * (float)0.577350269189626;
                 }
                 break;
-            case TransformType3D.ImproveXZPlanes:
-                {
+            case TransformType3D.ImproveXZPlanes: {
                     var xz = x + z;
                     var s2 = xz * -(float)0.211324865405187;
                     y *= (float)0.577350269189626;
@@ -751,8 +748,7 @@ public sealed class FastNoiseLite {
                     y += xz * (float)0.577350269189626;
                 }
                 break;
-            case TransformType3D.DefaultOpenSimplex2:
-                {
+            case TransformType3D.DefaultOpenSimplex2: {
                     const float R3 = (float)(2.0 / 3.0);
                     var r = (x + y + z) * R3; // Rotation, not skew
                     x = r - x;
@@ -764,8 +760,7 @@ public sealed class FastNoiseLite {
     }
 
     private void UpdateTransformType3D() {
-        switch (mRotationType3D)
-        {
+        switch (mRotationType3D) {
             case RotationType3D.ImproveXYPlanes:
                 mTransformType3D = TransformType3D.ImproveXYPlanes;
                 break;
@@ -790,8 +785,7 @@ public sealed class FastNoiseLite {
     // Domain Warp Coordinate Transforms
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void TransformDomainWarpCoordinate(ref float x, ref float y) {
-        switch (mDomainWarpType)
-        {
+        switch (mDomainWarpType) {
             case DomainWarpType.OpenSimplex2:
             case DomainWarpType.OpenSimplex2Reduced:
             {
@@ -806,10 +800,8 @@ public sealed class FastNoiseLite {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void TransformDomainWarpCoordinate(ref float x, ref float y, ref float z) {
-        switch (mWarpTransformType3D)
-        {
-            case TransformType3D.ImproveXYPlanes:
-                {
+        switch (mWarpTransformType3D) {
+            case TransformType3D.ImproveXYPlanes: {
                     var xy = x + y;
                     var s2 = xy * -(float)0.211324865405187;
                     z *= (float)0.577350269189626;
@@ -818,8 +810,7 @@ public sealed class FastNoiseLite {
                     z += xy * (float)0.577350269189626;
                 }
                 break;
-            case TransformType3D.ImproveXZPlanes:
-                {
+            case TransformType3D.ImproveXZPlanes: {
                     var xz = x + z;
                     var s2 = xz * -(float)0.211324865405187;
                     y *= (float)0.577350269189626;
@@ -827,8 +818,7 @@ public sealed class FastNoiseLite {
                     y += xz * (float)0.577350269189626;
                 }
                 break;
-            case TransformType3D.DefaultOpenSimplex2:
-                {
+            case TransformType3D.DefaultOpenSimplex2: {
                     const float R3 = (float)(2.0 / 3.0);
                     var r = (x + y + z) * R3; // Rotation, not skew
                     x = r - x;
@@ -842,8 +832,7 @@ public sealed class FastNoiseLite {
     }
 
     private void UpdateWarpTransformType3D() {
-        switch (mRotationType3D)
-        {
+        switch (mRotationType3D) {
             case RotationType3D.ImproveXYPlanes:
                 mWarpTransformType3D = TransformType3D.ImproveXYPlanes;
                 break;
@@ -851,8 +840,7 @@ public sealed class FastNoiseLite {
                 mWarpTransformType3D = TransformType3D.ImproveXZPlanes;
                 break;
             default:
-                switch (mDomainWarpType)
-                {
+                switch (mDomainWarpType) {
                     case DomainWarpType.OpenSimplex2:
                     case DomainWarpType.OpenSimplex2Reduced:
                         mWarpTransformType3D = TransformType3D.DefaultOpenSimplex2;
@@ -871,8 +859,7 @@ public sealed class FastNoiseLite {
         float sum = 0;
         var amp = mFractalBounding;
 
-        for (var i = 0; i < mOctaves; i++)
-        {
+        for (var i = 0; i < mOctaves; i++) {
             var noise = GenNoiseSingle(seed++, x, y);
             sum += noise * amp;
             amp *= Lerp(1.0f, FastMin(noise + 1, 2) * 0.5f, mWeightedStrength);
@@ -890,8 +877,7 @@ public sealed class FastNoiseLite {
         float sum = 0;
         var amp = mFractalBounding;
 
-        for (var i = 0; i < mOctaves; i++)
-        {
+        for (var i = 0; i < mOctaves; i++) {
             var noise = GenNoiseSingle(seed++, x, y, z);
             sum += noise * amp;
             amp *= Lerp(1.0f, (noise + 1) * 0.5f, mWeightedStrength);
@@ -911,8 +897,7 @@ public sealed class FastNoiseLite {
         float sum = 0;
         var amp = mFractalBounding;
 
-        for (var i = 0; i < mOctaves; i++)
-        {
+        for (var i = 0; i < mOctaves; i++) {
             var noise = FastAbs(GenNoiseSingle(seed++, x, y));
             sum += (noise * -2 + 1) * amp;
             amp *= Lerp(1.0f, 1 - noise, mWeightedStrength);
@@ -930,8 +915,7 @@ public sealed class FastNoiseLite {
         float sum = 0;
         var amp = mFractalBounding;
 
-        for (var i = 0; i < mOctaves; i++)
-        {
+        for (var i = 0; i < mOctaves; i++) {
             var noise = FastAbs(GenNoiseSingle(seed++, x, y, z));
             sum += (noise * -2 + 1) * amp;
             amp *= Lerp(1.0f, 1 - noise, mWeightedStrength);
@@ -953,8 +937,7 @@ public sealed class FastNoiseLite {
         float sum = 0;
         var amp = mFractalBounding;
 
-        for (var i = 0; i < mOctaves; i++)
-        {
+        for (var i = 0; i < mOctaves; i++) {
             var noise = PingPong((GenNoiseSingle(seed++, x, y) + 1) * mPingPongStrength);
             sum += (noise - 0.5f) * 2 * amp;
             amp *= Lerp(1.0f, noise, mWeightedStrength);
@@ -972,8 +955,7 @@ public sealed class FastNoiseLite {
         float sum = 0;
         var amp = mFractalBounding;
 
-        for (var i = 0; i < mOctaves; i++)
-        {
+        for (var i = 0; i < mOctaves; i++) {
             var noise = PingPong((GenNoiseSingle(seed++, x, y, z) + 1) * mPingPongStrength);
             sum += (noise - 0.5f) * 2 * amp;
             amp *= Lerp(1.0f, noise, mWeightedStrength);
@@ -1022,39 +1004,33 @@ public sealed class FastNoiseLite {
 
         var a = 0.5f - x0 * x0 - y0 * y0;
         if (a <= 0) n0 = 0;
-        else
-        {
+        else {
             n0 = (a * a) * (a * a) * GradCoord(seed, i, j, x0, y0);
         }
 
         var c = 2 * (1 - 2 * G2) * (1 / G2 - 2) * t + (-2 * (1 - 2 * G2) * (1 - 2 * G2) + a);
         if (c <= 0) n2 = 0;
-        else
-        {
+        else {
             var x2 = x0 + (2 * G2 - 1);
             var y2 = y0 + (2 * G2 - 1);
             n2 = (c * c) * (c * c) * GradCoord(seed, i + PrimeX, j + PrimeY, x2, y2);
         }
 
-        if (y0 > x0)
-        {
+        if (y0 > x0) {
             var x1 = x0 + G2;
             var y1 = y0 + (G2 - 1);
             var b = 0.5f - x1 * x1 - y1 * y1;
             if (b <= 0) n1 = 0;
-            else
-            {
+            else {
                 n1 = (b * b) * (b * b) * GradCoord(seed, i, j + PrimeY, x1, y1);
             }
         }
-        else
-        {
+        else {
             var x1 = x0 + (G2 - 1);
             var y1 = y0 + G2;
             var b = 0.5f - x1 * x1 - y1 * y1;
             if (b <= 0) n1 = 0;
-            else
-            {
+            else {
                 n1 = (b * b) * (b * b) * GradCoord(seed, i + PrimeX, j, x1, y1);
             }
         }
@@ -1062,8 +1038,7 @@ public sealed class FastNoiseLite {
         return (n0 + n1 + n2) * 99.83685446303647f;
     }
 
-    private static float SingleOpenSimplex2(int seed, float x, float y, float z)
-    {
+    private static float SingleOpenSimplex2(int seed, float x, float y, float z) {
         // 3D OpenSimplex2 case uses two offset rotated cube grids.
 
         /*

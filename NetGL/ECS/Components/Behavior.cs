@@ -6,7 +6,7 @@ public class Behavior: IComponent<Behavior>, IUpdatableComponent {
     private readonly Predicate<Entity>? condition;
     private readonly Action<Entity> action;
 
-    internal Behavior(in Entity entity, string name, Predicate<Entity>? condition, Action<Entity> action) {
+    internal Behavior(Entity entity, string name, Predicate<Entity>? condition, Action<Entity> action) {
         this.entity = entity;
         this.name = name;
         this.action = action;
@@ -15,7 +15,7 @@ public class Behavior: IComponent<Behavior>, IUpdatableComponent {
 
     public bool enable_update { get; set; } = true;
 
-    public void update(in float delta_time) {
+    public void update(float delta_time) {
         if (condition == null || condition(entity)) action(entity);
     }
 }

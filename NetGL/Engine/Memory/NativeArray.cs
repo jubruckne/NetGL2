@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
+[SkipLocalsInit]
 public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmanaged {
     public int length { get; private set; }
     private nint data;
@@ -198,7 +199,7 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
         }
     }
 
-    public void insert(in T[] items, int at = 0) {
+    public void insert(ReadOnlySpan<T> items, int at = 0) {
         if (at < 0)
             Error.index_out_of_range("at", at);
 

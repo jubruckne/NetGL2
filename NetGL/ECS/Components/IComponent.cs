@@ -4,7 +4,7 @@ namespace NetGL.ECS;
 
 public interface IUpdatableComponent {
     bool enable_update { get; set; }
-    void update(in float delta_time);
+    void update(float delta_time);
 }
 
 public class RenderData {
@@ -20,7 +20,7 @@ public interface IRenderable {
 
 public interface IRenderableComponent {
     Light[] lights { get; internal set; }
-    void render(in Camera camera, in Matrix4 model_matrix);
+    void render(Camera camera, in Matrix4 model_matrix);
 }
 
 public interface IComponent: INamed {

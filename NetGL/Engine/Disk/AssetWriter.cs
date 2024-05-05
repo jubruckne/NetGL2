@@ -56,7 +56,7 @@ public class AssetWriter: IDisposable {
         stream.Write(data);
         chunk_headers.Add(header);
 
-        Console.WriteLine($"Wrote chunk '{name}' with {data.Length} bytes, hash: {hash}.");
+        Console.WriteLine($"Wrote chunk '{name}' with {data.Length:N0} bytes, hash: {hash}.");
     }
 
     public static AssetWriter open(string filename)

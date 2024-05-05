@@ -5,19 +5,20 @@ using OpenTK.Graphics.OpenGL4;
 public class Texture2DBuffer: TextureBuffer {
     private readonly Image _image;
 
-    public override int length => 1;
+    public override int capacity => 1;
+
     public override int item_size { get; }
     public override Type item_type { get; }
-    public override int total_size { get; }
+    // public override int total_size { get; }
 
-    public Texture2DBuffer(in Image image) : base(TextureTarget.Texture2D) {
+    public Texture2DBuffer(Image image) : base(TextureTarget.Texture2D) {
         handle = 0;
 
         width = image.width;
         height = image.height;
+        length = 1;
         item_size = image.image_data.Length;
         item_type = image.image_data.GetType();
-        total_size = image.image_data.Length;
         this._image = image;
     }
 

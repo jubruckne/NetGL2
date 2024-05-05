@@ -25,15 +25,28 @@ using System.Runtime.CompilerServices;
 namespace NetGL.Vectors;
 
 public static class VectorGlobal {
+
+    public static T abs<T>(T number)
+        where T: INumber<T>
+        => T.Abs(number);
+
     public static T sqrt<T>(T number)
         where T: IRootFunctions<T>
         => T.Sqrt(number);
 
     // ------------------------ generic ------------------------------
 
+    public static vec2<T> vec2<T>(T v)
+        where T: unmanaged, INumber<T>
+        => new vec2<T>(v, v);
+
     public static vec2<T> vec2<T>(T x, T y)
         where T: unmanaged, INumber<T>
         => new vec2<T>(x, y);
+
+    public static vec3<T> vec3<T>(T v)
+        where T: unmanaged, INumber<T>
+        => new vec3<T>(v, v, v);
 
     public static vec3<T> vec3<T>(T x, T y, T z)
         where T: unmanaged, INumber<T>
@@ -42,6 +55,10 @@ public static class VectorGlobal {
     public static vec4<T> vec4<T>(T x, T y, T z, T w)
         where T: unmanaged, INumber<T>
         => new vec4<T>(x, y, z, w);
+
+    public static vec4<T> vec4<T>(T v)
+        where T: unmanaged, INumber<T>
+        => new vec4<T>(v, v, v, v);
 
     // -------------------------- int --------------------------------
 

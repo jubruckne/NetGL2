@@ -75,12 +75,23 @@ public static class Debug {
 
     [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
     public static void assert_equal<T>(
+        string description,
         T value1,
         T value2,
         [CallerArgumentExpression("value1")] string? name1 = default,
         [CallerArgumentExpression("value2")] string? name2 = default) where T: unmanaged, IEqualityOperators<T, T, bool> {
         if (value1 != value2)
-            throw new Exception($"Assertion failed: {name1}=={name2}: {value1}!={value2}!");
+            throw new Exception($"{description}: ({name1}=={name2}) {value1}!={value2}!");
+    }
+
+    [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
+    public static void assert_equal<T>(
+        T value1,
+        T value2,
+        [CallerArgumentExpression("value1")] string? name1 = default,
+        [CallerArgumentExpression("value2")] string? name2 = default) where T: unmanaged, IEqualityOperators<T, T, bool> {
+        if (value1 != value2)
+            throw new Exception($"Assertion failed: ({name1}=={name2}): {value1}!={value2}!");
     }
 
     [DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]

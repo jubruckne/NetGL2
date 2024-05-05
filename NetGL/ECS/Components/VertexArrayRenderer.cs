@@ -35,7 +35,7 @@ public class VertexArrayRenderer: IComponent<VertexArrayRenderer>, IRenderableCo
         return $"{name}: {entity.name}";
     }
 
-    public void render(in Camera camera,
+    public void render(Camera camera,
                        in Matrix4 model_matrix
     ) {
         var shader = entity.get<ShaderComponent>().shader;

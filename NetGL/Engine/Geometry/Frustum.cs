@@ -1,12 +1,11 @@
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
 using OpenTK.Mathematics;
 
 namespace NetGL;
 
 using System.Runtime.CompilerServices;
 
-public readonly struct Frustum {
+public readonly struct Frustum: IFormattable {
     public readonly Plane left_plane;
     public readonly Plane right_plane;
     public readonly Plane top_plane;
@@ -17,7 +16,7 @@ public readonly struct Frustum {
     public ReadOnlySpan<Plane> planes
         => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in left_plane), 6);
 
-    public static Frustum from_matrix(Matrix4 matrix) => new Frustum(matrix);
+    public static Frustum from_matrix(in Matrix4 matrix) => new Frustum(matrix);
 
     private Frustum(in Matrix4 matrix) {
         left_plane = new Plane(
@@ -132,4 +131,13 @@ public readonly struct Frustum {
            bottom_plane.intersects(ray) ||
            near_plane.intersects(ray) ||
            far_plane.intersects(ray);
+
+    public string ToString(string? format, IFormatProvider? formatProvider) {
+        FormattableString formattable = $"near: {near}, far: {far}, position: {position}, direction: {direction}";
+        return formattable.ToString(formatProvider);
+    }
+
+    public override string ToString() {
+        return $"near: {near}, far: {far}, position: {position}, direction: {direction}";
+    }
 }

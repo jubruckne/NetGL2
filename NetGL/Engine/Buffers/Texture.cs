@@ -36,6 +36,7 @@ public abstract class TextureBuffer: Buffer {
     public void bind() => bind(0);
 }
 
+[SkipLocalsInit]
 public class Texture2D<T>: Texture<T>
     where T: unmanaged {
     public readonly int width;

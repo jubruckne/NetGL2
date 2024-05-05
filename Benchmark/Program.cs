@@ -1,54 +1,41 @@
-﻿/*using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics;
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
-using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Exporters;
-using BenchmarkDotNet.Loggers;
-using BenchmarkDotNet.Reports;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using NetGL.Vectors;
-using Vector3 = System.Numerics.Vector3;
+using NetGL;
 
-BenchmarkRunner.Run<EnhancedGraphicsBenchmark>(new VectorExtensions.QuietConfig());
+BenchmarkRunner.Run<Benchmark>();
 
 [MemoryDiagnoser(true)]
-public class EnhancedGraphicsBenchmark {
-    public const int ParticleCount = 193;
+public class Benchmark {
+    private readonly NativeArray<float> data1 = new NativeArray<float>(32 * 32 * 32, true);
+    private readonly byte[] padd = new byte[1_182_011];
 
-    EnhancedGraphicsVec3Benchmark b1 = new EnhancedGraphicsVec3Benchmark();
-    EnhancedGraphicsVec3Benchmark_sys_vec b2 = new EnhancedGraphicsVec3Benchmark_sys_vec();
-    EnhancedGraphicsVec3Benchmark_sys_vec_t b3 = new EnhancedGraphicsVec3Benchmark_sys_vec_t();
+    private readonly NativeArray<float> data2 = new NativeArray<float>(32 * 32 * 32, true);
 
     [GlobalSetup]
     public void Setup() {
-        b3.Setup();
+        var rnd = new Random(217924751);
 
-        b2.Setup();
-        b1.Setup();
-
+        for (var i = 0; i < data1.length; ++i) {
+            data1[i] = rnd.NextSingle();
+            data2[i] = data1[i];
+            padd[i % 17] = (byte)(i % 8);
+        }
     }
 
 
     [Benchmark]
-    public void UpdateParticlesWithPhysics_sys_vec_t() {
-        b3.UpdateParticlesWithPhysics_vec_length();
+    public void SimpleLoop() {
+        for (var i = 0; i < data1.length; ++i) {
+            data1[i] = MathF.Cos(data1[i]);
+        }
     }
 
     [Benchmark]
-    public void UpdateParticlesWithPhysics_vec() {
-        b1.UpdateParticlesWithPhysics_vec_length();
+    public void Vectorized() {
+        GaborNoise.Cos_aligned(data2.as_span());
+
+        for (int i = 0; i < data1.length / 2048; ++i) {
+            Console.WriteLine($"{data1[i]:N5}, {data2[i]:N5} : {data1[i] - data2[i]:N5}");
+        }
     }
-/*
-    [Benchmark]
-    public void UpdateParticlesWithPhysics_sys_vec() {
-        b2.UpdateParticlesWithPhysics_vec();
-    }
-#1#
-
-
-}*/
-
-Console.WriteLine("Hello, World!");
+}

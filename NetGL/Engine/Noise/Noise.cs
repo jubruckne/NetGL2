@@ -1,10 +1,12 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace NetGL;
 
 using Libraries;
 using OpenTK.Mathematics;
 
+[SkipLocalsInit]
 public abstract class Layer {
     public readonly float amplitude;
     public readonly float frequency;
@@ -24,31 +26,36 @@ public abstract class Layer {
     public abstract float this[float x, float y] { get; }
 }
 
+[SkipLocalsInit]
 public sealed class PerlinLayer: Layer {
     public PerlinLayer(int seed, float frequency, float amplitude) :
         base(seed - 355875, FastNoiseLite.NoiseType.Perlin, frequency, amplitude) {}
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override float generate(float x, float y)
         => generator.SinglePerlin(x * frequency, y * frequency) * amplitude;
 
     public override float this[float x, float y] => generator.SinglePerlin(x * frequency, y * frequency) * amplitude;
 }
 
+[SkipLocalsInit]
 public sealed class SimplexLayer: Layer {
     public SimplexLayer(int seed, float frequency, float amplitude):
         base(seed - 438050, FastNoiseLite.NoiseType.OpenSimplex2, frequency, amplitude) {}
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override float generate(float x, float y)
         => generator.SingleSimplex(x * frequency, y * frequency) * amplitude;
 
     public override float this[float x, float y] => generator.SingleSimplex(x * frequency, y * frequency) * amplitude;
-
 }
 
+[SkipLocalsInit]
 public sealed class ValueLayer: Layer {
     public ValueLayer(int seed, float frequency, float amplitude):
         base(seed + 730236, FastNoiseLite.NoiseType.Value, frequency, amplitude) {}
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override float generate(float x, float y)
         => generator.SingleValue(x * frequency, y * frequency) * amplitude;
 
@@ -56,17 +63,20 @@ public sealed class ValueLayer: Layer {
 
 }
 
+[SkipLocalsInit]
 public sealed class CellularLayer: Layer {
     public CellularLayer(int seed, float frequency, float amplitude) :
         base(seed + 886344, FastNoiseLite.NoiseType.Cellular, frequency, amplitude) {
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override float generate(float x, float y)
         => generator.SingleCellular(x * frequency, y * frequency) * amplitude;
 
     public override float this[float x, float y] => generator.SingleCellular(x * frequency, y * frequency) * amplitude;
 }
 
+[SkipLocalsInit]
 public class Noise {
     private readonly List<Layer> layers;
     private readonly int seed;
@@ -76,7 +86,7 @@ public class Noise {
         this.layers = [];
     }
 
-    public virtual float sample(in float x, in float y) {
+    public virtual float sample(float x, float y) {
         float sample = 0;
 
         for (var l = 0; l < layers.Count; ++l)
@@ -85,7 +95,7 @@ public class Noise {
         return sample;
     }
 
-    public float sample(in Vector2 p) {
+    public float sample(Vector2 p) {
         float sample = 0;
 
         for(var l = 0; l < layers.Count; ++l)
@@ -133,7 +143,9 @@ public class Noise {
         layers.Add(new ValueLayer(seed + layers.Count, frequency, amplitude));
     }
 
-    public void add_cellular_layer(float frequency, float amplitude) {
-        layers.Add(new CellularLayer(seed + layers.Count, frequency, amplitude));
+    public CellularLayer add_cellular_layer(float frequency, float amplitude) {
+        var layer = new CellularLayer(seed + layers.Count, frequency, amplitude);
+        layers.Add(layer);
+        return layer;
     }
 }

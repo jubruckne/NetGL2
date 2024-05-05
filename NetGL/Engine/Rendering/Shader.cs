@@ -19,7 +19,7 @@ public struct CameraData {
     private float __padding;
 
     public Matrix4 get_view_projection_matrix()
-        => projection_matrix * camera_matrix;
+        => camera_matrix * projection_matrix;
 }
 
 public readonly struct UniformBlockDef: INamed {
