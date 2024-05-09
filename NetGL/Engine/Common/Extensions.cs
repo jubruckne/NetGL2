@@ -343,7 +343,9 @@ public static class ArrayExt {
         => (Map<TKey, TValue>)dict;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe bool can_reinterpret<TIn, TOut>(this TIn input) where TIn: unmanaged where TOut: unmanaged, INumberBase<TOut> {
+    public static unsafe bool can_reinterpret<TIn, TOut>(this TIn input)
+        where TIn: unmanaged
+        where TOut: unmanaged, INumberBase<TOut> {
         if (sizeof(TIn) != sizeof(TOut)) return false;
         if (input.is_float() && TOut.One.is_float()) return true;
         if (input.is_integer() && TOut.One.is_integer()) return true;
@@ -351,14 +353,17 @@ public static class ArrayExt {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe bool can_reinterpret<TIn, TOut>() where TIn: unmanaged, INumberBase<TIn> where TOut: unmanaged, INumberBase<TOut> {
+    public static unsafe bool can_reinterpret<TIn, TOut>()
+        where TIn: unmanaged, INumberBase<TIn>
+        where TOut: unmanaged, INumberBase<TOut> {
         if (sizeof(TIn) != sizeof(TOut)) return false;
         if (TIn.One.is_float() && TOut.One.is_float()) return true;
         if (TIn.One.is_integer() && TOut.One.is_integer()) return true;
         return false;
     }
 
-    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<int> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<int> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         var output = new TOut[span.Length];
 
         for (var i = 0; i < span.Length; i++)
@@ -367,15 +372,18 @@ public static class ArrayExt {
         return output;
     }
 
-    public static TOut convert_to<TOut>(this int value) where TOut: unmanaged, INumberBase<TOut> {
+    public static TOut convert_to<TOut>(this int value)
+        where TOut: unmanaged, INumberBase<TOut> {
         return TOut.CreateChecked(value);
     }
 
-    public static TOut convert_to<TOut>(this ushort value) where TOut: unmanaged, INumberBase<TOut> {
+    public static TOut convert_to<TOut>(this ushort value)
+        where TOut: unmanaged, INumberBase<TOut> {
         return TOut.CreateChecked(value);
     }
 
-    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<ushort> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<ushort> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         var output = new TOut[span.Length];
 
         for (var i = 0; i < span.Length; i++)
@@ -384,11 +392,12 @@ public static class ArrayExt {
         return output;
     }
 
-    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<Vector3i> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<Vector3i> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         var output = new TOut[span.Length * 3];
 
         for (var i = 0; i < span.Length; i++) {
-            output[i * 3] = TOut.CreateChecked(span[i].X);
+            output[i * 3]     = TOut.CreateChecked(span[i].X);
             output[i * 3 + 1] = TOut.CreateChecked(span[i].Y);
             output[i * 3 + 2] = TOut.CreateChecked(span[i].Z);
         }
@@ -396,11 +405,12 @@ public static class ArrayExt {
         return output;
     }
 
-    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<Index<int>> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<Index<int>> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         var output = new TOut[span.Length * 3];
 
         for (var i = 0; i < span.Length; i++) {
-            output[i * 3] = TOut.CreateChecked(span[i].p0);
+            output[i * 3]     = TOut.CreateChecked(span[i].p0);
             output[i * 3 + 1] = TOut.CreateChecked(span[i].p1);
             output[i * 3 + 2] = TOut.CreateChecked(span[i].p2);
         }
@@ -408,11 +418,12 @@ public static class ArrayExt {
         return output;
     }
 
-    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<Index<ushort>> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> convert_to<TOut>(this ReadOnlySpan<Index<ushort>> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         var output = new TOut[span.Length * 3];
 
         for (var i = 0; i < span.Length; i++) {
-            output[i * 3] = TOut.CreateChecked(span[i].p0);
+            output[i * 3]     = TOut.CreateChecked(span[i].p0);
             output[i * 3 + 1] = TOut.CreateChecked(span[i].p1);
             output[i * 3 + 2] = TOut.CreateChecked(span[i].p2);
         }
@@ -421,7 +432,9 @@ public static class ArrayExt {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<TOut> cast_to<TIn, TOut>(this ReadOnlySpan<TIn> span) where TIn: unmanaged where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> cast_to<TIn, TOut>(this ReadOnlySpan<TIn> span)
+        where TIn: unmanaged
+        where TOut: unmanaged, INumberBase<TOut> {
         if (can_reinterpret<int, TOut>())
             return new ReadOnlySpan<TOut>(ref Unsafe.As<TIn, TOut>(ref MemoryMarshal.GetReference(span)));
         Error.type_conversion_error<TIn, TOut>(span[0]); // convert_to<TOut>(span);
@@ -429,47 +442,55 @@ public static class ArrayExt {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<TOut> reinterpret_as<TIn, TOut>(this ReadOnlySpan<TIn> span) where TIn: unmanaged where TOut: unmanaged {
+    public static ReadOnlySpan<TOut> reinterpret_as<TIn, TOut>(this ReadOnlySpan<TIn> span)
+        where TIn: unmanaged
+        where TOut: unmanaged {
         return MemoryMarshal.Cast<TIn, TOut>(span);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<int> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<int> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         return can_reinterpret<int, TOut>()
             ? new ReadOnlySpan<TOut>(ref Unsafe.As<int, TOut>(ref MemoryMarshal.GetReference(span)))
             : convert_to<TOut>(span);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<ushort> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<ushort> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         return can_reinterpret<ushort, TOut>()
             ? new ReadOnlySpan<TOut>(ref Unsafe.As<ushort, TOut>(ref MemoryMarshal.GetReference(span)))
             : convert_to<TOut>(span);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<Vector3i> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<Vector3i> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         return can_reinterpret<int, TOut>()
             ? new ReadOnlySpan<TOut>(ref Unsafe.As<Vector3i, TOut>(ref MemoryMarshal.GetReference(span)))
             : convert_to<TOut>(span);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<Index<int>> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<Index<int>> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         return can_reinterpret<int, TOut>()
             ? new ReadOnlySpan<TOut>(ref Unsafe.As<Index<int>, TOut>(ref MemoryMarshal.GetReference(span)))
             : convert_to<TOut>(span);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<Index<ushort>> span) where TOut: unmanaged, INumberBase<TOut> {
+    public static ReadOnlySpan<TOut> cast_to<TOut>(this ReadOnlySpan<Index<ushort>> span)
+        where TOut: unmanaged, INumberBase<TOut> {
         return can_reinterpret<ushort, TOut>()
             ? new ReadOnlySpan<TOut>(ref Unsafe.As<Index<ushort>, TOut>(ref MemoryMarshal.GetReference(span)))
             : convert_to<TOut>(span);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<T> as_readonly_span<T>(this List<T> list) where T : unmanaged {
+    public static ReadOnlySpan<T> as_readonly_span<T>(this List<T> list)
+        where T: unmanaged {
         return CollectionsMarshal.AsSpan(list);
     }
 
@@ -523,21 +544,6 @@ public static class ArrayExt {
         return false;
     }
 
-    public static IEnumerable<KeyValuePair<string, T>> StartingWith<T>(this Dictionary<string, T> dict, string key) {
-        if (dict.Count == 0)
-            return Enumerable.Empty<KeyValuePair<string, T>>();
-
-        if (string.IsNullOrEmpty(key))
-            return dict;
-
-        var result = new List<KeyValuePair<string, T>>();
-        foreach (var item in dict)
-            if (item.Key.StartsWith(key))
-                result.Add(item);
-
-        return result;
-    }
-
     public static string array_to_string<T>(this IEnumerable<T> array) {
         StringBuilder sb = new();
 
@@ -547,11 +553,6 @@ public static class ArrayExt {
         return sb.ToString();
     }
 
-    public static void for_each<T>(this IEnumerable<T> array, Action<T> action) {
-        foreach (var e in array)
-            action(e);
-    }
-
     public static int sum<T>(this IEnumerable<T> list, Func<T, int> sum_function) {
         var result = 0;
         foreach (var e in list)
@@ -559,7 +560,9 @@ public static class ArrayExt {
         return result;
     }
 
-    public static int count<TList, T>(this TList list, Predicate<T> count_function) where T: unmanaged where TList: IEnumerable<T> {
+    public static int count<TList, T>(this TList list, Predicate<T> count_function)
+        where T: unmanaged
+        where TList: IEnumerable<T> {
         var result = 0;
         foreach (var e in list)
             if (count_function(e))
@@ -568,14 +571,21 @@ public static class ArrayExt {
         return result;
     }
 
-    public static int count<T>(this IEnumerable<T> list, Func<T, bool> count_function) {
-        var result = 0;
-        foreach (var e in list)
-            if (count_function(e))
-                ++result;
-
-        return result;
+    public static IEnumerable<(int index, T item)> random_sample<T>(this scoped ReadOnlySpan<T> data, int length = 10) where T: INumber<T> {
+        List<(int, T)> list = [];
+        for (var i = 0; i < length; ++i) {
+            var index = Random.Shared.Next(0, data.Length - 1);
+            list.Add((index, data[index]));
+        }
+        return list;
     }
 
-    public static int count<T>(this IEnumerable<T> list) => list.Count();
+    public static IEnumerable<(int index, T item)> random_sample<T>(this scoped Span<T> data, int length = 10) where T: INumber<T> {
+        List<(int, T)> list = [];
+        for (var i = 0; i < length; ++i) {
+            var index = Random.Shared.Next(0, data.Length - 1);
+            list.Add((index, data[index]));
+        }
+        return list;
+    }
 }

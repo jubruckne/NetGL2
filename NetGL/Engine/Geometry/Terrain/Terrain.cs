@@ -73,8 +73,8 @@ public class Terrain: Entity {
 
         Garbage.start_measuring();
 
-        heightmap = new Heightmap(4096 * 4, Rectangle.centered_at((0, 0), 16384));
-        heightmap.generate_threaded(noise);
+        heightmap = new Heightmap(8096, Rectangle.centered_at((0, 0), 16384));
+        heightmap.generate(noise);
 
         //HeightmapAsset.serialize_to_file(heightmap, "heightmap.jl");
         Garbage.stop_measuring();

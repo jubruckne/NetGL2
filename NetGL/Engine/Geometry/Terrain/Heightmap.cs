@@ -127,7 +127,40 @@ public class Heightmap: IDisposable {
 */
 
 
-    public void generate(Noise noise) {
+    public void generate(TerrainNoise noise) {
+        /*FastNoise2 fractal = new FastNoise2("FractalFBm");
+        fractal.Set("Source", new FastNoise2("Simplex"));
+        fractal.Set("Gain", new FastNoise2("Simplex"));
+        fractal.Set("Lacunarity", 0.7f);
+        fractal.Set("Octaves", 5);
+
+        fractal.GenUniformGrid2D(
+                                 texture.as_span(),
+                                 0,
+                                 0,
+                                 texture_size,
+                                 texture_size,
+                                 0.02f,
+                                 3838
+                                );
+
+        Debug.println(texture.as_span().random_sample(), ConsoleColor.Green);
+        texture.update();
+
+        return;*/
+
+        List<(float, float)> octaves = [
+            (1.1f, 555f),
+            (10.0f, 45f),
+            (5.1f, 10f),
+            (2.5f, 4.5f),
+
+        ];
+
+        Noise2D.calc_2d(texture.as_span(), octaves.as_readonly_span(),texture_size, texture_size);
+        texture.update();
+        return;
+
         for (var i = 0; i < texture_size * texture_size; ++i) {
             var px = i % texture_size;
             var py = i / texture_size;
@@ -140,13 +173,13 @@ public class Heightmap: IDisposable {
                              bounds.bottom + bounds.height * py / texture_size
                             );
 
-            var normal = normalize(
+            /*var normal = normalize(
                                    float3(
                                           bounds.left + bounds.width * px / texture_size,
                                           height,
                                           bounds.bottom + bounds.height * py / texture_size
                                          )
-                                  );
+                                  );*/
 
             //var hn = packed_height.pack(height, normal);
             //var hn2 = packed_height.unpack(hn);

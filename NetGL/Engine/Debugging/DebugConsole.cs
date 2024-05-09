@@ -403,7 +403,7 @@ public static class DebugConsole {
 
                         // Get partial completion and suggestions.
                         string partial = trim_str.Substring(startSubtrPos, endPos);
-                        m_CmdSuggestions.AddRange(cmdAutocomplete.StartingWith(partial).Select(x => x.Key));
+                        //m_CmdSuggestions.AddRange(cmdAutocomplete.StartingWith(partial).Select(x => x.Key));
 
                         // Autocomplete only when one work is available.
                         if (m_CmdSuggestions.Count != 0 && m_CmdSuggestions.Count == 1) {

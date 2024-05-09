@@ -19,7 +19,7 @@ void main() {
 
   vec2 tex_coord = vec2(pos.x, pos.z) / textureSize(heightmap, 0).xy + 0.5;
 
-  pos.y = texture(heightmap, tex_coord).r;
+  pos.y = texture(heightmap, tex_coord).r * 1.0;
 
   // calculate normal from surrounding pixels
   float north = textureOffset(heightmap, tex_coord, ivec2(0, 1)).r;

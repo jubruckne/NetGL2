@@ -47,6 +47,9 @@
       <None Remove="Assets\Temp\**" />
       <None Remove="Libraries\MagicPhysX\**" />
       <None Remove="Libraries\Jitter2\**" />
+      <None Update="runtimes\osx-arm64\native\libFastNoise.dylib">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
   <!--  
@@ -75,6 +78,7 @@
     <ItemGroup>
       <Folder Include="Assets\gen\" />
       <Folder Include="Assets\Heightmaps\" />
+      <Folder Include="Libraries\FastNoise2\build\lib\" />
     </ItemGroup>
     
 </Project>

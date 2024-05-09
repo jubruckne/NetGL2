@@ -51,4 +51,7 @@ public static class Error {
     public static void duplicated_key<T>(T key, [CallerMemberName] string caller = default!) =>
         throw new IndexOutOfRangeException($"{caller}({key}) key already exists!");
 
+    [DoesNotReturn, DebuggerNonUserCode, DebuggerStepThrough, StackTraceHidden, DebuggerHidden]
+    public static void invalid_argument<T>(T arg, string? msg = null, [CallerMemberName] string caller = default!)
+        => throw new ArgumentException($"{caller} {msg ?? "Invalid argument: "} {typeof(T).get_type_name()} {arg}");
 }

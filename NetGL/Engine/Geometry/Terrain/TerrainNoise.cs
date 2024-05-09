@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using NetGL.Libraries;
 
 namespace NetGL;
 
@@ -8,6 +9,7 @@ public sealed class TerrainNoise: Noise {
     private readonly SimplexLayer s2;
     private readonly SimplexLayer s3;
     private readonly CellularLayer c1;
+    internal readonly FastNoise2 fn2 = new FastNoise2("Simplex");
 
     public TerrainNoise(): base(333) {
         s1 = add_simplex_layer(0.0003f, 375f);

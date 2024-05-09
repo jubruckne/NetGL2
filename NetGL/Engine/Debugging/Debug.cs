@@ -43,7 +43,7 @@ public static class Debug {
 
         int i = -1;
 
-        if (items.Length <= 5) {
+        if (items.Length <= 10) {
             foreach (var item in items)
                 AnsiConsole.WriteLine($"  {++i}: {item?.ToString() ?? "<null>"}");
         } else {
