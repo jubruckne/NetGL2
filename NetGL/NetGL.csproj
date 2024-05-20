@@ -21,9 +21,11 @@
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.9.2" />
       <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="4.9.2" />
       <PackageReference Include="OpenTK" Version="4.8.2" />
+      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.4" />
       <PackageReference Include="Spectre.Console" Version="0.48.0" />
       <PackageReference Include="Spectre.Console.Cli" Version="0.48.0" />
       <PackageReference Include="StbImageSharp" Version="2.27.14" />
+      <PackageReference Include="StbImageWriteSharp" Version="1.16.7" />
       <Reference Include="BulletSharp">
           <HintPath>..\..\BulletSharpPInvoke\BulletSharp\bin\Debug\net8.0\BulletSharp.dll</HintPath>
       </Reference>

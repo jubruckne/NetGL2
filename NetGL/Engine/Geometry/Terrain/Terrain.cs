@@ -73,8 +73,11 @@ public class Terrain: Entity {
 
         Garbage.start_measuring();
 
-        heightmap = new Heightmap(8096, Rectangle.centered_at((0, 0), 16384));
-        heightmap.generate(noise);
+        heightmap = new Heightmap(
+                                  Rectangle.centered_at((0, 0), 16384),
+                                  Rectangle.with_size(8192, 8192)
+                                  );
+        heightmap.update();
 
         //HeightmapAsset.serialize_to_file(heightmap, "heightmap.jl");
         Garbage.stop_measuring();
@@ -99,6 +102,8 @@ public class Terrain: Entity {
         renderer.render_settings.depth_test   = true;
         renderer.render_settings.cull_face    = true;
         renderer.render_settings.front_facing = true;
+
+        this.add(new Component<Heightmap>(this, "Heightmap", heightmap));
 
        this.add_behavior(_ => update());
     }
@@ -171,7 +176,7 @@ public class Terrain: Entity {
         //Console.WriteLine(camera.camera_data.get_view_projection_matrix());
 
 
-        var center = Rectangle<float>.centered_at(
+        var center = Rectangle.centered_at(
                                                   float2(
                                                          position.x.nearest_multiple(lod.tile_size),
                                                          position.z.nearest_multiple(lod.tile_size)

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 namespace NetGL.Vectors;
 
 public readonly struct vec4_8_8_8_8<T>
-    where T: unmanaged, INumber<T> {
+    where T: unmanaged, IBinaryNumber<T> {
     private readonly uint value;
 
     public T r => unpack(this).x;

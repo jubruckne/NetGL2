@@ -1,11 +1,9 @@
-global using Rectangle = NetGL.Rectangle<float>;
-
 using System.Numerics;
 using NetGL.Vectors;
 
 namespace NetGL;
 
-public static class RectangleExt {
+public static class Rectangle {
     public static T get_area<T>(this Rectangle<T> rectangle) where T: unmanaged, INumber<T>, IMinMaxValue<T>
         => rectangle.width * rectangle.height;
 
@@ -16,6 +14,41 @@ public static class RectangleExt {
             result += rectangle.get_area();
 
         return result;
+    }
+
+    public static Rectangle<T> centered_at<T>(vec2<T> center, T size) where T: unmanaged, INumber<T>, IMinMaxValue<T>{
+        var half_size = size / T.CreateChecked(2);
+        return new(center.x - half_size, center.y - half_size, size, size);
+    }
+
+    public static Rectangle<T> with_size<T>(T width, T height) where T: unmanaged, INumber<T>, IMinMaxValue<T>
+        => new(T.Zero, T.Zero, width, height);
+
+    public static Rectangle<T> square<T>(T x, T y, T size) where T: unmanaged, INumber<T>, IMinMaxValue<T>
+        => new(x, y, size, size);
+
+    public static Rectangle<T> from_points<T>(IEnumerable<vec2<T>> points) where T: unmanaged, INumber<T>, IMinMaxValue<T> {
+        var min = vec2(T.MaxValue);
+        var max = vec2(T.MinValue);
+
+        foreach (var point in points) {
+            if (point.x < min.x)
+                min.x = point.x;
+
+            if (point.y < min.y)
+                min.y = point.y;
+
+            if (point.x > max.x)
+                max.x = point.x;
+
+            if (point.y > max.y)
+                max.y = point.y;
+        }
+
+        if(min.x == T.MaxValue)
+            throw new ArgumentException(nameof(points));
+
+        return new Rectangle<T>(min, max);
     }
 }
 
@@ -46,7 +79,7 @@ public readonly struct Rectangle<T>: IComparable<Rectangle<T>>
         }
     }
 
-public Rectangle(T x, T y, T width, T height) {
+    public Rectangle(T x, T y, T width, T height) {
         bottom_left = vec2(x, y);
         top_right = vec2(x + width, y + height);
     }
@@ -94,39 +127,6 @@ public Rectangle(T x, T y, T width, T height) {
 
         return result;
     }
-
-    public static Rectangle<T> centered_at(vec2<T> center, T size) {
-        var half_size = size / T.CreateChecked(2);
-        return new(center.x - half_size, center.y - half_size, size, size);
-    }
-
-    public static Rectangle<T> square(T x, T y, T size)
-        => new(x, y, size, size);
-
-    public static Rectangle<T> from_points(IEnumerable<vec2<T>> points) {
-        var min = vec2(T.MaxValue);
-        var max = vec2(T.MinValue);
-
-        foreach (var point in points) {
-            if (point.x < min.x)
-                min.x = point.x;
-
-            if (point.y < min.y)
-                min.y = point.y;
-
-            if (point.x > max.x)
-                max.x = point.x;
-
-            if (point.y > max.y)
-                max.y = point.y;
-        }
-
-        if(min.x == T.MaxValue)
-            throw new ArgumentException(nameof(points));
-
-        return new Rectangle<T>(min, max);
-    }
-
     public bool contains(vec2<T> point)
         => point.x >= bottom_left.x
             && point.x <= top_right.x

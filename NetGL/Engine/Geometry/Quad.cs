@@ -5,7 +5,7 @@ using NetGL.Vectors;
 
 namespace NetGL;
 
-public readonly struct Quad<T>: IComparable<Quad<T>> where T: unmanaged, INumber<T> {
+public readonly struct Quad<T>: IComparable<Quad<T>> where T: unmanaged, IBinaryNumber<T> {
     public readonly vec3<T> min;
     public readonly vec3<T> max;
 

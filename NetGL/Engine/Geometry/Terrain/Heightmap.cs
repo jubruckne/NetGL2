@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using NetGL.experiment;
 using OpenTK.Graphics.OpenGL4;
 
 namespace NetGL;
@@ -44,14 +45,21 @@ public static class packed_height {
 
 [SkipLocalsInit]
 public class Heightmap: IDisposable {
-    public Rectangle bounds { get; } // in world space
-    public int texture_size { get; } // in pixels
+    public Rectangle<int> area { get; } // in world space
+    public Rectangle<int> texture_size { get; } // in pixels
     public Texture2D<float> texture { get; }
 
-    public Heightmap(int texture_size, Rectangle bounds) {
-        this.bounds = bounds;
+    public List<(float freq, float amp)> octaves { get; set; } = [
+        (0.8f, 355f),
+        (5.0f, 25f),
+        (20.1f, 12f),
+        (39.5f, 6.7f)
+    ];
+
+    public Heightmap(Rectangle<int> area, Rectangle<int> texture_size) {
+        this.area = area;
         this.texture_size = texture_size;
-        this.texture = new Texture2D<float>(texture_size, texture_size, PixelFormat.Red, PixelType.Float);
+        this.texture = new Texture2D<float>(texture_size.width, texture_size.height, PixelFormat.Red, PixelType.Float);
         this.texture.internal_pixel_format = PixelInternalFormat.R32f;
         this.texture.min_filter = TextureMinFilter.Linear;
         this.texture.mag_filter = TextureMagFilter.Linear;
@@ -60,135 +68,17 @@ public class Heightmap: IDisposable {
         this.texture.create();
     }
 
-    private void generate(TerrainNoise noise, Rectangle<int> area) {
-        for (var x = area.left; x < area.right; ++x) {
-            var px = bounds.left + bounds.width * x / texture_size;
+    private void update_noise(Rectangle<int> area)
+        => SimplexNoise2.generate_2d<SimplexKernel>(area, texture_size, texture.get_view(), octaves.ToArray(), 6);
 
-            for (var y = area.bottom; y < area.top; ++y) {
-                var height = noise.sample(
-                                          px,
-                                          bounds.bottom + bounds.height * y / texture_size
-                                         );
-
-                /*var normal = normalize(
-                                       float3(
-                                              bounds.left + bounds.width * x / texture_size,
-                                              height,
-                                              bounds.bottom + bounds.height * y / texture_size
-                                             )
-                                      );
-*/
-                texture[x, y] = height;
-            }
-        }
+    public void update() {
+        update_noise(area);
+        texture.update();
     }
 
-    public void generate_threaded(TerrainNoise noise) {
-        var rects = Rectangle<int>.square(0, 0, texture_size).split(1, 8);
-
-        Parallel.ForEach(
-                         rects,
-                         (rect) =>
-                             generate(noise, rect)
-                        );
-
-        texture.update();
-
-    }
-
-/*
-        for (var i = 0; i < texture_size * texture_size; ++i) {
-            var px = i % texture_size;
-            var py = i / texture_size;
-
-            // sample noise at pixel position
-
-            var height =
-                noise.sample(
-                             bounds.left + bounds.width * px / texture_size,
-                             bounds.bottom + bounds.height * py / texture_size
-                            );
-
-            var normal = normalize(
-                                   float3(
-                                          bounds.left + bounds.width * px / texture_size,
-                                          height,
-                                          bounds.bottom + bounds.height * py / texture_size
-                                         )
-                                  );
-
-            //var hn = packed_height.pack(height, normal);
-            //var hn2 = packed_height.unpack(hn);
-            //Console.WriteLine($"original={(height, normal)}, unpacked={hn2}");
-
-            // pack height into 2x 8-bit channels
-            texture[px, py] = height;
-        }
-*/
-
-
-    public void generate(TerrainNoise noise) {
-        /*FastNoise2 fractal = new FastNoise2("FractalFBm");
-        fractal.Set("Source", new FastNoise2("Simplex"));
-        fractal.Set("Gain", new FastNoise2("Simplex"));
-        fractal.Set("Lacunarity", 0.7f);
-        fractal.Set("Octaves", 5);
-
-        fractal.GenUniformGrid2D(
-                                 texture.as_span(),
-                                 0,
-                                 0,
-                                 texture_size,
-                                 texture_size,
-                                 0.02f,
-                                 3838
-                                );
-
-        Debug.println(texture.as_span().random_sample(), ConsoleColor.Green);
-        texture.update();
-
-        return;*/
-
-        List<(float, float)> octaves = [
-            (1.1f, 555f),
-            (10.0f, 45f),
-            (5.1f, 10f),
-            (2.5f, 4.5f),
-
-        ];
-
-        Noise2D.calc_2d(texture.as_span(), octaves.as_readonly_span(),texture_size, texture_size);
-        texture.update();
-        return;
-
-        for (var i = 0; i < texture_size * texture_size; ++i) {
-            var px = i % texture_size;
-            var py = i / texture_size;
-
-            // sample noise at pixel position
-
-            var height =
-                noise.sample(
-                             bounds.left + bounds.width * px / texture_size,
-                             bounds.bottom + bounds.height * py / texture_size
-                            );
-
-            /*var normal = normalize(
-                                   float3(
-                                          bounds.left + bounds.width * px / texture_size,
-                                          height,
-                                          bounds.bottom + bounds.height * py / texture_size
-                                         )
-                                  );*/
-
-            //var hn = packed_height.pack(height, normal);
-            //var hn2 = packed_height.unpack(hn);
-            //Console.WriteLine($"original={(height, normal)}, unpacked={hn2}");
-
-            // pack height into 2x 8-bit channels
-            texture[px, py] = height;
-        }
-
+    public void update_threaded() {
+        var rects = texture_size.split(1, 8);
+        Parallel.ForEach(rects, update_noise);
         texture.update();
     }
 

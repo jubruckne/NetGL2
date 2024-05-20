@@ -48,8 +48,17 @@ public static class Noise2D {
         Error.invalid_argument(octaves.Length, "must be 4!");
     }
 
-    public static void calc_2d(Span<float> data, ReadOnlySpan<(float frequency, float amplitude)> octaves, int width, int height) {
-        if(data.Length != width * height)
+    private static IEnumerable<Range> batch(this int length, int batches) {
+        int start = 0;
+        int batch_size = length / batches;
+        while (start < length) {
+            yield return new(start, (start + batch_size).at_most(length));
+            start += batch_size;
+        }
+    }
+
+    public static void calc_2d(Rectangle<int> area, Rectangle<int> texture_size, Span<float> data, ReadOnlySpan<(float frequency, float amplitude)> octaves) {
+        if(data.Length != texture_size.get_area())
             Error.exception("data.Length != width * height");
 
         var amplitude_sum = 0f;
@@ -77,37 +86,37 @@ public static class Noise2D {
                                                octaves[3].frequency
                                               );
 
-            for (var i = 0; i < width; i++) {
-                xx = Vector128.Create(i / (float)width) * frequencies;
-                for (var j = 0; j < height; j++) {
-                    yy = Vector128.Create(j / (float)height) * frequencies;
-                    data[i + width * j] = Vector128.Sum(
-                                                        Vector128.Create(
-                                                           generate_2d(xx[0], yy[0]),
-                                                           generate_2d(xx[1], yy[1]),
-                                                           generate_2d(xx[2], yy[2]),
-                                                           generate_2d(xx[3], yy[3])
-                                                          )
-                                                        * amplitudes
-                                                        );
+            for (var i = 0; i < texture_size.width; i++) {
+                xx = Vector128.Create(i / (float)texture_size.width) * frequencies;
+                for (var j = 0; j < texture_size.height; j++) {
+                    yy = Vector128.Create(j / (float)texture_size.height) * frequencies;
+                    data[i + texture_size.width * j] = Vector128.Sum(
+                                                                     Vector128.Create(
+                                                                          generate_2d(yy[0], xx[0]),
+                                                                          generate_2d(xx[1], yy[1]),
+                                                                          generate_2d(xx[2], yy[2]),
+                                                                          generate_2d(xx[3], yy[3])
+                                                                         )
+                                                                     * amplitudes
+                                                                    );
                 }
             }
             return;
         }
 
         var noise_sum = 0f;
-        for (var i = 0; i < width; i++) {
-            x = i / (float)width;
+        for (var i = 0; i < texture_size.width; i++) {
+            x = i / (float)texture_size.width;
 
-            for (var j = 0; j < height; j++) {
-                y = j / (float)height;
+            for (var j = 0; j < texture_size.height; j++) {
+                y = j / (float)texture_size.height;
 
                 noise_sum = 0f;
 
                 foreach (var (freq, amplitude) in octaves)
                     noise_sum += generate_2d(x * freq, y * freq) * amplitude;
 
-                data[i + width * j] = noise_sum;
+                data[i + texture_size.width * j] = noise_sum;
             }
         }
     }

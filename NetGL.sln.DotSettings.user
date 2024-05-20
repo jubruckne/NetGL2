@@ -33,7 +33,6 @@
   &lt;Assembly Path="/usr/local/share/dotnet/shared/Microsoft.NETCore.App/8.0.0/System.Collections.Concurrent.dll" /&gt;
   &lt;Assembly Path="/usr/local/share/dotnet/packs/Microsoft.NETCore.App.Ref/8.0.0/ref/net8.0/System.Threading.dll" /&gt;
   &lt;Assembly Path="/usr/local/share/dotnet/packs/Microsoft.NETCore.App.Ref/8.0.0/ref/net8.0/System.Runtime.Numerics.dll" /&gt;
-  &lt;Assembly Path="/Users/julia/.nuget/packages/stbimagesharp/2.27.13/lib/netstandard2.0/StbImageSharp.dll" /&gt;
   &lt;Assembly Path="/Users/julia/.nuget/packages/noncopyableanalyzer/0.7.0/analyzers/dotnet/cs/NonCopyable.dll" /&gt;
   &lt;Assembly Path="/usr/local/share/dotnet/shared/Microsoft.NETCore.App/8.0.3/System.Private.CoreLib.dll" /&gt;
   &lt;Assembly Path="/usr/local/share/dotnet/shared/Microsoft.NETCore.App/8.0.3/System.Security.Cryptography.dll" /&gt;
@@ -43,6 +42,8 @@
   &lt;Assembly Path="/usr/local/share/dotnet/shared/Microsoft.NETCore.App/8.0.3/System.IO.Compression.Brotli.dll" /&gt;
   &lt;Assembly Path="/usr/local/share/dotnet/shared/Microsoft.NETCore.App/8.0.3/System.IO.Compression.dll" /&gt;
   &lt;Assembly Path="/Users/julia/.nuget/packages/mathnet.numerics/5.0.0/lib/net6.0/MathNet.Numerics.dll" /&gt;
+  &lt;Assembly Path="/Users/julia/.nuget/packages/sixlabors.imagesharp/3.1.4/lib/net6.0/SixLabors.ImageSharp.dll" /&gt;
+  &lt;Assembly Path="/Users/julia/RiderProjects/NetGL/NetGL/bin/Release/NetGL.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/SolBuilderDuo/CustomGlobalProperties/=PreferredUILang/@EntryIndexedValue">en-US</s:String>
 	

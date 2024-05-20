@@ -416,19 +416,38 @@ public class Engine: GameWindow {
                     continue;
 
                 if (comp is Transform t) {
-                    if (ImGui.TreeNodeEx($"{t.name}##{entity.name}_{t.name}_node", entity.name == "74656" ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None)) {
+                    if (ImGui.TreeNodeEx(
+                                         $"{t.name}##{entity.name}_{t.name}_node",
+                                         entity.name == "74656"
+                                             ? ImGuiTreeNodeFlags.DefaultOpen
+                                             : ImGuiTreeNodeFlags.None
+                                        )) {
                         ImGui.Unindent();
 
                         //ImGui2.Joystick(25);
                         // ImGui.Joystick2(t, 25);
 
-                        ImGui.DragFloat3($"Position##{entity.name}.position", ref t.position.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0.05f, -100, 100, "%.1f");
+                        ImGui.DragFloat3(
+                                         $"Position##{entity.name}.position",
+                                         ref t.position
+                                              .reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(),
+                                         0.05f,
+                                         -100,
+                                         100,
+                                         "%.1f"
+                                        );
 
                         var rotationYawPitchRoll = t.rotation.yaw_pitch_roll;
-                            //new System.Numerics.Vector3(t.rotation.yaw, t.rotation.yaw, t.rotation.roll);
-                        if(ImGui.DragFloat3($"Rotation##{entity.name}.rot",
-                                ref rotationYawPitchRoll.reinterpret_ref<OpenTK.Mathematics.Vector3, Vector3>(), 1f, -180,
-                                180, "%.0f")) {
+                        //new System.Numerics.Vector3(t.rotation.yaw, t.rotation.yaw, t.rotation.roll);
+                        if (ImGui.DragFloat3(
+                                             $"Rotation##{entity.name}.rot",
+                                             ref rotationYawPitchRoll
+                                                 .reinterpret_ref<OpenTK.Mathematics.Vector3, Vector3>(),
+                                             1f,
+                                             -180,
+                                             180,
+                                             "%.0f"
+                                            )) {
                             t.rotation.yaw_pitch_roll = rotationYawPitchRoll;
                         }
 
@@ -436,16 +455,57 @@ public class Engine: GameWindow {
                         ImGui.Spacing();
 
                         var attitudeDirection = t.rotation.forward;
-                        ImGui.DragFloat3($"Direction→##{entity.name}.direction", ref attitudeDirection.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
-                            ImGuiSliderFlags.NoInput);
+                        ImGui.DragFloat3(
+                                         $"Direction→##{entity.name}.direction",
+                                         ref attitudeDirection
+                                             .reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(),
+                                         0f,
+                                         -1,
+                                         1,
+                                         "%.1f",
+                                         ImGuiSliderFlags.NoInput
+                                        );
 
                         var attitudeUp = t.rotation.up;
-                        ImGui.DragFloat3($"Up→##{entity.name}.up", ref attitudeUp.reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(), 0f, -1, 1, "%.1f",
-                            ImGuiSliderFlags.NoInput);
+                        ImGui.DragFloat3(
+                                         $"Up→##{entity.name}.up",
+                                         ref attitudeUp
+                                             .reinterpret_ref<OpenTK.Mathematics.Vector3, System.Numerics.Vector3>(),
+                                         0f,
+                                         -1,
+                                         1,
+                                         "%.1f",
+                                         ImGuiSliderFlags.NoInput
+                                        );
 
                         ImGui.Spacing();
 
                         //ImGui.Text($"Aizmuth:{t.attitude.azimuth:N1}, Polar: {t.attitude.polar:N1}");
+                        ImGui.Indent();
+                        ImGui.TreePop();
+                    }
+                } else if (comp is Component<Heightmap> map) {
+                    if (ImGui.TreeNodeEx($"{map.name}##{entity.name}_{map.name}_node",
+                                         ImGuiTreeNodeFlags.DefaultOpen)) {
+                        ImGui.Unindent();
+
+                        Span<(float freq, float amp)> maps = stackalloc (float freq, float amp)[4];
+
+                        for(int i = 0; i < map.data.octaves.Count; ++i) {
+                            maps[i] = map.data.octaves[i];
+                            if (ImGui.DragFloat($"{i}_freq:##{i}_{map.name}_freq", ref maps[i].freq, 1f, 0f, 1000f)) {
+                                map.data.octaves[i] = (maps[i].freq, map.data.octaves[i].amp);
+                            }
+
+                            if (ImGui.DragFloat($"{i}_amp:##{i}_{map.name}_amp", ref maps[i].amp, 1f, 0f, 1000f)) {
+                                map.data.octaves[i] = (map.data.octaves[i].freq, maps[i].amp);
+                            }
+                        }
+
+                        if (ImGui.Button("Generate")) {
+                            map.data.update();
+                        }
+
                         ImGui.Indent();
                         ImGui.TreePop();
                     }

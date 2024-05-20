@@ -1,13 +1,17 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.JavaScript;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
+using Spectre.Console.Cli.Unsafe;
 
 namespace NetGL.Vectors;
 
 public partial struct vec4<T>:
     ivec4<T> ,
     IEquatable<vec4<T>>
-    where T: unmanaged, INumber<T> {
+    where T: unmanaged, INumber<T>, IBinaryNumber<T> {
 
     public T x;
     public T y;
@@ -28,22 +32,12 @@ public partial struct vec4<T>:
         this.w = w;
     }
 
-    public void set(T x, T y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public void set(T x, T y, T z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    public void set(T x, T y, T z, T w) {
+    public vec4<T> set(T x, T y, T z, T w) {
         this.x = x;
         this.y = y;
         this.z = z;
         this.w = w;
+        return this;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -58,6 +52,153 @@ public partial struct vec4<T>:
 
     public static implicit operator vec4<T>((T x, T y, T z, T w) vector) =>
         new vec4<T>(vector.x, vector.y, vector.z, vector.w);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator+(vec4<T> left, vec4<T> right)
+        => new vec4<T>().set(left.x + right.x, left.y + right.y, left.z + right.z, left.w + right.w);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator+(vec4<T> left, T right)
+        => new vec4<T>().set(left.x + right, left.y + right, left.z + right, left.w + right);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator-(vec4<T> left, vec4<T> right)
+        => new vec4<T>().set(left.x - right.x, left.y - right.y, left.z - right.z, left.w - right.w);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool4 operator<(vec4<T> left, vec4<T> right) {
+        if (left is float4 vl && right is float4 vr) {
+            var l = Vector128.Create<float>(vl.as_span());
+            var r = Vector128.Create<float>(vr.as_span());
+            return uint4(AdvSimd.CompareLessThan(l, r).As<float, uint>());
+        }
+        Error.invalid_argument(left);
+        return default;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool4 operator<(vec4<T> left, T right) {
+        if (left is float4 vl && right is float vr) {
+            var l = Vector128.Create<float>(vl.as_span());
+            var r = Vector128.Create<float>(vr);
+            return uint4(AdvSimd.CompareLessThan(l, r).As<float, uint>());
+        }
+        Error.invalid_argument(left);
+        return default;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool4 operator>(vec4<T> left, T right) {
+        if (left is float4 vl && right is float vr) {
+            var l = Vector128.Create<float>(vl.as_span());
+            var r = Vector128.Create<float>(vr);
+            return uint4(AdvSimd.CompareGreaterThan(l, r).As<float, uint>());
+        }
+        Error.invalid_argument(left);
+        return default;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool4 operator<=(vec4<T> left, vec4<T> right) {
+        if (left is float4 vl && right is float4 vr) {
+            var l = Vector128.Create<float>(vl.as_span());
+            var r = Vector128.Create<float>(vr.as_span());
+            return uint4(AdvSimd.CompareLessThanOrEqual(l, r).As<float, uint>());
+        }
+        Error.invalid_argument(left);
+        return default;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool4 operator>=(vec4<T> left, vec4<T> right) {
+        if (left is float4 vl && right is float4 vr) {
+            var l = Vector128.Create<float>(vl.as_span());
+            var r = Vector128.Create<float>(vr.as_span());
+            return uint4(AdvSimd.CompareGreaterThanOrEqual(l, r).As<float, uint>());
+        }
+        Error.invalid_argument(left);
+        return default;
+    }
+
+    public static bool4 operator>(vec4<T> left, vec4<T> right) {
+        if (left is float4 vl && right is float4 vr) {
+            var l = Vector128.Create<float>(vl.as_span());
+            var r = Vector128.Create<float>(vr.as_span());
+            return uint4(AdvSimd.CompareGreaterThan(l, r).As<float, uint>());
+        }
+        Error.invalid_argument(left);
+        return default;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator*(vec4<T> left, vec4<T> right)
+        => new vec4<T>().set(left.x - right.x, left.y - right.y, left.z - right.z, left.w - right.w);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator!(vec4<T> left)
+        => new vec4<T>().set(
+                             left.x == T.Zero ? T.One : T.Zero,
+                             left.y == T.Zero ? T.One : T.Zero,
+                             left.z == T.Zero ? T.One : T.Zero,
+                             left.w == T.Zero ? T.One : T.Zero
+                            );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator-(vec4<T> left, T right)
+        => new vec4<T>().set(left.x - right, left.y - right, left.z - right, left.w - right);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator-(T left, vec4<T> right)
+        => new vec4<T>().set(left - right.x, left - right.y, left - right.z, left - right.w);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator-(vec4<T> left, int4 right)
+        => new vec4<T>().set(
+                             left.x - T.CreateTruncating(right.x),
+                             left.y - T.CreateTruncating(right.y),
+                             left.z - T.CreateTruncating(right.z),
+                             left.w - T.CreateTruncating(right.w)
+                            );
+
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator&(vec4<T> left, vec4<T> right)
+        => new vec4<T>().set(left.x & right.x, left.y & right.y, left.z & right.z, left.w & right.w);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator&(vec4<T> left, T right)
+        => new vec4<T>().set(left.x & right, left.y & right, left.z & right, left.w & right);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator^(vec4<T> left, vec4<T> right)
+        => new vec4<T>().set(left.x ^ right.x, left.y ^ right.y, left.z ^ right.z, left.w ^ right.w);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator|(vec4<T> left, vec4<T> right)
+        => new vec4<T>().set(left.x | right.x, left.y | right.y, left.z | right.z, left.w | right.w);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator*(vec4<T> left, T right)
+        => new vec4<T>().set(left.x * right, left.y * right, left.z * right, left.w * right);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator>> (vec4<T> left, int right)
+        => new vec4<T>().set(
+                             Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(left.x) >> right),
+                             Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(left.y) >> right),
+                             Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(left.z) >> right),
+                             Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(left.w) >> right)
+                            );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static vec4<T> operator<<(vec4<T> left, int right)
+        => new vec4<T>().set(
+                             Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(left.x) << right),
+                             Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(left.y) << right),
+                             Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(left.z) << right),
+                             Unsafe.BitCast<uint, T>(Unsafe.BitCast<T, uint>(left.w) << right)
+                            );
 
     T ivec2<T>.x => x;
     T ivec2<T>.y => y;

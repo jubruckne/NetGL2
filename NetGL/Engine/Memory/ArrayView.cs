@@ -40,4 +40,7 @@ public sealed class ArrayView<V>: IEnumerable<V> where V : unmanaged {
     IEnumerator IEnumerable.GetEnumerator() => throw new NotImplementedException();
 
     public override string ToString() => $"{GetType().get_type_name()} (length={length:N0}, stride={stride:N0})";
+
+    public unsafe V* get_pointer()
+        => (V*)start;
 }

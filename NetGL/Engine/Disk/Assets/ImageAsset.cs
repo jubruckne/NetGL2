@@ -1,4 +1,6 @@
 using StbImageSharp;
+using StbImageWriteSharp;
+using ColorComponents = StbImageSharp.ColorComponents;
 
 namespace NetGL;
 
@@ -6,6 +8,11 @@ public class ImageAsset: Asset<ImageAsset, Image>, IAsset<Image> {
     public static string path => "Textures";
 
     private ImageAsset(string name, in Image data): base(name, data) {}
+
+    public static Image export(Texture2D<float> texture, string filename) {
+        StbImageWrite.stbi__flip_vertically_on_write = 1;
+        return null;
+    }
 
     public static Image load_from_file(string filename) {
         int    width;
