@@ -69,16 +69,10 @@ public class Heightmap: IDisposable {
     }
 
     private void update_noise(Rectangle<int> area)
-        => SimplexNoise2.generate_2d<SimplexKernel>(area, texture_size, texture.get_view(), octaves.ToArray(), 6);
+        => SimplexNoise2.generate_2d<SimplexKernel>(area, texture_size, texture.get_view(), octaves.ToArray(), 1);
 
     public void update() {
         update_noise(area);
-        texture.update();
-    }
-
-    public void update_threaded() {
-        var rects = texture_size.split(1, 8);
-        Parallel.ForEach(rects, update_noise);
         texture.update();
     }
 

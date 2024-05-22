@@ -4,10 +4,6 @@ using System.Runtime.Intrinsics.Arm;
 
 namespace NetGL;
 
-public interface IKernel {
-    static abstract Vector128<float> evaluate(Vector128<float> x, Vector128<float> y);
-}
-
 public readonly struct SimplexKernel: IKernel {
     private static readonly float F2 = 0.5f * (MathF.Sqrt(3.0f) - 1.0f);
     private static readonly float G2 = (3.0f - MathF.Sqrt(3.0f)) / 6.0f;

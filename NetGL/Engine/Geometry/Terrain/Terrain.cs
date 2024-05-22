@@ -75,7 +75,7 @@ public class Terrain: Entity {
 
         heightmap = new Heightmap(
                                   Rectangle.centered_at((0, 0), 16384),
-                                  Rectangle.with_size(8192, 8192)
+                                  Rectangle.with_size(8192 * 2, 8192 * 2)
                                   );
         heightmap.update();
 

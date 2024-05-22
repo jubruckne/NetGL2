@@ -20,22 +20,41 @@ public static class SimplexNoise2 {
         parallel_options.MaxDegreeOfParallelism = threads;
 
         Parallel.For(0,
-                     texture_size.width / 128,
+                     texture_size.height / 128,
                      parallel_options,
-                     ii => {
-                         for (var i = ii * 128; i < ii * 128 + 128; ++i) {
-                             var xx = Vector128.Create(i / (float)texture_size.width) * frequencies;
-                             for (var j = 0; j < texture_size.height; j++) {
-                                 var yy = Vector128.Create(j / (float)texture_size.height) * frequencies;
-                                 data[i + texture_size.width * j] =
-                                     Vector128.Sum(
-                                                   TKernel.evaluate(xx, yy)
-                                                   * amplitudes
-                                                  );
-                             }
-                         }
-                     }
+                     row => generate_2d_internal<TKernel>(
+                                                          texture_size.width,
+                                                          texture_size.height,
+                                                          row * 128,
+                                                          row * 128 + 128,
+                                                          data,
+                                                          frequencies,
+                                                          amplitudes
+                                                         )
                     );
+    }
+
+    private static unsafe void generate_2d_internal<TKernel>(int width,
+                                                             int height,
+                                                             int start_row,
+                                                             int end_row,
+                                                             float* data,
+                                                             Vector128<float> frequencies,
+                                                             Vector128<float> amplitudes
+    )
+        where TKernel: IKernel {
+
+        var f_width  = (float)width;
+        var f_height = (float)height;
+
+        for (var x = 0; x < width; ++x) {
+            var xx = Vector128.Create(x / f_width) * frequencies;
+            for (var y = start_row; y < end_row; ++y) {
+                var yy = Vector128.Create(y / f_height) * frequencies;
+                data[x + y * width] =
+                    Vector128.Sum(TKernel.evaluate(xx, yy) * amplitudes);
+            }
+        }
     }
 
     public static unsafe void generate_2d<TKernel>(Rectangle<int> area,
@@ -46,8 +65,7 @@ public static class SimplexNoise2 {
         if(threads == 0)
             Error.invalid_argument(threads);
 
-        if (data.length != texture_size.get_area())
-            Error.exception("data.Length != width * height");
+        Debug.assert_equal(data.length, texture_size.get_area());
 
         var amplitude_sum = 0f;
         foreach (var (_, amplitude) in octaves)
