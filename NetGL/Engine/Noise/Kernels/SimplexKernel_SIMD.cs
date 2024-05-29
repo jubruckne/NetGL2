@@ -5,7 +5,7 @@ using System.Runtime.Intrinsics.Arm;
 namespace NetGL;
 
 [SkipLocalsInit]
-public readonly struct SimplexKernel2: IKernel {
+public readonly struct SimplexKernel_SIMD: IKernel {
     private const int X = 501125321;
     private const int Y = 1136930381;
     private const float SQRT3 = 1.7320508075688772935274463415059f;
@@ -166,7 +166,16 @@ public readonly struct SimplexKernel2: IKernel {
         //                      )
         // );
 
-        return vec4_float_38 * AdvSimd.FusedMultiplyAdd(AdvSimd.FusedMultiplyAdd(n0 * t0, n1, t1), n2, t2);
+        return
+            vec4_float_38 * AdvSimd.FusedMultiplyAdd(
+                                                     AdvSimd.FusedMultiplyAdd(
+                                                                              n0 * t0,
+                                                                              n1,
+                                                                              t1
+                                                                             ),
+                                                     n2,
+                                                     t2
+                                                    );
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,0 +1,229 @@
+// Validating benchmarks:
+// ***** BenchmarkRunner: Start   *****
+// ***** Found 2 benchmark(s) in total *****
+// ***** Building 1 exe(s) in Parallel: Start   *****
+// start dotnet  restore /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 /p:Deterministic=true /p:Optimize=true in /Users/julia/RiderProjects/NetGL/Benchmark/bin/Release/net8.0/38b46b3d-110a-4460-a2d5-3d0a6711cfe2
+// command took 0.98 sec and exited with 0
+// start dotnet  build -c Release --no-restore /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 /p:Deterministic=true /p:Optimize=true in /Users/julia/RiderProjects/NetGL/Benchmark/bin/Release/net8.0/38b46b3d-110a-4460-a2d5-3d0a6711cfe2
+// command took 2.04 sec and exited with 0
+// ***** Done, took 00:00:03 (3.09 sec)   *****
+// Found 2 benchmarks:
+//   Benchmark.SimplexKernel_SIMD_float: DefaultJob
+//   Benchmark.SimplexKernel_SIMD_half: DefaultJob
+
+// **************************
+// Benchmark: Benchmark.SimplexKernel_SIMD_float: DefaultJob
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet 38b46b3d-110a-4460-a2d5-3d0a6711cfe2.dll --anonymousPipes 103 104 --benchmarkName Benchmark.SimplexKernel_SIMD_float --job Default --benchmarkId 0 in /Users/julia/RiderProjects/NetGL/Benchmark/bin/Release/net8.0/38b46b3d-110a-4460-a2d5-3d0a6711cfe2/bin/Release/net8.0
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.13.12
+// Runtime=.NET 8.0.5 (8.0.524.21615), Arm64 RyuJIT AdvSIMD
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AdvSIMD,AES,CRC32,DP,RDM,SHA1,SHA256 VectorSize=128
+// Job: DefaultJob
+
+OverheadJitting  1: 1 op, 114459.00 ns, 114.4590 us/op
+WorkloadJitting  1: 1 op, 959525625.00 ns, 959.5256 ms/op
+
+OverheadJitting  2: 1 op, 167.00 ns, 167.0000 ns/op
+WorkloadJitting  2: 1 op, 938576250.00 ns, 938.5762 ms/op
+
+WorkloadWarmup   1: 1 op, 948076583.00 ns, 948.0766 ms/op
+WorkloadWarmup   2: 1 op, 950007041.00 ns, 950.0070 ms/op
+WorkloadWarmup   3: 1 op, 978862291.00 ns, 978.8623 ms/op
+WorkloadWarmup   4: 1 op, 936364333.00 ns, 936.3643 ms/op
+WorkloadWarmup   5: 1 op, 931997250.00 ns, 931.9973 ms/op
+WorkloadWarmup   6: 1 op, 936714750.00 ns, 936.7147 ms/op
+WorkloadWarmup   7: 1 op, 960063083.00 ns, 960.0631 ms/op
+WorkloadWarmup   8: 1 op, 923032125.00 ns, 923.0321 ms/op
+
+// BeforeActualRun
+WorkloadActual   1: 1 op, 973410625.00 ns, 973.4106 ms/op
+WorkloadActual   2: 1 op, 977878083.00 ns, 977.8781 ms/op
+WorkloadActual   3: 1 op, 967204459.00 ns, 967.2045 ms/op
+WorkloadActual   4: 1 op, 965997542.00 ns, 965.9975 ms/op
+WorkloadActual   5: 1 op, 960624208.00 ns, 960.6242 ms/op
+WorkloadActual   6: 1 op, 989501708.00 ns, 989.5017 ms/op
+WorkloadActual   7: 1 op, 980405458.00 ns, 980.4055 ms/op
+WorkloadActual   8: 1 op, 963617541.00 ns, 963.6175 ms/op
+WorkloadActual   9: 1 op, 968927000.00 ns, 968.9270 ms/op
+WorkloadActual  10: 1 op, 982473750.00 ns, 982.4737 ms/op
+WorkloadActual  11: 1 op, 968146750.00 ns, 968.1467 ms/op
+WorkloadActual  12: 1 op, 971775875.00 ns, 971.7759 ms/op
+WorkloadActual  13: 1 op, 936614875.00 ns, 936.6149 ms/op
+WorkloadActual  14: 1 op, 951670042.00 ns, 951.6700 ms/op
+WorkloadActual  15: 1 op, 981422208.00 ns, 981.4222 ms/op
+
+// AfterActualRun
+WorkloadResult   1: 1 op, 973410625.00 ns, 973.4106 ms/op
+WorkloadResult   2: 1 op, 977878083.00 ns, 977.8781 ms/op
+WorkloadResult   3: 1 op, 967204459.00 ns, 967.2045 ms/op
+WorkloadResult   4: 1 op, 965997542.00 ns, 965.9975 ms/op
+WorkloadResult   5: 1 op, 960624208.00 ns, 960.6242 ms/op
+WorkloadResult   6: 1 op, 989501708.00 ns, 989.5017 ms/op
+WorkloadResult   7: 1 op, 980405458.00 ns, 980.4055 ms/op
+WorkloadResult   8: 1 op, 963617541.00 ns, 963.6175 ms/op
+WorkloadResult   9: 1 op, 968927000.00 ns, 968.9270 ms/op
+WorkloadResult  10: 1 op, 982473750.00 ns, 982.4737 ms/op
+WorkloadResult  11: 1 op, 968146750.00 ns, 968.1467 ms/op
+WorkloadResult  12: 1 op, 971775875.00 ns, 971.7759 ms/op
+WorkloadResult  13: 1 op, 936614875.00 ns, 936.6149 ms/op
+WorkloadResult  14: 1 op, 951670042.00 ns, 951.6700 ms/op
+WorkloadResult  15: 1 op, 981422208.00 ns, 981.4222 ms/op
+// GC:  0 0 0 2800 1
+// Threading:  0 0 1
+
+// AfterAll
+// Benchmark Process 30949 has exited with code 0.
+
+Mean = 969.311 ms, StdErr = 3.417 ms (0.35%), N = 15, StdDev = 13.234 ms
+Min = 936.615 ms, Q1 = 964.808 ms, Median = 968.927 ms, Q3 = 979.142 ms, Max = 989.502 ms
+IQR = 14.334 ms, LowerFence = 943.306 ms, UpperFence = 1,000.643 ms
+ConfidenceInterval = [955.163 ms; 983.459 ms] (CI 99.9%), Margin = 14.148 ms (1.46% of Mean)
+Skewness = -0.78, Kurtosis = 3.23, MValue = 2
+
+// ** Remained 1 (50.0 %) benchmark(s) to run. Estimated finish 2024-05-25 10:07 (0h 0m from now) **
+// **************************
+// Benchmark: Benchmark.SimplexKernel_SIMD_half: DefaultJob
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet 38b46b3d-110a-4460-a2d5-3d0a6711cfe2.dll --anonymousPipes 105 106 --benchmarkName Benchmark.SimplexKernel_SIMD_half --job Default --benchmarkId 1 in /Users/julia/RiderProjects/NetGL/Benchmark/bin/Release/net8.0/38b46b3d-110a-4460-a2d5-3d0a6711cfe2/bin/Release/net8.0
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.13.12
+// Runtime=.NET 8.0.5 (8.0.524.21615), Arm64 RyuJIT AdvSIMD
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AdvSIMD,AES,CRC32,DP,RDM,SHA1,SHA256 VectorSize=128
+// Job: DefaultJob
+
+OverheadJitting  1: 1 op, 113750.00 ns, 113.7500 us/op
+WorkloadJitting  1: 1 op, 1354126125.00 ns, 1.3541 s/op
+
+OverheadJitting  2: 1 op, 458.00 ns, 458.0000 ns/op
+WorkloadJitting  2: 1 op, 1391694125.00 ns, 1.3917 s/op
+
+WorkloadWarmup   1: 1 op, 1388515125.00 ns, 1.3885 s/op
+WorkloadWarmup   2: 1 op, 1387052333.00 ns, 1.3871 s/op
+WorkloadWarmup   3: 1 op, 1386447083.00 ns, 1.3864 s/op
+WorkloadWarmup   4: 1 op, 1382294875.00 ns, 1.3823 s/op
+WorkloadWarmup   5: 1 op, 1349654041.00 ns, 1.3497 s/op
+WorkloadWarmup   6: 1 op, 1500679125.00 ns, 1.5007 s/op
+WorkloadWarmup   7: 1 op, 1372538542.00 ns, 1.3725 s/op
+WorkloadWarmup   8: 1 op, 1378829959.00 ns, 1.3788 s/op
+WorkloadWarmup   9: 1 op, 1373468834.00 ns, 1.3735 s/op
+
+// BeforeActualRun
+WorkloadActual   1: 1 op, 1375095667.00 ns, 1.3751 s/op
+WorkloadActual   2: 1 op, 1382807791.00 ns, 1.3828 s/op
+WorkloadActual   3: 1 op, 1380961708.00 ns, 1.3810 s/op
+WorkloadActual   4: 1 op, 1381869541.00 ns, 1.3819 s/op
+WorkloadActual   5: 1 op, 1381111417.00 ns, 1.3811 s/op
+WorkloadActual   6: 1 op, 1386665208.00 ns, 1.3867 s/op
+WorkloadActual   7: 1 op, 1382484250.00 ns, 1.3825 s/op
+WorkloadActual   8: 1 op, 1365510750.00 ns, 1.3655 s/op
+WorkloadActual   9: 1 op, 1388382375.00 ns, 1.3884 s/op
+WorkloadActual  10: 1 op, 1373148416.00 ns, 1.3731 s/op
+WorkloadActual  11: 1 op, 1372089542.00 ns, 1.3721 s/op
+WorkloadActual  12: 1 op, 1365316583.00 ns, 1.3653 s/op
+WorkloadActual  13: 1 op, 1395883875.00 ns, 1.3959 s/op
+WorkloadActual  14: 1 op, 1397466375.00 ns, 1.3975 s/op
+WorkloadActual  15: 1 op, 1373896667.00 ns, 1.3739 s/op
+
+// AfterActualRun
+WorkloadResult   1: 1 op, 1375095667.00 ns, 1.3751 s/op
+WorkloadResult   2: 1 op, 1382807791.00 ns, 1.3828 s/op
+WorkloadResult   3: 1 op, 1380961708.00 ns, 1.3810 s/op
+WorkloadResult   4: 1 op, 1381869541.00 ns, 1.3819 s/op
+WorkloadResult   5: 1 op, 1381111417.00 ns, 1.3811 s/op
+WorkloadResult   6: 1 op, 1386665208.00 ns, 1.3867 s/op
+WorkloadResult   7: 1 op, 1382484250.00 ns, 1.3825 s/op
+WorkloadResult   8: 1 op, 1365510750.00 ns, 1.3655 s/op
+WorkloadResult   9: 1 op, 1388382375.00 ns, 1.3884 s/op
+WorkloadResult  10: 1 op, 1373148416.00 ns, 1.3731 s/op
+WorkloadResult  11: 1 op, 1372089542.00 ns, 1.3721 s/op
+WorkloadResult  12: 1 op, 1365316583.00 ns, 1.3653 s/op
+WorkloadResult  13: 1 op, 1395883875.00 ns, 1.3959 s/op
+WorkloadResult  14: 1 op, 1397466375.00 ns, 1.3975 s/op
+WorkloadResult  15: 1 op, 1373896667.00 ns, 1.3739 s/op
+// GC:  0 0 0 2800 1
+// Threading:  0 0 1
+
+// AfterAll
+// Benchmark Process 30950 has exited with code 0.
+
+Mean = 1.380 s, StdErr = 0.002 s (0.18%), N = 15, StdDev = 0.010 s
+Min = 1.365 s, Q1 = 1.374 s, Median = 1.381 s, Q3 = 1.385 s, Max = 1.397 s
+IQR = 0.011 s, LowerFence = 1.357 s, UpperFence = 1.402 s
+ConfidenceInterval = [1.370 s; 1.390 s] (CI 99.9%), Margin = 0.010 s (0.74% of Mean)
+Skewness = 0.17, Kurtosis = 2.05, MValue = 2
+
+// ** Remained 0 (0.0 %) benchmark(s) to run. Estimated finish 2024-05-25 10:07 (0h 0m from now) **
+// ***** BenchmarkRunner: Finish  *****
+
+// * Export *
+  BenchmarkDotNet.Artifacts/results/Benchmark-report.csv
+  BenchmarkDotNet.Artifacts/results/Benchmark-report-github.md
+  BenchmarkDotNet.Artifacts/results/Benchmark-report.html
+
+// * Detailed results *
+Benchmark.SimplexKernel_SIMD_float: DefaultJob
+Runtime = .NET 8.0.5 (8.0.524.21615), Arm64 RyuJIT AdvSIMD; GC = Concurrent Workstation
+Mean = 969.311 ms, StdErr = 3.417 ms (0.35%), N = 15, StdDev = 13.234 ms
+Min = 936.615 ms, Q1 = 964.808 ms, Median = 968.927 ms, Q3 = 979.142 ms, Max = 989.502 ms
+IQR = 14.334 ms, LowerFence = 943.306 ms, UpperFence = 1,000.643 ms
+ConfidenceInterval = [955.163 ms; 983.459 ms] (CI 99.9%), Margin = 14.148 ms (1.46% of Mean)
+Skewness = -0.78, Kurtosis = 3.23, MValue = 2
+-------------------- Histogram --------------------
+[929.572 ms ; 957.347 ms) | @@
+[957.347 ms ; 993.527 ms) | @@@@@@@@@@@@@
+---------------------------------------------------
+
+Benchmark.SimplexKernel_SIMD_half: DefaultJob
+Runtime = .NET 8.0.5 (8.0.524.21615), Arm64 RyuJIT AdvSIMD; GC = Concurrent Workstation
+Mean = 1.380 s, StdErr = 0.002 s (0.18%), N = 15, StdDev = 0.010 s
+Min = 1.365 s, Q1 = 1.374 s, Median = 1.381 s, Q3 = 1.385 s, Max = 1.397 s
+IQR = 0.011 s, LowerFence = 1.357 s, UpperFence = 1.402 s
+ConfidenceInterval = [1.370 s; 1.390 s] (CI 99.9%), Margin = 0.010 s (0.74% of Mean)
+Skewness = 0.17, Kurtosis = 2.05, MValue = 2
+-------------------- Histogram --------------------
+[1.364 s ; 1.403 s) | @@@@@@@@@@@@@@@
+---------------------------------------------------
+
+// * Summary *
+
+BenchmarkDotNet v0.13.12, macOS Sonoma 14.5 (23F79) [Darwin 23.5.0]
+Apple M1, 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.300
+  [Host]     : .NET 8.0.5 (8.0.524.21615), Arm64 RyuJIT AdvSIMD
+  DefaultJob : .NET 8.0.5 (8.0.524.21615), Arm64 RyuJIT AdvSIMD
+
+
+| Method                   | Mean       | Error    | StdDev   | Allocated |
+|------------------------- |-----------:|---------:|---------:|----------:|
+| SimplexKernel_SIMD_float |   969.3 ms | 14.15 ms | 13.23 ms |   2.73 KB |
+| SimplexKernel_SIMD_half  | 1,380.2 ms | 10.25 ms |  9.59 ms |   2.73 KB |
+
+// * Hints *
+Outliers
+  Benchmark.SimplexKernel_SIMD_float: Default -> 1 outlier  was  detected (936.61 ms)
+
+// * Legends *
+  Mean      : Arithmetic mean of all measurements
+  Error     : Half of 99.9% confidence interval
+  StdDev    : Standard deviation of all measurements
+  Allocated : Allocated memory per single operation (managed only, inclusive, 1KB = 1024B)
+  1 ms      : 1 Millisecond (0.001 sec)
+
+// * Diagnostic Output - MemoryDiagnoser *
+
+
+// ***** BenchmarkRunner: End *****
+Run time: 00:01:03 (63.99 sec), executed benchmarks: 2
+
+Global total time: 00:01:07 (67.26 sec), executed benchmarks: 2
+// * Artifacts cleanup *
+Artifacts cleanup is finished

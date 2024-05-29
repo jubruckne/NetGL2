@@ -46,7 +46,10 @@
   &lt;Assembly Path="/Users/julia/.nuget/packages/sixlabors.imagesharp/3.1.4/lib/net6.0/SixLabors.ImageSharp.dll" /&gt;
   &lt;Assembly Path="/Users/julia/RiderProjects/NetGL/NetGL/bin/Release/NetGL.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
+	<s:String x:Key="/Default/Environment/Hierarchy/Build/BuildTool/CustomBuildToolPath/@EntryValue">/usr/local/share/dotnet/sdk/9.0.100-preview.4.24267.66/MSBuild.dll</s:String>
+	<s:Int64 x:Key="/Default/Environment/Hierarchy/Build/BuildTool/MsbuildVersion/@EntryValue">1114112</s:Int64>
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/SolBuilderDuo/CustomGlobalProperties/=PreferredUILang/@EntryIndexedValue">en-US</s:String>
+	
 	
 	
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/SolutionBuilderNext/FileVerbosityLevel/@EntryValue">Quiet</s:String>

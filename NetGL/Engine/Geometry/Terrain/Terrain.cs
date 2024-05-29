@@ -39,7 +39,6 @@ public class Terrain: Entity {
 
     private readonly FirstPersonCamera camera;
 
-    internal readonly TerrainNoise noise;
     private readonly Shader shader;
 
     private readonly LodLevels lod_levels;
@@ -51,8 +50,6 @@ public class Terrain: Entity {
 
     internal Terrain(Entity? parent = null): base("Terrain", parent) {
         camera = get<FirstPersonCamera>(EntityRelationship.HierarchyWithChildrenRecursive);
-
-        noise = new();
 
         //lod_levels = LodLevels.create(6, 16,1);
         lod_levels = LodLevels.create(
@@ -73,10 +70,7 @@ public class Terrain: Entity {
 
         Garbage.start_measuring();
 
-        heightmap = new Heightmap(
-                                  Rectangle.centered_at((0, 0), 16384),
-                                  Rectangle.with_size(8192 * 2, 8192 * 2)
-                                  );
+        heightmap = new Heightmap(Rectangle.centered_at((0f, 0f), 16384f), 4096 * 2);
         heightmap.update();
 
         //HeightmapAsset.serialize_to_file(heightmap, "heightmap.jl");

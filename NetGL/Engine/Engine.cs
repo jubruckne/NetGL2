@@ -489,16 +489,14 @@ public class Engine: GameWindow {
                                          ImGuiTreeNodeFlags.DefaultOpen)) {
                         ImGui.Unindent();
 
-                        Span<(float freq, float amp)> maps = stackalloc (float freq, float amp)[4];
-
-                        for(int i = 0; i < map.data.octaves.Count; ++i) {
-                            maps[i] = map.data.octaves[i];
-                            if (ImGui.DragFloat($"{i}_freq:##{i}_{map.name}_freq", ref maps[i].freq, 1f, 0f, 1000f)) {
-                                map.data.octaves[i] = (maps[i].freq, map.data.octaves[i].amp);
+                        for(int i = 0; i < map.data.noise_settings.octaves.Length; ++i) {
+                            var o = map.data.noise_settings.octaves[i];
+                            if (ImGui.DragFloat($"{i}_freq:##{i}_{map.name}_freq", ref o.frequency, 1f, 0f, 1000f)) {
+                                map.data.noise_settings.octaves[i].frequency = o.frequency;
                             }
 
-                            if (ImGui.DragFloat($"{i}_amp:##{i}_{map.name}_amp", ref maps[i].amp, 1f, 0f, 1000f)) {
-                                map.data.octaves[i] = (map.data.octaves[i].freq, maps[i].amp);
+                            if (ImGui.DragFloat($"{i}_amp:##{i}_{map.name}_amp", ref o.amplitude, 1f, 0f, 1000f)) {
+                                map.data.noise_settings.octaves[i].amplitude = o.amplitude;
                             }
                         }
 

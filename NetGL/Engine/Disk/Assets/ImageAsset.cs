@@ -14,7 +14,7 @@ public class ImageAsset: Asset<ImageAsset, Image>, IAsset<Image> {
         return null;
     }
 
-    public static Image load_from_file(string filename) {
+    public static Image load_from_file(string filename, ColorComponents components = ColorComponents.RedGreenBlueAlpha) {
         int    width;
         int    height;
         byte[] image_data;
@@ -29,7 +29,7 @@ public class ImageAsset: Asset<ImageAsset, Image>, IAsset<Image> {
         }
 
         using (Stream stream = File.OpenRead(filename)) {
-            ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+            ImageResult image = ImageResult.FromStream(stream, components);
             image_data = image.Data;
             width      = image.Width;
             height     = image.Height;

@@ -1,0 +1,9 @@
+// Validating benchmarks:
+//    * No exporters defined, results will not be persisted.
+
+// ***** BenchmarkRunner: Start   *****
+// ***** Found 2 benchmark(s) in total *****
+// ***** Building 1 exe(s) in Parallel: Start   *****
+// start dotnet  restore /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 /p:Deterministic=true /p:Optimize=true in /Users/julia/RiderProjects/NetGL/Benchmark/bin/Release/net8.0/9bddde95-e83c-4967-b696-b571300d24ec
+// command took 0.95 sec and exited with 0
+// start dotnet  build -c Release --no-restore /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 /p:Deterministic=true /p:Optimize=true in /Users/julia/RiderProjects/NetGL/Benchmark/bin/Release/net8.0/9bddde95-e83c-4967-b696-b571300d24ec

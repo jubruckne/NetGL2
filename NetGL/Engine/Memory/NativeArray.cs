@@ -28,15 +28,10 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
         if(zero_out) zero();
     }
 
-    /// <summary>Create new <see cref="NativeArray{T}"/>, those elements are copied from <see cref="ReadOnlySpan{T}"/>.</summary>
-    /// <param name="span">Elements of the <see cref="NativeArray{T}"/> are initialized by this <see cref="ReadOnlySpan{T}"/>.</param>
     public NativeArray(ReadOnlySpan<T> span) : this(span.Length) {
         span.CopyTo(this.as_span());
     }
 
-    /// <summary>Get the specific item of specific index.</summary>
-    /// <param name="index">index</param>
-    /// <returns>The item of specific index</returns>
     public T this[int index] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
@@ -206,9 +201,6 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
         items.CopyTo(as_span(at));
     }
 
-    /// <summary>Copy to managed memory</summary>
-    /// <param name="destination">managed memory array</param>
-    /// <param name="arrayIndex">start index of destination array</param>
     public void copy_to(T[] destination, int arrayIndex) {
         if (is_disposed()) Error.already_disposed(this);
         if ((uint)arrayIndex >= (uint)destination.Length) {
@@ -227,8 +219,6 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
         }
     }
 
-    /// <summary>Copy fron <see cref="NativeArray{T}"/>.</summary>
-    /// <param name="source">source array of type <see cref="NativeArray{T}"/></param>
     public void copy_from(NativeArray<T> source) => copy_from(source.get_address(), 0, source.length);
 
     public void copy_from<S>(in S[] source) where S: unmanaged {
@@ -238,13 +228,8 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
         }
     }
 
-    /// <summary>Copy from <see cref="ReadOnlySpan{T}"/> to this <see cref="NativeArray{T}"/> of index 0.</summary>
-    /// <param name="span"><see cref="ReadOnlySpan{T}"/> object.</param>
     public void copy_from(ReadOnlySpan<T> span) => copy_from(span, 0);
 
-    /// <summary>Copy from <see cref="ReadOnlySpan{T}"/> to this <see cref="NativeArray{T}"/> of specified index.</summary>
-    /// <param name="source"><see cref="ReadOnlySpan{T}"/> object.</param>
-    /// <param name="start">start index of destination. (destination is this <see cref="NativeArray{T}"/>.)</param>
     public void copy_from(ReadOnlySpan<T> source, int start) {
         if (is_disposed()) Error.already_disposed(this);
         if (start < 0) {
@@ -262,10 +247,6 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
         }
     }
 
-    /// <summary>Copy from unmanaged.</summary>
-    /// <param name="source">unmanaged source pointer</param>
-    /// <param name="start">start index of destination. (destination is this <see cref="NativeArray{T}"/>.)</param>
-    /// <param name="length">count of copied item. (NOT length of bytes.)</param>
     public void copy_from(IntPtr source, int start, int length) {
         if (is_disposed()) Error.already_disposed(this);
         if (length == 0) {
@@ -323,10 +304,6 @@ public unsafe class NativeArray<T>: IEnumerable<T>, IDisposable where T : unmana
         return new Span<T>((T*)this.data + start, length);
     }
 
-    /// <summary>
-    /// Dispose this instance and release unmanaged memory.<para/>
-    /// If already disposed, do nothing.<para/>
-    /// </summary>
     public void Dispose() {
         Console.WriteLine("NativeArray.Dispose");
         Console.WriteLine("NativeArray.Dispose");

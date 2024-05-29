@@ -173,6 +173,10 @@ public static class Numbers {
     public static bool is_between<T>(this T t, in T lower, in T upper)
         where T: INumber<T> => t > lower && t < upper;
 
+    public static bool is_power_of_2(this int value)
+        => int.IsPow2(value);
+
+
     public static bool is_between_including<T>(this T t, in T lower, in T upper)
         where T: INumber<T> => t >= lower && t <= upper;
 
